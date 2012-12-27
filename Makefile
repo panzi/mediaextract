@@ -1,9 +1,9 @@
 .PHONY: all clean
 
-all: oggextract
+all: audioextract
 
-oggextract: oggextract.c
+audioextract: audioextract.c
 	gcc -Wall -std=c99 -O2 $< -o $@
 
 clean:
-	rm oggextract
+	rm audioextract

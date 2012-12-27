@@ -1,9 +1,11 @@
 /*
- * Author: Adrian Keet
- * Last modified: October 21, 2012
+ * audioextract
  *
- * This code is in the public domain. Go ahead and use it for whatever you
- * want. I don't care. :)
+ * Author: Mathaias Panzenböck
+ * This is derived from oggextract:
+ * http://ner.mine.nu/oggextract/
+ *
+ * Original author of oggextract: Adrian Keet
  */
 
 #include <stdio.h>
@@ -67,15 +69,15 @@ enum fileformat {
 	/* TODO: MP3, AAC and MKV? */
 };
 
-int usage()
+int usage(int argc, char **argv)
 {
-	fprintf(stderr, "Usage: audioextract <filename> [<filename> ...]\n");
+	fprintf(stderr, "Usage: %s <filename> [<filename> ...]\n", argc <= 0 ? "audioextract" : argv[0]);
 	return 255;
 }
 
 const unsigned char *findmagic(const unsigned char *start, const unsigned char *end, enum fileformat *format)
 {
-	if (end < 4)
+	if (end < (unsigned char *)4)
 		return NULL;
 	end -= 4;
 	for (; start < end; ++ start)
@@ -154,7 +156,7 @@ int wave_ischunk(const unsigned char *start, const unsigned char *end, size_t *l
 	if (*(const int32_t *)start != RIFF_MAGIC)
 		return 0;
 	
-	length = *(const uint16_t *)(start + 4) + 8;
+	length = *(const uint32_t *)(start + 4) + 8;
 
 	if (end <= (unsigned char *)length || end - length < start)
 		return 0;
@@ -179,7 +181,7 @@ int aiff_ischunk(const unsigned char *start, const unsigned char *end, size_t *l
 	if (*(const int32_t *)start != FORM_MAGIC)
 		return 0;
 	
-	length = ntohs(*(const uint16_t *)(start + 4)) + 8;
+	length = ntohl(*(const uint32_t *)(start + 4)) + 8;
 
 	if (end <= (unsigned char *)length || end - length < start)
 		return 0;
@@ -199,7 +201,7 @@ const char *basename(const char *path)
 	const char *ptr = strrchr(path, '/');
 #ifdef __WINDOWS__
 	/* Windows supports both / and \ */
-	const char *ptr2 = strtchr(path, '\\');
+	const char *ptr2 = strrchr(path, '\\');
 	if (ptr2 > ptr)
 		ptr = ptr2;
 #endif
@@ -222,7 +224,7 @@ int extract(const char *filepath, size_t *numfilesptr)
 
 	size_t numfiles = 0;
 	const char *filename = basename(filepath);
-	size_t namelen = strlen(filename) + 16;
+	size_t namelen = strlen(filename) + 22;
 
 	printf("Extracting %s\n", filepath);
 
@@ -265,7 +267,7 @@ int extract(const char *filepath, size_t *numfilesptr)
 	}
 
 #define OPEN_OUTFD(ext) \
-	snprintf(outfilename, namelen, "%s_%08x.%s", filename, (unsigned int)(ptr - filedata), ext); \
+	snprintf(outfilename, namelen, "%s_%08zx.%s", filename, (size_t)(ptr - filedata), ext); \
 	outfd = creat(outfilename, -1); \
 	if (outfd < 0) \
 	{ \
@@ -273,6 +275,7 @@ int extract(const char *filepath, size_t *numfilesptr)
 		success = 0; \
 		goto exit_free; \
 	} \
+	++ numfiles; \
 	printf("Writing: %s\n", outfilename)
 
 	ptr = filedata;
@@ -349,7 +352,7 @@ int main(int argc, char **argv)
 	size_t numfiles = 0;
 
 	if (argc < 2)
-		return usage();
+		return usage(argc, argv);
 
 	failures = 0;
 	
@@ -368,7 +371,7 @@ int main(int argc, char **argv)
 	printf("Extracted %lu file(s).\n", numfiles);
 	if (failures > 0)
 	{
-		fprintf(stderr, "%lu error(s) during extraction.\n", failures);
+		fprintf(stderr, "%zu error(s) during extraction.\n", failures);
 		return 1;
 	}
 	return 0;
