@@ -245,7 +245,7 @@ int extract(const char *filepath, size_t *numfilesptr)
 				break;
 		}
 
-		ptr += 4;
+		++ ptr;
 	}
 
 	goto cleanup;

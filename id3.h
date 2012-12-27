@@ -6,8 +6,8 @@
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 
 #	define ID3_MASK    (uint32_t)0x00FFFFFF
-#	define ID3v1_MAGIC (uint32_t)0x00474154 /* "TAG\0" (reversed) */
-#	define ID3v2_MAGIC (uint32_t)0x00334449 /* "ID3\0" (reversed) */
+#	define ID3v1_MAGIC (uint32_t)0x00474154 /* "\0GAT" */
+#	define ID3v2_MAGIC (uint32_t)0x00334449 /* "\03DI" */
 
 #elif __BYTE_ORDER == __BIG_ENDIAN
 
