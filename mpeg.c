@@ -79,6 +79,9 @@ int mpeg_isframe(const unsigned char *start, const unsigned char *end, struct mp
 	uint32_t  samprate  = mpeg_srates[ver][srx];
 	uint16_t  samples   = mpeg_frame_samples[ver][lyr];
 	uint8_t   slot_size = mpeg_slot_size[lyr];
+
+	if (bitrate == 0 || samprate == 0 || samples == 0)
+		return 0;
 	
 	// In-between calculations
 	// Frame sizes are truncated integers

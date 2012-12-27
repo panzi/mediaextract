@@ -12,13 +12,15 @@
 #include "wave.h"
 #include "ogg.h"
 #include "mpeg.h"
+#include "id3.h"
 
 enum fileformat {
 	NONE,
 	OGG,
 	RIFF,
 	AIFF,
-	MPEG
+	MPEG,
+	ID3v2
 
 	/* TODO: AAC and MKV/WebM? */
 };
@@ -53,7 +55,12 @@ const unsigned char *findmagic(const unsigned char *start, const unsigned char *
 				return start;
 
 			default:
-				if (IS_MPEG_MAGIC(start))
+				if (IS_ID3v2_MAGIC(start))
+				{
+					*format = ID3v2;
+					return start;
+				}
+				else if (IS_MPEG_MAGIC(start))
 				{
 					*format = MPEG;
 					return start;
@@ -185,8 +192,17 @@ int extract(const char *filepath, size_t *numfilesptr)
 				}
 				break;
 
+			case ID3v2:
 			case MPEG:
-				if (mpeg_isframe(ptr, end, &mpeg))
+				if (format == ID3v2)
+				{
+					if (!id3v2_istag(ptr, end, &length))
+						break;
+				}
+				else
+					length = 0;
+
+				if (mpeg_isframe(ptr + length, end, &mpeg))
 				{
 					uint8_t version = mpeg.version;
 					uint8_t layer   = mpeg.layer;
@@ -197,6 +213,9 @@ int extract(const char *filepath, size_t *numfilesptr)
 						layer == 3 ? "mp3" :
 						             "mpeg");
 
+					write(outfd, ptr, length);
+					ptr += length;
+
 					do {
 						write(outfd, ptr, mpeg.frame_size);
 						ptr += mpeg.frame_size;
@@ -204,6 +223,19 @@ int extract(const char *filepath, size_t *numfilesptr)
 					      && mpeg_isframe(ptr, end, &mpeg)
 					      && mpeg.version == version
 					      && mpeg.layer == layer);
+					
+					if (id3v1_istag(ptr, end, &length))
+					{
+						write(outfd, ptr, length);
+						ptr += length;
+					}
+
+					if (id3v2_istag(ptr, end, &length))
+					{
+						write(outfd, ptr, length);
+						ptr += length;
+					}
+					
 					close(outfd);
 					continue;
 				}
