@@ -8,57 +8,9 @@
  * Original author of oggextract: Adrian Keet
  */
 
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <arpa/inet.h>
-
-#if (defined(_WIN16) || defined(_WIN32) || defined(_WIN64)) && !defined(__WINDOWS__)
-#define __WINDOWS__
-#endif
-
-#ifndef __WINDOWS__
-#include <endian.h>
-#endif
-
-#define OGG_HEADER_SIZE 27
-#define ogg_isinitial(data) ((data)[5] & 2)
-
-#define WAVE_HEADER_SIZE 8
-
-#if defined(__WINDOWS__) || __BYTE_ORDER == __LITTLE_ENDIAN
-
-#	define OGG_MAGIC  0x5367674f /* "OggS" (reversed) */
-
-#	define RIFF_MAGIC 0x46464952 /* "RIFF" (reversed) */
-#	define WAVE_MAGIC 0x45564157 /* "WAVE" (reversed) */
-
-#	define FORM_MAGIC 0x4d524f46 /* "FORM" (reversed) */
-#	define AIFF_MAGIC 0x46464941 /* "AIFF" (reversed) */
-#	define AIFC_MAGIC 0x43464941 /* "AIFC" (reversed) */
-
-#elif __BYTE_ORDER == __BIG_ENDIAN
-
-#	define OGG_MAGIC  0x5367674f /* "OggS" */
-
-#	define RIFF_MAGIC 0x46464952 /* "RIFF" */
-#	define WAVE_MAGIC 0x57415645 /* "WAVE" */
-
-#	define FORM_MAGIC 0x464f524d /* "FORM" */
-#	define AIFF_MAGIC 0x41494646 /* "AIFF" */
-#	define AIFC_MAGIC 0x41494643 /* "AIFC" */
-
-#else
-
-#error unsupported endian
-
-#endif
+#include "audioextract.h"
+#include "wave.h"
+#include "ogg.h"
 
 enum fileformat {
 	NONE = 0,
@@ -71,7 +23,8 @@ enum fileformat {
 
 int usage(int argc, char **argv)
 {
-	fprintf(stderr, "Usage: %s <filename> [<filename> ...]\n", argc <= 0 ? "audioextract" : argv[0]);
+	fprintf(stderr, "Usage: %s <filename> [<filename> ...]\n",
+		argc <= 0 ? "audioextract" : argv[0]);
 	return 255;
 }
 
@@ -99,101 +52,6 @@ const unsigned char *findmagic(const unsigned char *start, const unsigned char *
 	}
 
 	return NULL;
-}
-
-int ogg_ispage(const unsigned char *start, const unsigned char *end, size_t *lengthptr)
-{
-	unsigned char nsegs;
-	size_t length, i;
-	const unsigned char *segs = start + OGG_HEADER_SIZE;
-
-	/* full header available? */
-	if (end <= (unsigned char*)OGG_HEADER_SIZE || end - OGG_HEADER_SIZE < start)
-		return 0;
-
-	/* capture pattern */
-	if (*(const int32_t *)start != OGG_MAGIC)
-		return 0;
-
-	/* stream structure version */
-	if (start[4] != 0x00)
-		return 0;
-
-	/* header type flag */
-	if ((start[5] & ~7) != 0x00)
-		return 0;
-	
-	nsegs = start[26];
-	length = OGG_HEADER_SIZE + nsegs;
-
-	/* segment sizes fully available? */
-	if (end <= (unsigned char*)length || end - length < start)
-		return 0;
-
-	for (i = 0; i < nsegs; ++ i)
-	{
-		length += segs[i];
-	}
-
-	/* segments fully available? */
-	if (end <= (unsigned char*)length || end - length < start)
-		return 0;
-	
-	if (lengthptr)
-		*lengthptr = length;
-
-	/* I think we can reasonably assume it is a real page now */
-	return 1;
-}
-
-int wave_ischunk(const unsigned char *start, const unsigned char *end, size_t *lengthptr)
-{
-	size_t length;
-
-	if (end <= (unsigned char *)WAVE_HEADER_SIZE || end - WAVE_HEADER_SIZE < start)
-		return 0;
-	
-	if (*(const int32_t *)start != RIFF_MAGIC)
-		return 0;
-	
-	length = *(const uint32_t *)(start + 4) + 8;
-
-	if (end <= (unsigned char *)length || end - length < start)
-		return 0;
-	
-	if (*(const uint32_t *)(start + 8) != WAVE_MAGIC)
-		return 0;
-	
-	if (lengthptr)
-		*lengthptr = length;
-
-	return 1;
-}
-
-int aiff_ischunk(const unsigned char *start, const unsigned char *end, size_t *lengthptr)
-{
-	size_t length;
-	int16_t format;
-
-	if (end <= (unsigned char *)WAVE_HEADER_SIZE || end - WAVE_HEADER_SIZE < start)
-		return 0;
-	
-	if (*(const int32_t *)start != FORM_MAGIC)
-		return 0;
-	
-	length = ntohl(*(const uint32_t *)(start + 4)) + 8;
-
-	if (end <= (unsigned char *)length || end - length < start)
-		return 0;
-	
-	format = *(const uint32_t *)(start + 8);
-	if (format != AIFF_MAGIC && format != AIFC_MAGIC)
-		return 0;
-	
-	if (lengthptr)
-		*lengthptr = length;
-
-	return 1;
 }
 
 const char *basename(const char *path)
@@ -232,21 +90,18 @@ int extract(const char *filepath, size_t *numfilesptr)
 	if (fd < 0)
 	{
 		perror("open");
-		success = 0;
-		goto exit_numfiles;
+		goto error;
 	}
 
 	if (fstat(fd, &statdata) < 0)
 	{
 		perror("stat");
-		success = 0;
-		goto exit_fd;
+		goto error;
 	}
 	if (S_ISDIR(statdata.st_mode))
 	{
 		fprintf(stderr, "error: Is a directory: %s\n", filepath);
-		success = 0;
-		goto exit_fd;
+		goto error;
 	}
 	filesize = statdata.st_size;
 
@@ -254,16 +109,14 @@ int extract(const char *filepath, size_t *numfilesptr)
 	if (filedata == MAP_FAILED)
 	{
 		perror("mmap");
-		success = 0;
-		goto exit_fd;
+		goto error;
 	}
 
 	outfilename = malloc(namelen);
 	if (outfilename == NULL)
 	{
 		perror("malloc");
-		success = 0;
-		goto exit_munmap;
+		goto error;
 	}
 
 #define OPEN_OUTFD(ext) \
@@ -272,8 +125,7 @@ int extract(const char *filepath, size_t *numfilesptr)
 	if (outfd < 0) \
 	{ \
 		perror("creat"); \
-		success = 0; \
-		goto exit_free; \
+		goto error; \
 	} \
 	++ numfiles; \
 	printf("Writing: %s\n", outfilename)
@@ -328,16 +180,21 @@ int extract(const char *filepath, size_t *numfilesptr)
 		ptr += 4;
 	}
 
-exit_free:
-	free(outfilename);
+	goto cleanup;
 
-exit_munmap:
-	munmap(filedata, filesize);
+error:
+	success = 0;
 
-exit_fd:
-	close(fd);
+cleanup:
+	if (outfilename)
+		free(outfilename);
 
-exit_numfiles:
+	if (filedata)
+		munmap(filedata, filesize);
+
+	if (fd >= 0)
+		close(fd);
+
 	if (numfilesptr)
 		*numfilesptr = numfiles;
 
