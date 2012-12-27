@@ -8,6 +8,9 @@
  * Original author of oggextract: Adrian Keet
  */
 
+#include <getopt.h>
+#include <strings.h>
+
 #include "audioextract.h"
 #include "wave.h"
 #include "ogg.h"
@@ -15,24 +18,51 @@
 #include "id3.h"
 
 enum fileformat {
-	NONE,
-	OGG,
-	RIFF,
-	AIFF,
-	MPEG,
-	ID3v2
+	NONE  =  0,
+	OGG   =  1,
+	RIFF  =  2,
+	AIFF  =  4,
+	MPEG  =  8,
+	ID3v2 = 16
 
 	/* TODO: AAC and MKV/WebM? */
 };
 
 int usage(int argc, char **argv)
 {
-	fprintf(stderr, "Usage: %s <filename> [<filename> ...]\n",
-		argc <= 0 ? "audioextract" : argv[0]);
+	const char *progname = argc <= 0 ? "audioextract" : argv[0]; 
+	fprintf(stderr,
+		"Usage:\n"
+		"  %s <filename> [<filename> ...]\n"
+		"\n"
+		"Options:\n"
+		"  -h, --help             Print this help message.\n"
+		"  -f, --formats=FORMATS  Comma separated list of formats (file magics) to extract.\n"
+		"                         Supported formats:\n"
+		"                           all       all supported formats\n"
+		"                           default   the default set of formats (AIFF, ID3v2, Ogg, RIFF)\n"
+		"                           aiff      big-endian (Apple) wave files\n"
+		"                           id3v2     MPEG files with ID3V2 tags at the start\n"
+		"                           mpeg      any MPEG files\n"
+		"                           ogg       Ogg files (Vorbis, FLAC, Opus, Theora, etc.)\n"
+		"                           riff      little-endian (Windows) wave files\n"
+		"                           wav       alias for riff\n"
+		"                           wave      both RIFF and AIFF wave files\n"
+		"\n"
+		"                         If '-' is written before a format name the format will be\n"
+		"                         removed from the set of formats to extract. E.g. extract\n"
+		"                         everything except wave files:\n"
+		"\n"
+		"                           %s --formats=all,-wave data.bin\n"
+		"\n"
+		"  -o, --output=DIR       Directory where extracted files should be written. (default: \".\")\n"
+		"  -q, --quiet            Do not print status messages.\n"
+		"\n",
+		progname, progname);
 	return 255;
 }
 
-const unsigned char *findmagic(const unsigned char *start, const unsigned char *end, enum fileformat *format)
+const unsigned char *findmagic(const unsigned char *start, const unsigned char *end, int formats, enum fileformat *format)
 {
 	if (end < (unsigned char *)4)
 		return NULL;
@@ -40,31 +70,32 @@ const unsigned char *findmagic(const unsigned char *start, const unsigned char *
 
 	for (; start < end; ++ start)
 	{
-		switch (*(const int32_t *)start)
+		int32_t magic = *(const int32_t *)start;
+
+		if (formats & OGG && magic == OGG_MAGIC)
 		{
-			case OGG_MAGIC:
-				*format = OGG;
-				return start;
-
-			case RIFF_MAGIC:
-				*format = RIFF;
-				return start;
-
-			case FORM_MAGIC:
-				*format = AIFF;
-				return start;
-
-			default:
-				if (IS_ID3v2_MAGIC(start))
-				{
-					*format = ID3v2;
-					return start;
-				}
-				else if (IS_MPEG_MAGIC(start))
-				{
-					*format = MPEG;
-					return start;
-				}
+			*format = OGG;
+			return start;
+		}
+		else if (formats & RIFF && magic == RIFF_MAGIC)
+		{
+			*format = RIFF;
+			return start;
+		}
+		else if (formats & AIFF && magic == FORM_MAGIC)
+		{
+			*format = AIFF;
+			return start;
+		}
+		else if (formats & ID3v2 && IS_ID3v2_MAGIC(start))
+		{
+			*format = ID3v2;
+			return start;
+		}
+		else if (formats & MPEG && IS_MPEG_MAGIC(start))
+		{
+			*format = MPEG;
+			return start;
 		}
 	}
 
@@ -83,7 +114,7 @@ const char *basename(const char *path)
 	return ptr ? ptr + 1 : path;
 }
 
-int extract(const char *filepath, size_t *numfilesptr)
+int extract(const char *filepath, const char *outdir, int formats, int quiet, size_t *numfilesptr)
 {
 	int fd = -1;
 	struct stat statdata;
@@ -99,11 +130,12 @@ int extract(const char *filepath, size_t *numfilesptr)
 
 	size_t numfiles = 0;
 	const char *filename = basename(filepath);
-	size_t namelen = strlen(filename) + 23;
+	size_t namelen = strlen(outdir) + strlen(filename) + 24;
 
 	struct mpeg_info mpeg;
 
-	printf("Extracting %s\n", filepath);
+	if (!quiet)
+		printf("Extracting %s\n", filepath);
 
 	fd = open(filepath, O_RDONLY);
 	if (fd < 0)
@@ -139,7 +171,7 @@ int extract(const char *filepath, size_t *numfilesptr)
 	}
 
 #define OPEN_OUTFD(ext) \
-	snprintf(outfilename, namelen, "%s_%08zx.%s", filename, (size_t)(ptr - filedata), (ext)); \
+	snprintf(outfilename, namelen, "%s/%s_%08zx.%s", outdir, filename, (size_t)(ptr - filedata), (ext)); \
 	outfd = creat(outfilename, -1); \
 	if (outfd < 0) \
 	{ \
@@ -147,10 +179,13 @@ int extract(const char *filepath, size_t *numfilesptr)
 		goto error; \
 	} \
 	++ numfiles; \
-	printf("Writing: %s\n", outfilename)
+	if (!quiet) \
+	{ \
+		printf("Writing %s\n", outfilename); \
+	}
 
 	ptr = filedata;
-	for (end = filedata + filesize; (ptr = findmagic(ptr, end, &format));)
+	for (end = filedata + filesize; (ptr = findmagic(ptr, end, formats, &format));)
 	{
 		switch (format)
 		{
@@ -269,21 +304,154 @@ cleanup:
 	return success;
 }
 
+int parse_formats(const char *formats)
+{
+	unsigned int parsed = NONE;
+	const char *start = formats;
+	const char *end = strchr(start,',');
+
+	while (*start)
+	{
+		if (!end)
+			end = formats + strlen(formats);
+
+		size_t len = (size_t)(end - start);
+		if (strncasecmp("ogg", start, len) == 0)
+		{
+			parsed |= OGG;
+		}
+		else if (strncasecmp("riff", start, len) == 0 || strncasecmp("wav", start, len) == 0)
+		{
+			parsed |= RIFF;
+		}
+		else if (strncasecmp("aiff", start, len) == 0)
+		{
+			parsed |= AIFF;
+		}
+		else if (strncasecmp("wave", start, len) == 0)
+		{
+			parsed |= RIFF | AIFF;
+		}
+		else if (strncasecmp("mpeg", start, len) == 0)
+		{
+			parsed |= MPEG;
+		}
+		else if (strncasecmp("id3v2", start, len) == 0)
+		{
+			parsed |= ID3v2;
+		}
+		else if (strncasecmp("all", start, len) == 0)
+		{
+			parsed = OGG | RIFF | AIFF | MPEG | ID3v2;
+		}
+		else if (strncasecmp("default", start, len) == 0)
+		{
+			parsed |= OGG | RIFF | AIFF | ID3v2;
+		}
+		else if (strncasecmp("-ogg", start, len) == 0)
+		{
+			parsed &= ~OGG;
+		}
+		else if (strncasecmp("-riff", start, len) == 0 || strncasecmp("-wav", start, len) == 0)
+		{
+			parsed &= ~RIFF;
+		}
+		else if (strncasecmp("-aiff", start, len) == 0)
+		{
+			parsed &= ~AIFF;
+		}
+		else if (strncasecmp("-wave", start, len) == 0)
+		{
+			parsed &= ~(RIFF | AIFF);
+		}
+		else if (strncasecmp("-mpeg", start, len) == 0)
+		{
+			parsed &= ~MPEG;
+		}
+		else if (strncasecmp("-id3v2", start, len) == 0)
+		{
+			parsed &= ~ID3v2;
+		}
+		else if (strncasecmp("-all", start, len) == 0)
+		{
+			parsed &= ~(OGG | RIFF | AIFF | MPEG | ID3v2);
+		}
+		else if (strncasecmp("-default", start, len) == 0)
+		{
+			parsed &= ~(OGG | RIFF | AIFF | ID3v2);
+		}
+		else if (len != 0)
+		{
+			fprintf(stderr, "Unknown format: \"");
+			fwrite(start, len, 1, stderr);
+			fprintf(stderr, "\"\nSee --help for usage information.\n");
+			return -1;
+		}
+
+		if (!*end)
+			break;
+
+		start = end + 1;
+		end = strchr(start, ',');
+	}
+
+	return parsed;
+}
+
+const struct option long_options[] = {
+	{"formats", required_argument, 0,  'f' },
+	{"output",  required_argument, 0,  'o' },
+	{"help",    no_argument,       0,  'h' },
+	{"quiet",   no_argument,       0,  'q' },
+	{0,         0,                 0,  0 }
+};
+
 int main(int argc, char **argv)
 {
-	int i = 0;
+	int i = 0, opt = 0, quiet = 0;
 	size_t failures = 0;
 	size_t sumnumfiles = 0;
 	size_t numfiles = 0;
+	int formats = OGG | RIFF | AIFF | ID3v2;
+	const char *outdir = ".";
 
-	if (argc < 2)
-		return usage(argc, argv);
-
-	failures = 0;
-	
-	for (i = 1; i < argc; ++i)
+	while ((opt = getopt_long(argc, argv, "f:o:hq", long_options, NULL)) != -1)
 	{
-		if (extract(argv[i], &numfiles))
+		switch (opt)
+		{
+			case 'f':
+				formats = parse_formats(optarg);
+				if (formats < 0)
+					return 255;
+				else if (formats == 0)
+				{
+					fprintf(stderr, "error: No formats specified.\nSee --help for usage information.\n");
+					return 255;
+				}
+				break;
+
+			case 'o':
+				outdir = optarg;
+				break;
+
+			case 'h':
+				return usage(argc, argv);
+
+			case 'q':
+				quiet = 1;
+				break;
+		}
+	}
+
+	if (optind >= argc)
+	{
+		fprintf(stderr, "error: Not enough arguments.\nSee --help for usage information.\n");
+		return 1;
+	}
+
+	for (i = optind; i < argc; ++ i)
+	{
+		if (extract(argv[i], outdir, formats, quiet, &numfiles))
 		{
 			sumnumfiles += numfiles;
 		}
@@ -293,7 +461,9 @@ int main(int argc, char **argv)
 		}
 	}
 
-	printf("Extracted %lu file(s).\n", numfiles);
+	if (!quiet)
+		printf("Extracted %lu file(s).\n", numfiles);
+
 	if (failures > 0)
 	{
 		fprintf(stderr, "%zu error(s) during extraction.\n", failures);
