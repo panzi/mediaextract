@@ -11,14 +11,16 @@
 #include "audioextract.h"
 #include "wave.h"
 #include "ogg.h"
+#include "mpeg.h"
 
 enum fileformat {
-	NONE = 0,
-	OGG  = 1,
-	RIFF = 2,
-	AIFF = 3
+	NONE,
+	OGG,
+	RIFF,
+	AIFF,
+	MPEG
 
-	/* TODO: MP3, AAC and MKV? */
+	/* TODO: AAC and MKV/WebM? */
 };
 
 int usage(int argc, char **argv)
@@ -33,6 +35,7 @@ const unsigned char *findmagic(const unsigned char *start, const unsigned char *
 	if (end < (unsigned char *)4)
 		return NULL;
 	end -= 4;
+
 	for (; start < end; ++ start)
 	{
 		switch (*(const int32_t *)start)
@@ -48,6 +51,13 @@ const unsigned char *findmagic(const unsigned char *start, const unsigned char *
 			case FORM_MAGIC:
 				*format = AIFF;
 				return start;
+
+			default:
+				if (IS_MPEG_MAGIC(start))
+				{
+					*format = MPEG;
+					return start;
+				}
 		}
 	}
 
@@ -82,7 +92,9 @@ int extract(const char *filepath, size_t *numfilesptr)
 
 	size_t numfiles = 0;
 	const char *filename = basename(filepath);
-	size_t namelen = strlen(filename) + 22;
+	size_t namelen = strlen(filename) + 23;
+
+	struct mpeg_info mpeg;
 
 	printf("Extracting %s\n", filepath);
 
@@ -120,7 +132,7 @@ int extract(const char *filepath, size_t *numfilesptr)
 	}
 
 #define OPEN_OUTFD(ext) \
-	snprintf(outfilename, namelen, "%s_%08zx.%s", filename, (size_t)(ptr - filedata), ext); \
+	snprintf(outfilename, namelen, "%s_%08zx.%s", filename, (size_t)(ptr - filedata), (ext)); \
 	outfd = creat(outfilename, -1); \
 	if (outfd < 0) \
 	{ \
@@ -168,6 +180,30 @@ int extract(const char *filepath, size_t *numfilesptr)
 
 					write(outfd, ptr, length);
 					ptr += length;
+					close(outfd);
+					continue;
+				}
+				break;
+
+			case MPEG:
+				if (mpeg_isframe(ptr, end, &mpeg))
+				{
+					uint8_t version = mpeg.version;
+					uint8_t layer   = mpeg.layer;
+
+					OPEN_OUTFD(
+						layer == 1 ? "mp1" :
+						layer == 2 ? "mp2" :
+						layer == 3 ? "mp3" :
+						             "mpeg");
+
+					do {
+						write(outfd, ptr, mpeg.frame_size);
+						ptr += mpeg.frame_size;
+					} while (ptr < end
+					      && mpeg_isframe(ptr, end, &mpeg)
+					      && mpeg.version == version
+					      && mpeg.layer == layer);
 					close(outfd);
 					continue;
 				}

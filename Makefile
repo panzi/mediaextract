@@ -1,5 +1,5 @@
 BUILDDIR=build
-OBJ=$(BUILDDIR)/audioextract.o $(BUILDDIR)/wave.o $(BUILDDIR)/ogg.o
+OBJ=$(BUILDDIR)/audioextract.o $(BUILDDIR)/wave.o $(BUILDDIR)/ogg.o $(BUILDDIR)/mpeg.o
 CC=gcc
 CFLAGS=-Wall -std=c99 -O2 -fmessage-length=0 -g
 BIN=$(BUILDDIR)/audioextract
@@ -11,17 +11,17 @@ all: $(BIN)
 $(BIN): $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) -o $@
 
-$(BUILDDIR)/audioextract.o: audioextract.c audioextract.h ogg.h wave.h $(BUILDDIR)
+$(BUILDDIR)/audioextract.o: audioextract.c audioextract.h ogg.h wave.h mpeg.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
-$(BUILDDIR)/wave.o: wave.c audioextract.h wave.h $(BUILDDIR)
+$(BUILDDIR)/wave.o: wave.c audioextract.h wave.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
-$(BUILDDIR)/ogg.o: ogg.c audioextract.h ogg.h $(BUILDDIR)
+$(BUILDDIR)/ogg.o: ogg.c audioextract.h ogg.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
-$(BUILDDIR):
-	mkdir -p $(BUILDDIR)
+$(BUILDDIR)/mpeg.o: mpeg.c audioextract.h mpeg.h
+	$(CC) $(CFLAGS) $< -o $@ -c
 
 clean:
 	rm $(BIN) $(OBJ)
