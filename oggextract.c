@@ -7,30 +7,93 @@
  */
 
 #include <stdio.h>
-#include <malloc.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
+#include <arpa/inet.h>
+
+#if (defined(_WIN16) || defined(_WIN32) || defined(_WIN64)) && !defined(__WINDOWS__)
+#define __WINDOWS__
+#endif
+
+#ifndef __WINDOWS__
+#include <endian.h>
+#endif
 
 #define OGG_HEADER_SIZE 27
 #define ogg_isinitial(data) ((data)[5] & 2)
 
+#define WAVE_HEADER_SIZE 8
+
+#if defined(__WINDOWS__) || __BYTE_ORDER == __LITTLE_ENDIAN
+
+#	define OGG_MAGIC  0x5367674f /* "OggS" (reversed) */
+
+#	define RIFF_MAGIC 0x46464952 /* "RIFF" (reversed) */
+#	define WAVE_MAGIC 0x45564157 /* "WAVE" (reversed) */
+
+#	define FORM_MAGIC 0x4d524f46 /* "FORM" (reversed) */
+#	define AIFF_MAGIC 0x46464941 /* "AIFF" (reversed) */
+#	define AIFC_MAGIC 0x43464941 /* "AIFC" (reversed) */
+
+#elif __BYTE_ORDER == __BIG_ENDIAN
+
+#	define OGG_MAGIC  0x5367674f /* "OggS" */
+
+#	define RIFF_MAGIC 0x46464952 /* "RIFF" */
+#	define WAVE_MAGIC 0x57415645 /* "WAVE" */
+
+#	define FORM_MAGIC 0x464f524d /* "FORM" */
+#	define AIFF_MAGIC 0x41494646 /* "AIFF" */
+#	define AIFC_MAGIC 0x41494643 /* "AIFC" */
+
+#else
+
+#error unsupported endian
+
+#endif
+
+enum fileformat {
+	NONE = 0,
+	OGG  = 1,
+	RIFF = 2,
+	AIFF = 3
+
+	/* TODO: MP3, AAC and MKV? */
+};
+
 int usage()
 {
-	fprintf(stderr, "Usage: oggextract <filename> [<filename> ...]\n");
+	fprintf(stderr, "Usage: audioextract <filename> [<filename> ...]\n");
 	return 255;
 }
 
-const unsigned char *findpattern(const unsigned char *start, const unsigned char *end)
+const unsigned char *findmagic(const unsigned char *start, const unsigned char *end, enum fileformat *format)
 {
+	if (end < 4)
+		return NULL;
 	end -= 4;
 	for (; start < end; ++ start)
 	{
-		if (*(const int *)start == 0x5367674f) /* "OggS" */
-			return start;
+		switch (*(const int32_t *)start)
+		{
+			case OGG_MAGIC:
+				*format = OGG;
+				return start;
+
+			case RIFF_MAGIC:
+				*format = RIFF;
+				return start;
+
+			case FORM_MAGIC:
+				*format = AIFF;
+				return start;
+		}
 	}
 
 	return NULL;
@@ -47,7 +110,7 @@ int ogg_ispage(const unsigned char *start, const unsigned char *end, size_t *len
 		return 0;
 
 	/* capture pattern */
-	if (*(const int *)start != 0x5367674f) /* "OggS" */
+	if (*(const int32_t *)start != OGG_MAGIC)
 		return 0;
 
 	/* stream structure version */
@@ -81,22 +144,60 @@ int ogg_ispage(const unsigned char *start, const unsigned char *end, size_t *len
 	return 1;
 }
 
-unsigned int ogg_getlength(const unsigned char *data)
+int wave_ischunk(const unsigned char *start, const unsigned char *end, size_t *lengthptr)
 {
-	unsigned char nsegs = data[26];
-	const unsigned char *segs = data + 27;
-	int length = 27 + nsegs;
-	int i;
+	size_t length;
 
-	for (i = 0; i < nsegs; i++)
-		length += segs[i];
-	return length;
+	if (end <= (unsigned char *)WAVE_HEADER_SIZE || end - WAVE_HEADER_SIZE < start)
+		return 0;
+	
+	if (*(const int32_t *)start != RIFF_MAGIC)
+		return 0;
+	
+	length = *(const uint16_t *)(start + 4) + 8;
+
+	if (end <= (unsigned char *)length || end - length < start)
+		return 0;
+	
+	if (*(const uint32_t *)(start + 8) != WAVE_MAGIC)
+		return 0;
+	
+	if (lengthptr)
+		*lengthptr = length;
+
+	return 1;
+}
+
+int aiff_ischunk(const unsigned char *start, const unsigned char *end, size_t *lengthptr)
+{
+	size_t length;
+	int16_t format;
+
+	if (end <= (unsigned char *)WAVE_HEADER_SIZE || end - WAVE_HEADER_SIZE < start)
+		return 0;
+	
+	if (*(const int32_t *)start != FORM_MAGIC)
+		return 0;
+	
+	length = ntohs(*(const uint16_t *)(start + 4)) + 8;
+
+	if (end <= (unsigned char *)length || end - length < start)
+		return 0;
+	
+	format = *(const uint32_t *)(start + 8);
+	if (format != AIFF_MAGIC && format != AIFC_MAGIC)
+		return 0;
+	
+	if (lengthptr)
+		*lengthptr = length;
+
+	return 1;
 }
 
 const char *basename(const char *path)
 {
 	const char *ptr = strrchr(path, '/');
-#if defined(_WIN16) || defined(_WIN32) || defined(_WIN64)
+#ifdef __WINDOWS__
 	/* Windows supports both / and \ */
 	const char *ptr2 = strtchr(path, '\\');
 	if (ptr2 > ptr)
@@ -112,8 +213,9 @@ int extract(const char *filepath, size_t *numfilesptr)
 	size_t filesize = 0;
 	unsigned char *filedata = NULL;
 	const unsigned char *ptr = NULL, *end = NULL;
+	enum fileformat format = NONE;
 
-	size_t pagelen = 0;
+	size_t length = 0;
 	int outfd = -1;
 	int success = 1;
 	char *outfilename = NULL;
@@ -147,62 +249,81 @@ int extract(const char *filepath, size_t *numfilesptr)
 	filesize = statdata.st_size;
 
 	filedata = mmap(0, filesize, PROT_READ, MAP_PRIVATE, fd, 0);
-	if (filedata == MAP_FAILED) {
+	if (filedata == MAP_FAILED)
+	{
 		perror("mmap");
 		success = 0;
 		goto exit_fd;
 	}
 
 	outfilename = malloc(namelen);
-	if (outfilename == NULL) {
+	if (outfilename == NULL)
+	{
 		perror("malloc");
 		success = 0;
 		goto exit_munmap;
 	}
 
+#define OPEN_OUTFD(ext) \
+	snprintf(outfilename, namelen, "%s_%08x.%s", filename, (unsigned int)(ptr - filedata), ext); \
+	outfd = creat(outfilename, -1); \
+	if (outfd < 0) \
+	{ \
+		perror("creat"); \
+		success = 0; \
+		goto exit_free; \
+	} \
+	printf("Writing: %s\n", outfilename)
+
 	ptr = filedata;
-	for (end = filedata + filesize; (ptr = findpattern(ptr, end));)
+	for (end = filedata + filesize; (ptr = findmagic(ptr, end, &format));)
 	{
-		if (ogg_ispage(ptr, end, &pagelen) && (outfd >= 0 || ogg_isinitial(ptr)))
+		switch (format)
 		{
-			pagelen = ogg_getlength(ptr);
-
-			if (outfd < 0)
-			{
-				snprintf(outfilename, namelen, "%s_%08x.ogg", filename, (unsigned int)(ptr - filedata));
-				outfd = creat(outfilename, -1);
-				if (outfd < 0)
+			case OGG:
+				if (ogg_ispage(ptr, end, &length) && ogg_isinitial(ptr))
 				{
-					perror("creat");
-					success = 0;
-					goto exit_free;
+					OPEN_OUTFD("ogg");
+
+					do {
+						write(outfd, ptr, length);
+						ptr += length;
+					} while (ptr < end && ogg_ispage(ptr, end, &length));
+					close(outfd);
+					continue;
 				}
-				printf("writing file: %s\n", outfilename);
-				++ numfiles;
-			}
+				break;
 
-			if (write(outfd, ptr, pagelen) < 0)
-			{
-					perror("write");
-					success = 0;
-					goto exit_outfd;
-			}
-			ptr += pagelen;
+			case RIFF:
+				if (wave_ischunk(ptr, end, &length))
+				{
+					OPEN_OUTFD("wav");
+
+					write(outfd, ptr, length);
+					ptr += length;
+					close(outfd);
+					continue;
+				}
+				break;
+
+			case AIFF:
+				if (aiff_ischunk(ptr, end, &length))
+				{
+					OPEN_OUTFD("aif");
+
+					write(outfd, ptr, length);
+					ptr += length;
+					close(outfd);
+					continue;
+				}
+				break;
+
+			case NONE:
+				break;
 		}
-		else
-		{
-			if (outfd >= 0)
-			{
-				close(outfd);
-				outfd = -1;
-			}
-			ptr += 4;
-		}
+
+		ptr += 4;
 	}
-
-exit_outfd:
-	if (outfd >= 0)
-		close(outfd);
 
 exit_free:
 	free(outfilename);
