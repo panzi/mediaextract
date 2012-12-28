@@ -35,21 +35,22 @@ int usage(int argc, char **argv)
 		"audioextract - extracts audio files that are embedded within other files\n"
 		"\n"
 		"Usage:\n"
-		"  %s [options] <filename> [<filename> ...]\n"
+		"  %s [option...] <filename> [<filename> ...]\n"
 		"\n"
 		"Options:\n"
 		"  -h, --help             Print this help message.\n"
+		"  -q, --quiet            Do not print status messages.\n"
 		"  -f, --formats=FORMATS  Comma separated list of formats (file magics) to extract.\n"
 		"                         Supported formats:\n"
-		"                           all       all supported formats\n"
-		"                           default   the default set of formats (AIFF, ID3v2, Ogg, RIFF)\n"
-		"                           aiff      big-endian (Apple) wave files\n"
-		"                           id3v2     MPEG files with ID3v2 tags at the start\n"
-		"                           mpeg      any MPEG files (e.g. MP3)\n"
-		"                           ogg       Ogg files (Vorbis, FLAC, Opus, Theora, etc.)\n"
-		"                           riff      little-endian (Windows) wave files\n"
-		"                           wav       alias for riff\n"
-		"                           wave      both RIFF and AIFF wave files\n"
+		"                           all      all supported formats\n"
+		"                           default  the default set of formats (AIFF, ID3v2, Ogg, RIFF)\n"
+		"                           aiff     big-endian (Apple) wave files\n"
+		"                           id3v2    MPEG files with ID3v2 tags at the start\n"
+		"                           mpeg     any MPEG files (e.g. MP3)\n"
+		"                           ogg      Ogg files (Vorbis, FLAC, Opus, Theora, etc.)\n"
+		"                           riff     little-endian (Windows) wave files\n"
+		"                           wav      alias for riff\n"
+		"                           wave     both RIFF and AIFF wave files\n"
 		"\n"
 		"                         WARNING: Because MPEG files do not have a nice file magic, using\n"
 		"                         the 'mpeg' format may cause *a lot* of false positives. Nowadays\n"
@@ -66,7 +67,16 @@ int usage(int argc, char **argv)
 		"                           %s --formats=all,-wave data.bin\n"
 		"\n"
 		"  -o, --output=DIR       Directory where extracted files should be written. (default: \".\")\n"
-		"  -q, --quiet            Do not print status messages.\n"
+		"  -m, --min=SIZE         Minumum size of extracted files (skip smaller). (default: 0)\n"
+		"  -x, --max=SIZE         Maximum size of extracted files (skip larger).\n"
+		"                         (default: max. possible size_t value)\n"
+		"\n"
+		"                         The last character of SIZE may be one of the following:\n"
+		"                           B (or none)  for bytes\n"
+		"                           k            for Kilobytes (units of 1024 bytes)\n"
+		"                           M            for Megabytes (units of 1024 Kilobytes)\n"
+		"                           G            for Gigabytes (units of 1024 Megabytes)\n"
+		"                           T            for Terabytes (units of 1024 Gigabytes)\n"
 		"\n",
 		progname, progname);
 	return 255;
@@ -124,7 +134,44 @@ const char *basename(const char *path)
 	return ptr ? ptr + 1 : path;
 }
 
-int extract(const char *filepath, const char *outdir, int formats, int quiet, size_t *numfilesptr)
+int write_file(const char *outdir, const char *filename, size_t offset,
+               const char *ext, char *pathbuf, size_t pathbuflen,
+               const unsigned char *data, size_t length,
+               size_t minsize, size_t maxsize, int quiet)
+{
+	snprintf(pathbuf, pathbuflen, "%s/%s_%08zx.%s", outdir, filename, offset, ext);
+	
+	if (length < minsize)
+	{
+		if (!quiet)
+			fprintf(stderr, "Skipped too small (%zu) %s\n", length, pathbuf);
+
+		return 0;
+	}
+	else if (length > maxsize)
+	{
+		if (!quiet)
+			fprintf(stderr, "Skipped too large (%zu) %s\n", length, pathbuf);
+
+		return 0;
+	}
+
+	int outfd = creat(pathbuf, -1);
+	if (outfd < 0)
+	{
+		perror("creat");
+		return 0;
+	}
+
+	if (!quiet)
+		printf("Writing %s\n", pathbuf);
+
+	write(outfd, data, length);
+	close(outfd);
+	return 1;
+}
+
+int extract(const char *filepath, const char *outdir, size_t minsize, size_t maxsize, int formats, int quiet, size_t *numfilesptr)
 {
 	int fd = -1;
 	struct stat statdata;
@@ -134,7 +181,6 @@ int extract(const char *filepath, const char *outdir, int formats, int quiet, si
 	enum fileformat format = NONE;
 
 	size_t length = 0;
-	int outfd = -1;
 	int success = 1;
 	char *outfilename = NULL;
 
@@ -143,6 +189,7 @@ int extract(const char *filepath, const char *outdir, int formats, int quiet, si
 	size_t namelen = strlen(outdir) + strlen(filename) + 24;
 
 	struct mpeg_info mpeg;
+	const unsigned char *audio_start = NULL;
 
 	if (!quiet)
 		printf("Extracting %s\n", filepath);
@@ -180,20 +227,12 @@ int extract(const char *filepath, const char *outdir, int formats, int quiet, si
 		goto error;
 	}
 
-#define OPEN_OUTFD(ext) \
-	snprintf(outfilename, namelen, "%s/%s_%08zx.%s", outdir, filename, (size_t)(ptr - filedata), (ext)); \
-	outfd = creat(outfilename, -1); \
-	if (outfd < 0) \
+#define WRITE_FILE(data, length, ext) \
+	if (write_file(outdir, filename, (size_t)((data) - filedata), (ext), outfilename, namelen, (data), (length), minsize, maxsize, quiet)) \
 	{ \
-		perror("creat"); \
-		goto error; \
-	} \
-	++ numfiles; \
-	if (!quiet) \
-	{ \
-		printf("Writing %s\n", outfilename); \
+		++ numfiles; \
 	}
-
+	
 	ptr = filedata;
 	for (end = filedata + filesize; (ptr = findmagic(ptr, end, formats, &format));)
 	{
@@ -202,13 +241,13 @@ int extract(const char *filepath, const char *outdir, int formats, int quiet, si
 			case OGG:
 				if (ogg_ispage(ptr, end, &length) && ogg_isinitial(ptr))
 				{
-					OPEN_OUTFD("ogg");
+					audio_start = ptr;
 
 					do {
-						write(outfd, ptr, length);
 						ptr += length;
 					} while (ptr < end && ogg_ispage(ptr, end, &length));
-					close(outfd);
+					
+					WRITE_FILE(audio_start, ptr - audio_start, "ogg");
 					continue;
 				}
 				break;
@@ -216,11 +255,8 @@ int extract(const char *filepath, const char *outdir, int formats, int quiet, si
 			case RIFF:
 				if (wave_ischunk(ptr, end, &length))
 				{
-					OPEN_OUTFD("wav");
-
-					write(outfd, ptr, length);
+					WRITE_FILE(ptr, length, "wav");
 					ptr += length;
-					close(outfd);
 					continue;
 				}
 				break;
@@ -228,11 +264,8 @@ int extract(const char *filepath, const char *outdir, int formats, int quiet, si
 			case AIFF:
 				if (aiff_ischunk(ptr, end, &length))
 				{
-					OPEN_OUTFD("aif");
-
-					write(outfd, ptr, length);
+					WRITE_FILE(ptr, length, "aif");
 					ptr += length;
-					close(outfd);
 					continue;
 				}
 				break;
@@ -252,17 +285,10 @@ int extract(const char *filepath, const char *outdir, int formats, int quiet, si
 					uint8_t version = mpeg.version;
 					uint8_t layer   = mpeg.layer;
 
-					OPEN_OUTFD(
-						layer == 1 ? "mp1" :
-						layer == 2 ? "mp2" :
-						layer == 3 ? "mp3" :
-						             "mpeg");
-
-					write(outfd, ptr, length);
+					audio_start = ptr;
 					ptr += length;
 
 					do {
-						write(outfd, ptr, mpeg.frame_size);
 						ptr += mpeg.frame_size;
 					} while (ptr < end
 					      && mpeg_isframe(ptr, end, &mpeg)
@@ -271,17 +297,19 @@ int extract(const char *filepath, const char *outdir, int formats, int quiet, si
 					
 					if (id3v1_istag(ptr, end, &length))
 					{
-						write(outfd, ptr, length);
 						ptr += length;
 					}
 
 					if (formats & ID3v2 && id3v2_istag(ptr, end, 1, &length))
 					{
-						write(outfd, ptr, length);
 						ptr += length;
 					}
 					
-					close(outfd);
+					WRITE_FILE(audio_start, ptr - audio_start,
+						layer == 1 ? "mp1" :
+						layer == 2 ? "mp2" :
+						layer == 3 ? "mp3" :
+						             "mpeg");
 					continue;
 				}
 				break;
@@ -409,11 +437,13 @@ int parse_formats(const char *formats)
 }
 
 const struct option long_options[] = {
-	{"formats", required_argument, 0,  'f' },
-	{"output",  required_argument, 0,  'o' },
-	{"help",    no_argument,       0,  'h' },
-	{"quiet",   no_argument,       0,  'q' },
-	{0,         0,                 0,  0 }
+	{"formats",  required_argument, 0,  'f' },
+	{"output",   required_argument, 0,  'o' },
+	{"help",     no_argument,       0,  'h' },
+	{"quiet",    no_argument,       0,  'q' },
+	{"min-size", required_argument, 0,  'm' },
+	{"max-size", no_argument,       0,  'x' },
+	{0,         0,                  0,  0 }
 };
 
 int main(int argc, char **argv)
@@ -422,10 +452,16 @@ int main(int argc, char **argv)
 	size_t failures = 0;
 	size_t sumnumfiles = 0;
 	size_t numfiles = 0;
+	size_t minsize = 0;
+	size_t maxsize = (size_t)-1;
 	int formats = OGG | RIFF | AIFF | ID3v2;
 	const char *outdir = ".";
+	long long tmp = 0;
+	size_t size = 0;
+	char sizeunit = 'B';
+	char *endptr = NULL;
 
-	while ((opt = getopt_long(argc, argv, "f:o:hq", long_options, NULL)) != -1)
+	while ((opt = getopt_long(argc, argv, "f:o:hqm:x:", long_options, NULL)) != -1)
 	{
 		switch (opt)
 		{
@@ -435,7 +471,8 @@ int main(int argc, char **argv)
 					return 255;
 				else if (formats == 0)
 				{
-					fprintf(stderr, "error: No formats specified.\nSee --help for usage information.\n");
+					fprintf(stderr, "error: No formats specified.\n"
+						"See --help for usage information.\n");
 					return 255;
 				}
 				break;
@@ -450,6 +487,81 @@ int main(int argc, char **argv)
 			case 'q':
 				quiet = 1;
 				break;
+
+			case 'x':
+			case 'm':
+				tmp = strtoull(optarg, &endptr, 10);
+				sizeunit = *endptr;
+				if (endptr == optarg)
+				{
+					fprintf(stderr, "error: Illegal size: \"%s\"\n"
+						"See --help for usage information.\n", optarg);
+					return 255;
+				}
+				else if ((sizeunit && endptr[1]) || tmp < 0 || tmp > (size_t)(-1))
+				{
+					perror("strtoull");
+					fprintf(stderr, "error: Illegal size: \"%s\"\n"
+						"See --help for usage information.\n", optarg);
+					return 255;
+				}
+				size = tmp;
+				switch (sizeunit)
+				{
+					case '\0':
+					case 'B':
+						break;
+
+					case 'k':
+						if ((size_t)(-1) / 1024ll < size)
+						{
+							fprintf(stderr, "error: Illegal size (integer overflow): \"%s\"\n"
+								"See --help for usage information.\n", optarg);
+							return 255;
+						}
+						size *= 1024ll;
+						break;
+
+					case 'M':
+						if ((size_t)(-1) / (1024ll * 1024ll) < size)
+						{
+							fprintf(stderr, "error: Illegal size (integer overflow): \"%s\"\n"
+								"See --help for usage information.\n", optarg);
+							return 255;
+						}
+						size *= 1024ll * 1024ll;
+						break;
+
+					case 'G':
+						if ((size_t)(-1) / (1024ll * 1024ll * 1024ll) < size)
+						{
+							fprintf(stderr, "error: Illegal size (integer overflow): \"%s\"\n"
+								"See --help for usage information.\n", optarg);
+							return 255;
+						}
+						size *= 1024ll * 1024ll * 1024ll;
+						break;
+
+					case 'T':
+						if ((size_t)(-1) / (1024ll * 1024ll * 1024ll * 1024ll) < size)
+						{
+							fprintf(stderr, "error: Illegal size (integer overflow): \"%s\"\n"
+								"See --help for usage information.\n", optarg);
+							return 255;
+						}
+						size *= 1024ll * 1024ll * 1024ll * 1024ll;
+						break;
+
+					default:
+						fprintf(stderr, "error: Illegal size: \"%s\"\n"
+							"See --help for usage information.\n", optarg);
+						return 255;
+				}
+				if (opt == 'm')
+					minsize = size;
+				else
+					maxsize = size;
+				break;
 		}
 	}
 
@@ -461,7 +573,7 @@ int main(int argc, char **argv)
 
 	for (i = optind; i < argc; ++ i)
 	{
-		if (extract(argv[i], outdir, formats, quiet, &numfiles))
+		if (extract(argv[i], outdir, minsize, maxsize, formats, quiet, &numfiles))
 		{
 			sumnumfiles += numfiles;
 		}
