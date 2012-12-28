@@ -1,7 +1,7 @@
 BUILDDIR=build
 OBJ=$(BUILDDIR)/audioextract.o $(BUILDDIR)/wave.o $(BUILDDIR)/ogg.o $(BUILDDIR)/mpeg.o $(BUILDDIR)/id3.o
 CC=gcc
-CFLAGS=-Wall -std=c99 -O2 -fmessage-length=0 -g
+CFLAGS=-Wall -std=gnu99 -O2 -fmessage-length=0 -g
 BIN=$(BUILDDIR)/audioextract
 
 .PHONY: all clean
