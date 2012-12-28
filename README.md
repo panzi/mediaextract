@@ -8,6 +8,12 @@ Usage
 
 	audioextract [option...] <filename> [<filename> ...]
 
+### Examples
+
+	audioextract -f id3v2,mpeg --minsize 100k -o ~/Music data.bin
+
+	audioextract -f wave,ogg -o ~/Music data.bin
+
 ### Options
 
 	-h, --help             Print this help message.
@@ -36,7 +42,7 @@ Usage
 	                       removed from the set of formats to extract. E.g. extract
 	                       everything except wave files:
 
-	                         ./build/audioextract --formats=all,-wave data.bin
+	                         audioextract --formats=all,-wave data.bin
 
 	-o, --output=DIR       Directory where extracted files should be written. (default: ".")
 	-m, --min=SIZE         Minumum size of extracted files (skip smaller). (default: 0)
