@@ -32,8 +32,10 @@ int usage(int argc, char **argv)
 {
 	const char *progname = argc <= 0 ? "audioextract" : argv[0]; 
 	fprintf(stderr,
+		"audioextract - extracts audio files that are embedded within other files\n"
+		"\n"
 		"Usage:\n"
-		"  %s <filename> [<filename> ...]\n"
+		"  %s [options] <filename> [<filename> ...]\n"
 		"\n"
 		"Options:\n"
 		"  -h, --help             Print this help message.\n"
