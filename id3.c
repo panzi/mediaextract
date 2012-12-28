@@ -13,7 +13,7 @@ int id3v1_istag(const unsigned char *start, const unsigned char *end, size_t *le
 	return 1;
 }
 
-int id3v2_istag(const unsigned char *start, const unsigned char *end, size_t *lengthptr)
+int id3v2_istag(const unsigned char *start, const unsigned char *end, int appended, size_t *lengthptr)
 {
 	if ((intptr_t)end <= ID3v2_HEADER_SIZE || end - ID3v2_HEADER_SIZE < start)
 		return 0;
@@ -36,6 +36,8 @@ int id3v2_istag(const unsigned char *start, const unsigned char *end, size_t *le
 	/* has footer? */
 	if (flags & 0x10)
 		length += ID3v2_FOOTER_SIZE;
+	else if (major >= 4 && appended)
+		return 0;
 	
 	if ((intptr_t)end <= length || end - length < start)
 		return 0;

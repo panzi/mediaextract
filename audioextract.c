@@ -42,12 +42,20 @@ int usage(int argc, char **argv)
 		"                           all       all supported formats\n"
 		"                           default   the default set of formats (AIFF, ID3v2, Ogg, RIFF)\n"
 		"                           aiff      big-endian (Apple) wave files\n"
-		"                           id3v2     MPEG files with ID3V2 tags at the start\n"
-		"                           mpeg      any MPEG files\n"
+		"                           id3v2     MPEG files with ID3v2 tags at the start\n"
+		"                           mpeg      any MPEG files (e.g. MP3)\n"
 		"                           ogg       Ogg files (Vorbis, FLAC, Opus, Theora, etc.)\n"
 		"                           riff      little-endian (Windows) wave files\n"
 		"                           wav       alias for riff\n"
 		"                           wave      both RIFF and AIFF wave files\n"
+		"\n"
+		"                         WARNING: Because MPEG files do not have a nice file magic, using\n"
+		"                         the 'mpeg' format may cause *a lot* of false positives. Nowadays\n"
+		"                         MP3 files usually have an ID3v2 tag at the start, so using the\n"
+		"                         'id3v2' format is the better option anyway.\n"
+		"\n"
+		"                         NOTE: When using only the 'mpeg' format but not 'id3v2' any ID3v2\n"
+		"                         tag will be stripped. ID3v1 tags will still be kept.\n"
 		"\n"
 		"                         If '-' is written before a format name the format will be\n"
 		"                         removed from the set of formats to extract. E.g. extract\n"
@@ -231,7 +239,7 @@ int extract(const char *filepath, const char *outdir, int formats, int quiet, si
 			case MPEG:
 				if (format == ID3v2)
 				{
-					if (!id3v2_istag(ptr, end, &length))
+					if (!id3v2_istag(ptr, end, 0, &length))
 						break;
 				}
 				else
@@ -265,7 +273,7 @@ int extract(const char *filepath, const char *outdir, int formats, int quiet, si
 						ptr += length;
 					}
 
-					if (id3v2_istag(ptr, end, &length))
+					if (formats & ID3v2 && id3v2_istag(ptr, end, 1, &length))
 					{
 						write(outfd, ptr, length);
 						ptr += length;

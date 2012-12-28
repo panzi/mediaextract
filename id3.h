@@ -28,6 +28,6 @@
 #define ID3v2_FOOTER_SIZE 10
 
 int id3v1_istag(const unsigned char *start, const unsigned char *end, size_t *lengthptr);
-int id3v2_istag(const unsigned char *start, const unsigned char *end, size_t *lengthptr);
+int id3v2_istag(const unsigned char *start, const unsigned char *end, int appended, size_t *lengthptr);
 
 #endif /* AUDIOEXTRACT_ID3_H__ */
