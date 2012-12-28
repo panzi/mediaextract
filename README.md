@@ -10,9 +10,17 @@ Usage
 
 ### Examples
 
-	audioextract -f id3v2,mpeg --minsize 100k -o ~/Music data.bin
+Extract .wav, .aif and .ogg (might actually be .flac, .opus or .ogm) files from
+the file `data.bin` and store them in the `~/Music` directory.
 
 	audioextract -f wave,ogg -o ~/Music data.bin
+
+Extract .mp3, .mp2 and .mp1 files (with or without ID3v2 tags). The `mpeg` option
+yields a lot of false positives because there is no nice way to unambigiously
+detect MPEG files. These false positives are however usually very small, so
+using the `--minsize` one can hopefully extract only real MPEG files.
+
+	audioextract -f id3v2,mpeg --minsize 100k -o ~/Music data.bin
 
 ### Options
 
