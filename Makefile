@@ -1,10 +1,11 @@
+PREFIX=/usr/local
 BUILDDIR=build
 OBJ=$(BUILDDIR)/audioextract.o $(BUILDDIR)/wave.o $(BUILDDIR)/ogg.o $(BUILDDIR)/mpeg.o $(BUILDDIR)/id3.o
 CC=gcc
 CFLAGS=-Wall -std=gnu99 -O2 -fmessage-length=0 -g
 BIN=$(BUILDDIR)/audioextract
 
-.PHONY: all clean
+.PHONY: all clean install uninstall
 
 all: $(BIN)
 
@@ -26,5 +27,11 @@ $(BUILDDIR)/mpeg.o: mpeg.c audioextract.h mpeg.h
 $(BUILDDIR)/id3.o: id3.c audioextract.h id3.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
+install: all
+	install -s -D $(BIN) "$(PREFIX)/bin/audioextract"
+
+uninstall:
+	rm -f "$(PREFIX)/bin/audioextract"
+
 clean:
-	rm $(BIN) $(OBJ)
+	rm -f $(BIN) $(OBJ)
