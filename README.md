@@ -18,9 +18,9 @@ the file `data.bin` and store them in the `~/Music` directory.
 Extract .mp3, .mp2 and .mp1 files (with or without ID3v2 tags). The `mpeg` option
 yields a lot of false positives because there is no nice way to unambigiously
 detect MPEG files. These false positives are however usually very small, so
-using the `--minsize` one can hopefully extract only real MPEG files.
+using the `--min-size` one can hopefully extract only real MPEG files.
 
-	audioextract -f id3v2,mpeg --minsize 100k -o ~/Music data.bin
+	audioextract -f id3v2,mpeg --min-size 100k -o ~/Music data.bin
 
 ### Options
 
@@ -53,8 +53,8 @@ using the `--minsize` one can hopefully extract only real MPEG files.
 	                         audioextract --formats=all,-wave data.bin
 
 	-o, --output=DIR       Directory where extracted files should be written. (default: ".")
-	-m, --min=SIZE         Minumum size of extracted files (skip smaller). (default: 0)
-	-x, --max=SIZE         Maximum size of extracted files (skip larger).
+	-m, --min-size=SIZE    Minumum size of extracted files (skip smaller). (default: 0)
+	-x, --max-size=SIZE    Maximum size of extracted files (skip larger).
 	                       (default: max. possible size_t value)
 
 	                       The last character of SIZE may be one of the following:
