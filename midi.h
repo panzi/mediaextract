@@ -3,21 +3,8 @@
 
 #include "audioextract.h"
 
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-
-#	define MIDI_MAGIC       0x6468544D /* "dhTM" */
-#	define MIDI_TRACK_MAGIC 0x6B72544D /* "krTM" */
-
-#elif __BYTE_ORDER == __BIG_ENDIAN
-
-#	define MIDI_MAGIC       0x4D546864 /* "MThd" */
-#	define MIDI_TRACK_MAGIC 0x4D54726B /* "MTrk" */
-
-#else
-
-#	error unsupported endian
-
-#endif
+#define MIDI_MAGIC       MAGIC("MThd")
+#define MIDI_TRACK_MAGIC MAGIC("MTrk")
 
 #define MIDI_HEADER_SIZE 14
 #define MIDI_TRACK_HEADER_SIZE 8

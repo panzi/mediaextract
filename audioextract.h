@@ -33,18 +33,6 @@
 
 #endif
 
-#ifndef __BYTE_ORDER
-#	ifndef __WINDOWS__
-#		error cannot detect byte order
-#	else
-		/* assume little endian byte order on windows */
-#		define __LITTLE_ENDIAN 1234
-#		define __BIG_ENDIAN 4321
-#		define __PDP_ENDIAN 3412
-#		define __BYTE_ORDER __LITTLE_ENDIAN
-#	endif
-#elif __BYTE_ORDER != __LITTLE_ENDIAN && __BYTE_ORDER != __BIG_ENDIAN
-#	error unsupported byte order
-#endif
+#define MAGIC(STR) (*(const uint32_t*)(STR))
 
 #endif /*  AUDIOEXTRACT_H__ */

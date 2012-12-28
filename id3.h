@@ -3,23 +3,9 @@
 
 #include "audioextract.h"
 
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-
-#	define ID3_MASK    (uint32_t)0x00FFFFFF
-#	define ID3v1_MAGIC (uint32_t)0x00474154 /* "\0GAT" */
-#	define ID3v2_MAGIC (uint32_t)0x00334449 /* "\03DI" */
-
-#elif __BYTE_ORDER == __BIG_ENDIAN
-
-#	define ID3_MASK    (uint32_t)0xFFFFFF00
-#	define ID3v1_MAGIC (uint32_t)0x54414700 /* "TAG\0" */
-#	define ID3v2_MAGIC (uint32_t)0x49443300 /* "ID3\0" */
-
-#else
-
-#	error unsupported endian
-
-#endif
+#define ID3_MASK    MAGIC("\xff\xff\xff\x00")
+#define ID3v1_MAGIC MAGIC("TAG\0")
+#define ID3v2_MAGIC MAGIC("ID3\0")
 
 #define IS_ID3v1_MAGIC(hdr) ((*(uint32_t *)(hdr) & ID3_MASK) == ID3v1_MAGIC)
 #define IS_ID3v2_MAGIC(hdr) ((*(uint32_t *)(hdr) & ID3_MASK) == ID3v2_MAGIC)
