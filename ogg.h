@@ -5,7 +5,7 @@
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 
-#	define OGG_MAGIC  0x5367674f /* "OggS" (reversed) */
+#	define OGG_MAGIC  0x5367674f /* "SggO" */
 
 #elif __BYTE_ORDER == __BIG_ENDIAN
 

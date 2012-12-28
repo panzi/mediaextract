@@ -3,6 +3,12 @@ Audioextract
 
 Extract audio files that are embedded within other files.
 
+Setup
+-----
+
+	make
+	make install PREFIX=/usr
+
 Usage
 -----
 
@@ -29,13 +35,13 @@ using the `--min-size` one can hopefully extract only real MPEG files.
 	-f, --formats=FORMATS  Comma separated list of formats (file magics) to extract.
 	                       Supported formats:
 	                         all      all supported formats
-	                         default  the default set of formats (AIFF, ID3v2, Ogg, RIFF)
+	                         default  the default set of formats (AIFF, ID3v2, Ogg, RIFF, MIDI)
 	                         aiff     big-endian (Apple) wave files
 	                         id3v2    MPEG files with ID3v2 tags at the start
+	                         midi     MIDI files
 	                         mpeg     any MPEG files (e.g. MP3)
 	                         ogg      Ogg files (Vorbis, FLAC, Opus, Theora, etc.)
 	                         riff     little-endian (Windows) wave files
-	                         wav      alias for riff
 	                         wave     both RIFF and AIFF wave files
 
 	                       WARNING: Because MPEG files do not have a nice file magic, using

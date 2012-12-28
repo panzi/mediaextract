@@ -16,16 +16,21 @@
 #include "ogg.h"
 #include "mpeg.h"
 #include "id3.h"
+#include "midi.h"
 
 enum fileformat {
-	NONE  =  0,
-	OGG   =  1,
-	RIFF  =  2,
-	AIFF  =  4,
-	MPEG  =  8,
-	ID3v2 = 16
-
-	/* TODO: AAC and MKV/WebM? */
+	NONE  =   0,
+	OGG   =   1,
+	RIFF  =   2,
+	AIFF  =   4,
+	MPEG  =   8,
+	ID3v2 =  16,
+	MIDI  =  32,
+// TODO:
+//	MOD   =  64,
+//	S3M   = 128,
+//	IT    = 256,
+//	XM    = 512,
 };
 
 int usage(int argc, char **argv)
@@ -43,13 +48,13 @@ int usage(int argc, char **argv)
 		"  -f, --formats=FORMATS  Comma separated list of formats (file magics) to extract.\n"
 		"                         Supported formats:\n"
 		"                           all      all supported formats\n"
-		"                           default  the default set of formats (AIFF, ID3v2, Ogg, RIFF)\n"
+		"                           default  the default set of formats (AIFF, ID3v2, Ogg, RIFF, MIDI)\n"
 		"                           aiff     big-endian (Apple) wave files\n"
 		"                           id3v2    MPEG files with ID3v2 tags at the start\n"
+		"                           midi     MIDI files\n"
 		"                           mpeg     any MPEG files (e.g. MP3)\n"
 		"                           ogg      Ogg files (Vorbis, FLAC, Opus, Theora, etc.)\n"
 		"                           riff     little-endian (Windows) wave files\n"
-		"                           wav      alias for riff\n"
 		"                           wave     both RIFF and AIFF wave files\n"
 		"\n"
 		"                         WARNING: Because MPEG files do not have a nice file magic, using\n"
@@ -105,6 +110,11 @@ const unsigned char *findmagic(const unsigned char *start, const unsigned char *
 		else if (formats & AIFF && magic == FORM_MAGIC)
 		{
 			*format = AIFF;
+			return start;
+		}
+		else if (formats & MIDI && magic == MIDI_MAGIC)
+		{
+			*format = MIDI;
 			return start;
 		}
 		else if (formats & ID3v2 && IS_ID3v2_MAGIC(start))
@@ -189,6 +199,7 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 	size_t namelen = strlen(outdir) + strlen(filename) + 24;
 
 	struct mpeg_info mpeg;
+	size_t count = 0; // e.g. for tracks count in midi
 	const unsigned char *audio_start = NULL;
 
 	if (!quiet)
@@ -245,11 +256,11 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 
 					do {
 						ptr += length;
-					} while (ptr < end && ogg_ispage(ptr, end, &length));
+					} while (ogg_ispage(ptr, end, &length));
 					
 					WRITE_FILE(audio_start, ptr - audio_start, "ogg");
-					continue;
 				}
+				else ++ ptr;
 				break;
 
 			case RIFF:
@@ -257,8 +268,8 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 				{
 					WRITE_FILE(ptr, length, "wav");
 					ptr += length;
-					continue;
 				}
+				else ++ ptr;
 				break;
 
 			case AIFF:
@@ -266,8 +277,8 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 				{
 					WRITE_FILE(ptr, length, "aif");
 					ptr += length;
-					continue;
 				}
+				else ++ ptr;
 				break;
 
 			case ID3v2:
@@ -275,7 +286,10 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 				if (format == ID3v2)
 				{
 					if (!id3v2_istag(ptr, end, 0, &length))
+					{
+						++ ptr;
 						break;
+					}
 				}
 				else
 					length = 0;
@@ -290,10 +304,9 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 
 					do {
 						ptr += mpeg.frame_size;
-					} while (ptr < end
-					      && mpeg_isframe(ptr, end, &mpeg)
+					} while (mpeg_isframe(ptr, end, &mpeg)
 					      && mpeg.version == version
-					      && mpeg.layer == layer);
+					      && mpeg.layer   == layer);
 					
 					if (id3v1_istag(ptr, end, &length))
 					{
@@ -310,15 +323,32 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 						layer == 2 ? "mp2" :
 						layer == 3 ? "mp3" :
 						             "mpeg");
-					continue;
 				}
+				else ++ ptr;
+				break;
+
+			case MIDI:
+				if (midi_isheader(ptr, end, &length, &count))
+				{
+					audio_start = ptr;
+					do {
+						ptr += length;
+					} while (count-- > 0 && midi_istrack(ptr, end, &length));
+
+					if (count != 0 && !quiet)
+					{
+						fprintf(stderr, "warning: midi file misses %zu tracks\n", count);
+					}
+
+					WRITE_FILE(audio_start, ptr - audio_start, "mid");
+				}
+				else ++ ptr;
 				break;
 
 			case NONE:
+				++ ptr;
 				break;
 		}
-
-		++ ptr;
 	}
 
 	goto cleanup;
@@ -354,69 +384,50 @@ int parse_formats(const char *formats)
 			end = formats + strlen(formats);
 
 		size_t len = (size_t)(end - start);
+		unsigned int mask = NONE;
+		int remove = *start == '-';
+
+		if (remove)
+		{
+			++ start;
+			-- len;
+		}
+
 		if (strncasecmp("ogg", start, len) == 0)
 		{
-			parsed |= OGG;
+			mask = OGG;
 		}
-		else if (strncasecmp("riff", start, len) == 0 || strncasecmp("wav", start, len) == 0)
+		else if (strncasecmp("riff", start, len) == 0)
 		{
-			parsed |= RIFF;
+			mask = RIFF;
 		}
 		else if (strncasecmp("aiff", start, len) == 0)
 		{
-			parsed |= AIFF;
+			mask = AIFF;
 		}
 		else if (strncasecmp("wave", start, len) == 0)
 		{
-			parsed |= RIFF | AIFF;
+			mask = RIFF | AIFF;
 		}
 		else if (strncasecmp("mpeg", start, len) == 0)
 		{
-			parsed |= MPEG;
+			mask = MPEG;
 		}
 		else if (strncasecmp("id3v2", start, len) == 0)
 		{
-			parsed |= ID3v2;
+			mask = ID3v2;
+		}
+		else if (strncasecmp("midi", start, len) == 0)
+		{
+			mask = MIDI;
 		}
 		else if (strncasecmp("all", start, len) == 0)
 		{
-			parsed = OGG | RIFF | AIFF | MPEG | ID3v2;
+			mask = OGG | RIFF | AIFF | MPEG | ID3v2 | MIDI;
 		}
 		else if (strncasecmp("default", start, len) == 0)
 		{
-			parsed |= OGG | RIFF | AIFF | ID3v2;
-		}
-		else if (strncasecmp("-ogg", start, len) == 0)
-		{
-			parsed &= ~OGG;
-		}
-		else if (strncasecmp("-riff", start, len) == 0 || strncasecmp("-wav", start, len) == 0)
-		{
-			parsed &= ~RIFF;
-		}
-		else if (strncasecmp("-aiff", start, len) == 0)
-		{
-			parsed &= ~AIFF;
-		}
-		else if (strncasecmp("-wave", start, len) == 0)
-		{
-			parsed &= ~(RIFF | AIFF);
-		}
-		else if (strncasecmp("-mpeg", start, len) == 0)
-		{
-			parsed &= ~MPEG;
-		}
-		else if (strncasecmp("-id3v2", start, len) == 0)
-		{
-			parsed &= ~ID3v2;
-		}
-		else if (strncasecmp("-all", start, len) == 0)
-		{
-			parsed &= ~(OGG | RIFF | AIFF | MPEG | ID3v2);
-		}
-		else if (strncasecmp("-default", start, len) == 0)
-		{
-			parsed &= ~(OGG | RIFF | AIFF | ID3v2);
+			mask = OGG | RIFF | AIFF | ID3v2 | MIDI;
 		}
 		else if (len != 0)
 		{
@@ -425,6 +436,9 @@ int parse_formats(const char *formats)
 			fprintf(stderr, "\"\nSee --help for usage information.\n");
 			return -1;
 		}
+
+		if (remove) parsed &= ~mask;
+		else        parsed |= mask;
 
 		if (!*end)
 			break;
@@ -454,7 +468,7 @@ int main(int argc, char **argv)
 	size_t numfiles = 0;
 	size_t minsize = 0;
 	size_t maxsize = (size_t)-1;
-	int formats = OGG | RIFF | AIFF | ID3v2;
+	int formats = OGG | RIFF | AIFF | ID3v2 | MIDI;
 	const char *outdir = ".";
 	long long tmp = 0;
 	size_t size = 0;

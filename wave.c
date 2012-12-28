@@ -1,19 +1,3 @@
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__)
-
-#	include <sys/endian.h>
-#	define le32toh letoh32
-#	define be32toh betoh32
-
-#elif defined(__OpenBSD__)
-
-#	include <sys/endian.h>
-
-#else
-
-#	include <endian.h>
-
-#endif
-
 #include "wave.h"
 
 int wave_ischunk(const unsigned char *start, const unsigned char *end, size_t *lengthptr)

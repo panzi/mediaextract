@@ -15,8 +15,22 @@
 #define __WINDOWS__
 #endif
 
-#ifndef __WINDOWS__
-#include <endian.h>
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__)
+
+#	include <sys/endian.h>
+#	define le32toh letoh32
+#	define be32toh betoh32
+#	define le16toh letoh16
+#	define be16toh betoh16
+
+#elif defined(__OpenBSD__)
+
+#	include <sys/endian.h>
+
+#else
+
+#	include <endian.h>
+
 #endif
 
 #ifndef __BYTE_ORDER
