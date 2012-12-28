@@ -60,7 +60,8 @@ const uint8_t mpeg_slot_size[4] = { 0, 1, 1, 4 }; // Rsvd, 3, 2, 1
 
 int mpeg_isframe(const unsigned char *start, const unsigned char *end, struct mpeg_info *info)
 {
-	if ((intptr_t)end <= MPEG_HEADER_SIZE || end - MPEG_HEADER_SIZE < start)
+	size_t input_len = (size_t)(end - start);
+	if (input_len < MPEG_HEADER_SIZE)
 		return 0;
 	
 	// Quick validity check
@@ -89,7 +90,7 @@ int mpeg_isframe(const unsigned char *start, const unsigned char *end, struct mp
 	uint16_t  fsize     = (uint16_t)(((uint32_t)bps * bitrate) / samprate);
 	if (pad)  fsize    += slot_size;
 
-	if ((intptr_t)end <= fsize || end - fsize < start)
+	if (input_len < fsize)
 		return 0;
 	
 	if (info)

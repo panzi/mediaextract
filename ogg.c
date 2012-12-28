@@ -3,11 +3,11 @@
 int ogg_ispage(const unsigned char *start, const unsigned char *end, size_t *lengthptr)
 {
 	unsigned char nsegs;
-	size_t length, i;
+	size_t length, i, input_len = (size_t)(end - start);
 	const unsigned char *segs = start + OGG_HEADER_SIZE;
 
 	/* full header available? */
-	if (end <= (unsigned char*)OGG_HEADER_SIZE || end - OGG_HEADER_SIZE < start)
+	if (input_len < OGG_HEADER_SIZE)
 		return 0;
 
 	/* capture pattern */
@@ -26,7 +26,7 @@ int ogg_ispage(const unsigned char *start, const unsigned char *end, size_t *len
 	length = OGG_HEADER_SIZE + nsegs;
 
 	/* segment sizes fully available? */
-	if (end <= (unsigned char*)length || end - length < start)
+	if (input_len < length)
 		return 0;
 
 	for (i = 0; i < nsegs; ++ i)
@@ -35,7 +35,7 @@ int ogg_ispage(const unsigned char *start, const unsigned char *end, size_t *len
 	}
 
 	/* segments fully available? */
-	if (end <= (unsigned char*)length || end - length < start)
+	if (input_len < length)
 		return 0;
 	
 	if (lengthptr)

@@ -15,7 +15,8 @@ int id3v1_istag(const unsigned char *start, const unsigned char *end, size_t *le
 
 int id3v2_istag(const unsigned char *start, const unsigned char *end, int appended, size_t *lengthptr)
 {
-	if ((intptr_t)end <= ID3v2_HEADER_SIZE || end - ID3v2_HEADER_SIZE < start)
+	size_t input_len = (size_t)(end - start);
+	if (input_len < ID3v2_HEADER_SIZE)
 		return 0;
 	
 	if (!IS_ID3v2_MAGIC(start))
@@ -39,7 +40,7 @@ int id3v2_istag(const unsigned char *start, const unsigned char *end, int append
 	else if (major >= 4 && appended)
 		return 0;
 	
-	if ((intptr_t)end <= length || end - length < start)
+	if (input_len < length)
 		return 0;
 
 	if (lengthptr) *lengthptr = length;

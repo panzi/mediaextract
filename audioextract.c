@@ -89,13 +89,13 @@ int usage(int argc, char **argv)
 
 const unsigned char *findmagic(const unsigned char *start, const unsigned char *end, int formats, enum fileformat *format)
 {
-	if (end < (unsigned char *)4)
+	if ((intptr_t)end < 4)
 		return NULL;
 	end -= 4;
 
 	for (; start < end; ++ start)
 	{
-		int32_t magic = *(const int32_t *)start;
+		uint32_t magic = MAGIC(start);
 
 		if (formats & OGG && magic == OGG_MAGIC)
 		{

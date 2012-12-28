@@ -2,20 +2,21 @@
 
 int wave_ischunk(const unsigned char *start, const unsigned char *end, size_t *lengthptr)
 {
+	size_t input_len = (size_t)(end - start);
 	size_t length;
 
-	if (end <= (unsigned char *)WAVE_HEADER_SIZE || end - WAVE_HEADER_SIZE < start)
+	if (input_len < WAVE_HEADER_SIZE)
 		return 0;
 
-	if (*(const int32_t *)start != RIFF_MAGIC)
+	if (MAGIC(start) != RIFF_MAGIC)
 		return 0;
 
 	length = le32toh(*(const uint32_t *)(start + 4)) + 8;
 
-	if (end <= (unsigned char *)length || end - length < start)
+	if (input_len < length)
 		return 0;
 
-	if (*(const uint32_t *)(start + 8) != WAVE_MAGIC)
+	if (MAGIC(start + 8) != WAVE_MAGIC)
 		return 0;
 
 	if (lengthptr)
@@ -26,21 +27,22 @@ int wave_ischunk(const unsigned char *start, const unsigned char *end, size_t *l
 
 int aiff_ischunk(const unsigned char *start, const unsigned char *end, size_t *lengthptr)
 {
+	size_t input_len = (size_t)(end - start);
 	size_t length;
 	int16_t format;
 
-	if (end <= (unsigned char *)WAVE_HEADER_SIZE || end - WAVE_HEADER_SIZE < start)
+	if (input_len < WAVE_HEADER_SIZE)
 		return 0;
 
-	if (*(const int32_t *)start != FORM_MAGIC)
+	if (MAGIC(start) != FORM_MAGIC)
 		return 0;
 
 	length = be32toh(*(const uint32_t *)(start + 4)) + 8;
 
-	if (end <= (unsigned char *)length || end - length < start)
+	if (input_len < length)
 		return 0;
 
-	format = *(const uint32_t *)(start + 8);
+	format = MAGIC(start + 8);
 	if (format != AIFF_MAGIC && format != AIFC_MAGIC)
 		return 0;
 
