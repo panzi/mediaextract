@@ -35,7 +35,7 @@ using the `--min-size` one can hopefully extract only real MPEG files.
 	-f, --formats=FORMATS  Comma separated list of formats (file magics) to extract.
 	                       Supported formats:
 	                         all      all supported formats
-	                         default  the default set of formats (AIFF, ID3v2, Ogg, RIFF, MIDI, MOD)
+	                         default  the default set of formats (AIFF, ID3v2, Ogg, RIFF, MIDI, S3M, IT)
 	                         aiff     big-endian (Apple) wave files
 	                         id3v2    MPEG files with ID3v2 tags at the start
 	                         it       ImpulseTracker files
@@ -44,7 +44,7 @@ using the `--min-size` one can hopefully extract only real MPEG files.
 	                         mpeg     any MPEG files (e.g. MP3)
 	                         ogg      Ogg files (Vorbis, FLAC, Opus, Theora, etc.)
 	                         riff     little-endian (Windows) wave files
-	                         s3m      ScreamTracker files
+	                         s3m      ScreamTracker III files
 	                         tracker  all tracker files (MOD, S3M, IT)
 	                         wave     both RIFF and AIFF wave files
 
@@ -52,6 +52,9 @@ using the `--min-size` one can hopefully extract only real MPEG files.
 	                       the 'mpeg' format may cause *a lot* of false positives. Nowadays
 	                       MP3 files usually have an ID3v2 tag at the start, so using the
 	                       'id3v2' format is the better option anyway.
+
+	                       The detection accuracy of MOD files is not much better and thus
+	                       they are alos per default disabled.
 
 	                       NOTE: When using only the 'mpeg' format but not 'id3v2' any ID3v2
 	                       tag will be stripped. ID3v1 tags will still be kept.

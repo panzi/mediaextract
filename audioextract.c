@@ -37,8 +37,8 @@ enum fileformat {
 };
 
 #define ALL_FORMATS     (OGG | RIFF | AIFF | MPEG | ID3v2 | MIDI | MOD | S3M | IT)
-#define DEFAULT_FORMATS (OGG | RIFF | AIFF |        ID3v2 | MIDI | MOD | S3M | IT)
-#define TRACKER_FORMATS (MOD | S3M | IT)
+#define DEFAULT_FORMATS (OGG | RIFF | AIFF |        ID3v2 | MIDI |       S3M | IT)
+#define TRACKER_FORMATS (MOD | S3M  | IT)
 
 int usage(int argc, char **argv)
 {
@@ -55,7 +55,7 @@ int usage(int argc, char **argv)
 		"  -f, --formats=FORMATS  Comma separated list of formats (file magics) to extract.\n"
 		"                         Supported formats:\n"
 		"                           all      all supported formats\n"
-		"                           default  the default set of formats (AIFF, ID3v2, Ogg, RIFF, MIDI, MOD)\n"
+		"                           default  the default set of formats (AIFF, ID3v2, Ogg, RIFF, MIDI, S3M, IT)\n"
 		"                           aiff     big-endian (Apple) wave files\n"
 		"                           id3v2    MPEG files with ID3v2 tags at the start\n"
 		"                           it       ImpulseTracker files\n"
@@ -64,7 +64,7 @@ int usage(int argc, char **argv)
 		"                           mpeg     any MPEG files (e.g. MP3)\n"
 		"                           ogg      Ogg files (Vorbis, FLAC, Opus, Theora, etc.)\n"
 		"                           riff     little-endian (Windows) wave files\n"
-		"                           s3m      ScreamTracker files\n"
+		"                           s3m      ScreamTracker III files\n"
 		"                           tracker  all tracker files (MOD, S3M, IT)\n"
 		"                           wave     both RIFF and AIFF wave files\n"
 		"\n"
@@ -72,6 +72,9 @@ int usage(int argc, char **argv)
 		"                         the 'mpeg' format may cause *a lot* of false positives. Nowadays\n"
 		"                         MP3 files usually have an ID3v2 tag at the start, so using the\n"
 		"                         'id3v2' format is the better option anyway.\n"
+		"\n"
+		"                         The detection accuracy of MOD files is not much better and thus\n"
+		"                         they are alos per default disabled.\n"
 		"\n"
 		"                         NOTE: When using only the 'mpeg' format but not 'id3v2' any ID3v2\n"
 		"                         tag will be stripped. ID3v1 tags will still be kept.\n"
