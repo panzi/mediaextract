@@ -21,12 +21,12 @@ the file `data.bin` and store them in the `~/Music` directory.
 
 	audioextract -f wave,ogg -o ~/Music data.bin
 
-Extract .mp3, .mp2 and .mp1 files (with or without ID3v2 tags). The `mpeg` option
-yields a lot of false positives because there is no nice way to unambigiously
-detect MPEG files. These false positives are however usually very small, so
-using the `--min-size` one can hopefully extract only real MPEG files.
+Extract .mp3, .mp2 and .mp1 files (with or without ID3v2 tags). The `mpg123`
+option yields a lot of false positives because there is no nice way to
+unambigiously detect MPEG files. These false positives are however usually very
+small, so using the `--min-size` one can hopefully extract only real MPEG files.
 
-	audioextract -f id3v2,mpeg --min-size 100k -o ~/Music data.bin
+	audioextract -f id3v2,mpg123 --min-size 100k -o ~/Music data.bin
 
 ### Options
 
@@ -37,26 +37,26 @@ using the `--min-size` one can hopefully extract only real MPEG files.
 	                         all      all supported formats
 	                         default  the default set of formats (AIFF, ID3v2, Ogg, RIFF, MIDI, S3M, IT)
 	                         aiff     big-endian (Apple) wave files
-	                         id3v2    MPEG files with ID3v2 tags at the start
+	                         id3v2    MP1/2/3 files with ID3v2 tags at the start
 	                         it       ImpulseTracker files
 	                         midi     MIDI files
 	                         mod      FastTracker files
-	                         mpeg     any MPEG files (e.g. MP3)
+	                         mpg123   any MPEG layer 1/2/3 files (e.g. MP3)
 	                         ogg      Ogg files (Vorbis, FLAC, Opus, Theora, etc.)
 	                         riff     little-endian (Windows) wave files
 	                         s3m      ScreamTracker III files
 	                         tracker  all tracker files (MOD, S3M, IT)
 	                         wave     both RIFF and AIFF wave files
 
-	                       WARNING: Because MPEG files do not have a nice file magic, using
-	                       the 'mpeg' format may cause *a lot* of false positives. Nowadays
+	                       WARNING: Because MP1/2/3 files do not have a nice file magic, using
+	                       the 'mpg123' format may cause *a lot* of false positives. Nowadays
 	                       MP3 files usually have an ID3v2 tag at the start, so using the
 	                       'id3v2' format is the better option anyway.
 
 	                       The detection accuracy of MOD files is not much better and thus
 	                       they are alos per default disabled.
 
-	                       NOTE: When using only the 'mpeg' format but not 'id3v2' any ID3v2
+	                       NOTE: When using only the 'mpg123' format but not 'id3v2' any ID3v2
 	                       tag will be stripped. ID3v1 tags will still be kept.
 
 	                       If '-' is written before a format name the format will be
