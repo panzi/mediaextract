@@ -7,7 +7,8 @@ OBJ=\
 	$(BUILDDIR)/mpeg.o \
 	$(BUILDDIR)/id3.o \
 	$(BUILDDIR)/midi.o \
-	$(BUILDDIR)/mod.o
+	$(BUILDDIR)/mod.o \
+	$(BUILDDIR)/s3m.o
 CC=gcc
 CFLAGS=-Wall -std=gnu99 -O2 -fmessage-length=0 -g
 BIN=$(BUILDDIR)/audioextract
@@ -19,7 +20,7 @@ all: $(BIN)
 $(BIN): $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) -o $@
 
-$(BUILDDIR)/audioextract.o: audioextract.c audioextract.h ogg.h wave.h mpeg.h id3.h midi.h mod.h
+$(BUILDDIR)/audioextract.o: audioextract.c audioextract.h ogg.h wave.h mpeg.h id3.h midi.h mod.h s3m.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
 $(BUILDDIR)/wave.o: wave.c audioextract.h wave.h
@@ -38,6 +39,9 @@ $(BUILDDIR)/midi.o: midi.c audioextract.h midi.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
 $(BUILDDIR)/mod.o: mod.c audioextract.h mod.h
+	$(CC) $(CFLAGS) $< -o $@ -c
+
+$(BUILDDIR)/s3m.o: s3m.c audioextract.h s3m.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
 install: all

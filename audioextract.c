@@ -18,6 +18,7 @@
 #include "id3.h"
 #include "midi.h"
 #include "mod.h"
+#include "s3m.h"
 
 enum fileformat {
 	NONE  =   0,
@@ -28,14 +29,14 @@ enum fileformat {
 	ID3v2 =  16,
 	MIDI  =  32,
 	MOD   =  64,
+	S3M   = 128,
 // TODO:
-//	S3M   = 128,
 //	IT    = 256,
 //	XM    = 512,
 };
 
-#define ALL_FORMATS     (OGG | RIFF | AIFF | MPEG | ID3v2 | MIDI | MOD)
-#define DEFAULT_FORMATS (OGG | RIFF | AIFF |        ID3v2 | MIDI | MOD)
+#define ALL_FORMATS     (OGG | RIFF | AIFF | MPEG | ID3v2 | MIDI | MOD | S3M)
+#define DEFAULT_FORMATS (OGG | RIFF | AIFF |        ID3v2 | MIDI | MOD | S3M)
 
 int usage(int argc, char **argv)
 {
@@ -132,13 +133,23 @@ const unsigned char *findmagic(const unsigned char *start, const unsigned char *
 			*format = MPEG;
 			return start;
 		}
-		else if (formats & MOD && (size_t)(end - start) >= MOD_MAGIC_OFFSET)
+		else
 		{
-			uint32_t modmagic = MAGIC(start + MOD_MAGIC_OFFSET);
-			if (IS_MOD_MAGIC(modmagic))
+			size_t length = (size_t)(end - start);
+			
+			if (formats & S3M && length >= S3M_MAGIC_OFFSET && MAGIC(start + S3M_MAGIC_OFFSET) == S3M_MAGIC)
 			{
-				*format = MOD;
+				*format = S3M;
 				return start;
+			}
+			else if (formats & MOD && length >= MOD_MAGIC_OFFSET)
+			{
+				uint32_t modmagic = MAGIC(start + MOD_MAGIC_OFFSET);
+				if (IS_MOD_MAGIC(modmagic))
+				{
+					*format = MOD;
+					return start;
+				}
 			}
 		}
 	}
@@ -368,6 +379,15 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 				else ++ ptr;
 				break;
 
+			case S3M:
+				if (s3m_isfile(ptr, end, &length))
+				{
+					WRITE_FILE(ptr, length, "s3m");
+					ptr += length;
+				}
+				else ++ ptr;
+				break;
+
 			case NONE:
 				++ ptr;
 				break;
@@ -447,6 +467,10 @@ int parse_formats(const char *formats)
 		else if (strncasecmp("mod", start, len) == 0)
 		{
 			mask = MOD;
+		}
+		else if (strncasecmp("s3m", start, len) == 0)
+		{
+			mask = S3M;
 		}
 		else if (strncasecmp("all", start, len) == 0)
 		{
