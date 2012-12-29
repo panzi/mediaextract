@@ -180,7 +180,7 @@ int write_file(const char *outdir, const char *filename, size_t offset,
 		return 0;
 	}
 
-	int outfd = creat(pathbuf, -1);
+	int outfd = creat(pathbuf, 0644);
 	if (outfd < 0)
 	{
 		perror("creat");
