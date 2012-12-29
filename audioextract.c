@@ -98,6 +98,23 @@ int usage(int argc, char **argv)
 	return 255;
 }
 
+int probalby_mod_text(const unsigned char *str, size_t length)
+{
+	size_t non_ascii = 0;
+	for (const unsigned char *end = str + length; str < end; ++ str)
+	{
+		unsigned char c = *str;
+
+		if (c == '\n' || c == '\r')
+			return 0;
+
+		if (c >= 0x80 && c < 0xFF)
+			++ non_ascii;
+	}
+
+	return length / 2 > non_ascii;
+}
+
 const unsigned char *findmagic(const unsigned char *start, const unsigned char *end, int formats, enum fileformat *format)
 {
 	if ((intptr_t)end < 4)
@@ -154,7 +171,7 @@ const unsigned char *findmagic(const unsigned char *start, const unsigned char *
 			}
 			else if (formats & MOD && length >= MOD_MAGIC_OFFSET)
 			{
-				uint32_t modmagic = MAGIC(start + MOD_MAGIC_OFFSET);
+				const unsigned char *modmagic = start + MOD_MAGIC_OFFSET;
 				if (IS_MOD_MAGIC(modmagic))
 				{
 					*format = MOD;

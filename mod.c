@@ -7,7 +7,7 @@ int mod_isfile(const unsigned char *start, const unsigned char *end, size_t *len
 	size_t channels = 0;
 	size_t patterns = 0;
 
-	if (input_len < length)
+	if (input_len < length || !probalby_mod_text(start, 20))
 		return 0;
 
 	for (const unsigned char *ptr = start + 20, *sample_end = ptr + 31*30;
@@ -27,15 +27,22 @@ int mod_isfile(const unsigned char *start, const unsigned char *end, size_t *len
 	}
 	++ patterns;
 
-	uint32_t magic = MAGIC(start + MOD_MAGIC_OFFSET);
+	const unsigned char *magic = start + MOD_MAGIC_OFFSET;
 
 	if      (IS_MOD_4CH_MAGIC(magic))  channels =  4;
-	else if (IS_MOD_5CH_MAGIC(magic))  channels =  5;
-	else if (IS_MOD_6CH_MAGIC(magic))  channels =  6;
-	else if (IS_MOD_7CH_MAGIC(magic))  channels =  7;
 	else if (IS_MOD_8CH_MAGIC(magic))  channels =  8;
-	else if (IS_MOD_16CH_MAGIC(magic)) channels = 16;
-	else if (IS_MOD_32CH_MAGIC(magic)) channels = 32;
+	else if (IS_MOD_XCHN_MAGIC(magic))
+	{
+		channels = magic[0] - '0';
+	}
+	else if (IS_MOD_XXCH_MAGIC(magic) || IS_MOD_XXCN_MAGIC(magic))
+	{
+		channels = (magic[0] - '0') * 10 + (magic[1] - '0');
+	}
+	else if (IS_MOD_TDZX_MAGIC(magic))
+	{
+		channels = magic[3] - '0';
+	}
 	else
 		return 0;
 

@@ -6,7 +6,7 @@ int it_isfile(const unsigned char *start, const unsigned char *end, size_t *leng
 	if (input_len < IT_HEADER_SIZE)
 		return 0;
 
-	if (MAGIC(start) != IT_MAGIC)
+	if (MAGIC(start) != IT_MAGIC || !probalby_mod_text(start + 4, 26))
 		return 0;
 
 	uint16_t orders      = le16toh(*(uint16_t *)(start + 0x20));
