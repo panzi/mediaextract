@@ -48,8 +48,10 @@ $(BUILDDIR)/s3m.o: s3m.c audioextract.h s3m.h
 $(BUILDDIR)/it.o: it.c audioextract.h it.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
-install: all
-	install -s -D $(BIN) "$(PREFIX)/bin/audioextract"
+install: $(PREFIX)/bin/audioextract
+
+$(PREFIX)/bin/audioextract: $(BIN)
+	install -s -D $(BIN) "$@"
 
 uninstall:
 	rm -f "$(PREFIX)/bin/audioextract"
