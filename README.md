@@ -35,7 +35,8 @@ small, so using the `--min-size` one can hopefully extract only real MPEG files.
 	-f, --formats=FORMATS  Comma separated list of formats (file magics) to extract.
 	                       Supported formats:
 	                         all      all supported formats
-	                         default  the default set of formats (AIFF, ID3v2, Ogg, RIFF, MIDI, S3M, IT)
+	                         default  the default set of formats (AIFF, ID3v2, IT, MIDI, MP4,
+	                                  Ogg, RIFF, S3M)
 	                         aiff     big-endian (Apple) wave files
 	                         id3v2    MP1/2/3 files with ID3v2 tags at the start
 	                         it       ImpulseTracker files
