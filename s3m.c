@@ -30,11 +30,7 @@ int s3m_isfile(const unsigned char *start, const unsigned char *end, size_t *len
 		{ \
 			length = _len; \
 			if (input_len < length) \
-			{ \
-				fprintf(stderr, "%s:%d: length out of bounds (%zu < %zu)\n", \
-					__FILE__, __LINE__, input_len, length); \
 				return 0; \
-			} \
 		} \
 	}
 
