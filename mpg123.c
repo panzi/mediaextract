@@ -1,4 +1,4 @@
-#include "mpeg.h"
+#include "mpg123.h"
 
 /* MPEG frame length calculation code from:
  * http://www.hydrogenaudio.org/forums/index.php?showtopic=85125
@@ -58,14 +58,14 @@ const uint16_t mpeg_frame_samples[4][4] = {
 // Slot size (MPEG unit of measurement) - use [layer]
 const uint8_t mpeg_slot_size[4] = { 0, 1, 1, 4 }; // Rsvd, 3, 2, 1
 
-int mpeg_isframe(const unsigned char *start, const unsigned char *end, struct mpeg_info *info)
+int mpg123_isframe(const unsigned char *start, const unsigned char *end, struct mpg123_info *info)
 {
 	size_t input_len = (size_t)(end - start);
-	if (input_len < MPEG_HEADER_SIZE)
+	if (input_len < MPG123_HEADER_SIZE)
 		return 0;
 	
 	// Quick validity check
-	if (!IS_MPEG_MAGIC(start))
+	if (!IS_MPG123_MAGIC(start))
 		return 0;
 	
 	// Data to be extracted from the header

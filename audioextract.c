@@ -14,7 +14,7 @@
 #include "audioextract.h"
 #include "wave.h"
 #include "ogg.h"
-#include "mpeg.h"
+#include "mpg123.h"
 #include "id3.h"
 #include "midi.h"
 #include "mod.h"
@@ -22,22 +22,22 @@
 #include "it.h"
 
 enum fileformat {
-	NONE  =   0,
-	OGG   =   1,
-	RIFF  =   2,
-	AIFF  =   4,
-	MPEG  =   8,
-	ID3v2 =  16,
-	MIDI  =  32,
-	MOD   =  64,
-	S3M   = 128,
-	IT    = 256,
+	NONE   =   0,
+	OGG    =   1,
+	RIFF   =   2,
+	AIFF   =   4,
+	MPG123 =   8,
+	ID3v2  =  16,
+	MIDI   =  32,
+	MOD    =  64,
+	S3M    = 128,
+	IT     = 256,
 // TODO:
-//	XM    = 512,
+//	XM     = 512,
 };
 
-#define ALL_FORMATS     (OGG | RIFF | AIFF | MPEG | ID3v2 | MIDI | MOD | S3M | IT)
-#define DEFAULT_FORMATS (OGG | RIFF | AIFF |        ID3v2 | MIDI |       S3M | IT)
+#define ALL_FORMATS     (OGG | RIFF | AIFF | MPG123 | ID3v2 | MIDI | MOD | S3M | IT)
+#define DEFAULT_FORMATS (OGG | RIFF | AIFF |          ID3v2 | MIDI |       S3M | IT)
 #define TRACKER_FORMATS (MOD | S3M  | IT)
 
 int usage(int argc, char **argv)
@@ -57,26 +57,26 @@ int usage(int argc, char **argv)
 		"                           all      all supported formats\n"
 		"                           default  the default set of formats (AIFF, ID3v2, Ogg, RIFF, MIDI, S3M, IT)\n"
 		"                           aiff     big-endian (Apple) wave files\n"
-		"                           id3v2    MPEG files with ID3v2 tags at the start\n"
+		"                           id3v2    MP1/2/3 files with ID3v2 tags at the start\n"
 		"                           it       ImpulseTracker files\n"
 		"                           midi     MIDI files\n"
 		"                           mod      FastTracker files\n"
-		"                           mpeg     any MPEG files (e.g. MP3)\n"
+		"                           mpg123   any MPEG layer 1/2/3 files (e.g. MP3)\n"
 		"                           ogg      Ogg files (Vorbis, FLAC, Opus, Theora, etc.)\n"
 		"                           riff     little-endian (Windows) wave files\n"
 		"                           s3m      ScreamTracker III files\n"
 		"                           tracker  all tracker files (MOD, S3M, IT)\n"
 		"                           wave     both RIFF and AIFF wave files\n"
 		"\n"
-		"                         WARNING: Because MPEG files do not have a nice file magic, using\n"
-		"                         the 'mpeg' format may cause *a lot* of false positives. Nowadays\n"
+		"                         WARNING: Because MP1/2/3 files do not have a nice file magic, using\n"
+		"                         the 'mpg123' format may cause *a lot* of false positives. Nowadays\n"
 		"                         MP3 files usually have an ID3v2 tag at the start, so using the\n"
 		"                         'id3v2' format is the better option anyway.\n"
 		"\n"
 		"                         The detection accuracy of MOD files is not much better and thus\n"
 		"                         they are alos per default disabled.\n"
 		"\n"
-		"                         NOTE: When using only the 'mpeg' format but not 'id3v2' any ID3v2\n"
+		"                         NOTE: When using only the 'mpg123' format but not 'id3v2' any ID3v2\n"
 		"                         tag will be stripped. ID3v1 tags will still be kept.\n"
 		"\n"
 		"                         If '-' is written before a format name the format will be\n"
@@ -158,9 +158,9 @@ const unsigned char *findmagic(const unsigned char *start, const unsigned char *
 			*format = IT;
 			return start;
 		}
-		else if (formats & MPEG && IS_MPEG_MAGIC(start))
+		else if (formats & MPG123 && IS_MPG123_MAGIC(start))
 		{
-			*format = MPEG;
+			*format = MPG123;
 			return start;
 		}
 		else
@@ -253,7 +253,7 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 	const char *filename = basename(filepath);
 	size_t namelen = strlen(outdir) + strlen(filename) + 24;
 
-	struct mpeg_info mpeg;
+	struct mpg123_info mpg123;
 	size_t count = 0; // e.g. for tracks count in midi
 	const unsigned char *audio_start = NULL;
 
@@ -337,7 +337,7 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 				break;
 
 			case ID3v2:
-			case MPEG:
+			case MPG123:
 				if (format == ID3v2)
 				{
 					if (!id3v2_istag(ptr, end, 0, &length))
@@ -349,19 +349,19 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 				else
 					length = 0;
 
-				if (mpeg_isframe(ptr + length, end, &mpeg))
+				if (mpg123_isframe(ptr + length, end, &mpg123))
 				{
-					uint8_t version = mpeg.version;
-					uint8_t layer   = mpeg.layer;
+					uint8_t version = mpg123.version;
+					uint8_t layer   = mpg123.layer;
 
 					audio_start = ptr;
 					ptr += length;
 
 					do {
-						ptr += mpeg.frame_size;
-					} while (mpeg_isframe(ptr, end, &mpeg)
-					      && mpeg.version == version
-					      && mpeg.layer   == layer);
+						ptr += mpg123.frame_size;
+					} while (mpg123_isframe(ptr, end, &mpg123)
+					      && mpg123.version == version
+					      && mpg123.layer   == layer);
 					
 					if (id3v1_istag(ptr, end, &length))
 					{
@@ -377,7 +377,7 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 						layer == 1 ? "mp1" :
 						layer == 2 ? "mp2" :
 						layer == 3 ? "mp3" :
-						             "mpeg");
+						             "mpg");
 				}
 				else ++ ptr;
 				break;
@@ -491,9 +491,9 @@ int parse_formats(const char *formats)
 		{
 			mask = RIFF | AIFF;
 		}
-		else if (strncasecmp("mpeg", start, len) == 0)
+		else if (strncasecmp("mpg123", start, len) == 0)
 		{
-			mask = MPEG;
+			mask = MPG123;
 		}
 		else if (strncasecmp("id3v2", start, len) == 0)
 		{
