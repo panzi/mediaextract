@@ -17,6 +17,7 @@
 #include "mpeg.h"
 #include "id3.h"
 #include "midi.h"
+#include "mod.h"
 
 enum fileformat {
 	NONE  =   0,
@@ -26,12 +27,15 @@ enum fileformat {
 	MPEG  =   8,
 	ID3v2 =  16,
 	MIDI  =  32,
+	MOD   =  64,
 // TODO:
-//	MOD   =  64,
 //	S3M   = 128,
 //	IT    = 256,
 //	XM    = 512,
 };
+
+#define ALL_FORMATS     (OGG | RIFF | AIFF | MPEG | ID3v2 | MIDI | MOD)
+#define DEFAULT_FORMATS (OGG | RIFF | AIFF |        ID3v2 | MIDI | MOD)
 
 int usage(int argc, char **argv)
 {
@@ -48,10 +52,11 @@ int usage(int argc, char **argv)
 		"  -f, --formats=FORMATS  Comma separated list of formats (file magics) to extract.\n"
 		"                         Supported formats:\n"
 		"                           all      all supported formats\n"
-		"                           default  the default set of formats (AIFF, ID3v2, Ogg, RIFF, MIDI)\n"
+		"                           default  the default set of formats (AIFF, ID3v2, Ogg, RIFF, MIDI, MOD)\n"
 		"                           aiff     big-endian (Apple) wave files\n"
 		"                           id3v2    MPEG files with ID3v2 tags at the start\n"
 		"                           midi     MIDI files\n"
+		"                           mod      MOD files\n"
 		"                           mpeg     any MPEG files (e.g. MP3)\n"
 		"                           ogg      Ogg files (Vorbis, FLAC, Opus, Theora, etc.)\n"
 		"                           riff     little-endian (Windows) wave files\n"
@@ -126,6 +131,15 @@ const unsigned char *findmagic(const unsigned char *start, const unsigned char *
 		{
 			*format = MPEG;
 			return start;
+		}
+		else if (formats & MOD && (size_t)(end - start) >= MOD_MAGIC_OFFSET)
+		{
+			uint32_t modmagic = MAGIC(start + MOD_MAGIC_OFFSET);
+			if (IS_MOD_MAGIC(modmagic))
+			{
+				*format = MOD;
+				return start;
+			}
 		}
 	}
 
@@ -345,6 +359,15 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 				else ++ ptr;
 				break;
 
+			case MOD:
+				if (mod_isfile(ptr, end, &length))
+				{
+					WRITE_FILE(ptr, length, "mod");
+					ptr += length;
+				}
+				else ++ ptr;
+				break;
+
 			case NONE:
 				++ ptr;
 				break;
@@ -421,13 +444,17 @@ int parse_formats(const char *formats)
 		{
 			mask = MIDI;
 		}
+		else if (strncasecmp("mod", start, len) == 0)
+		{
+			mask = MOD;
+		}
 		else if (strncasecmp("all", start, len) == 0)
 		{
-			mask = OGG | RIFF | AIFF | MPEG | ID3v2 | MIDI;
+			mask = ALL_FORMATS;
 		}
 		else if (strncasecmp("default", start, len) == 0)
 		{
-			mask = OGG | RIFF | AIFF | ID3v2 | MIDI;
+			mask = DEFAULT_FORMATS;
 		}
 		else if (len != 0)
 		{
@@ -468,7 +495,7 @@ int main(int argc, char **argv)
 	size_t numfiles = 0;
 	size_t minsize = 0;
 	size_t maxsize = (size_t)-1;
-	int formats = OGG | RIFF | AIFF | ID3v2 | MIDI;
+	int formats = DEFAULT_FORMATS;
 	const char *outdir = ".";
 	long long tmp = 0;
 	size_t size = 0;

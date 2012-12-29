@@ -35,10 +35,11 @@ using the `--min-size` one can hopefully extract only real MPEG files.
 	-f, --formats=FORMATS  Comma separated list of formats (file magics) to extract.
 	                       Supported formats:
 	                         all      all supported formats
-	                         default  the default set of formats (AIFF, ID3v2, Ogg, RIFF, MIDI)
+	                         default  the default set of formats (AIFF, ID3v2, Ogg, RIFF, MIDI, MOD)
 	                         aiff     big-endian (Apple) wave files
 	                         id3v2    MPEG files with ID3v2 tags at the start
 	                         midi     MIDI files
+	                         mod      MOD files
 	                         mpeg     any MPEG files (e.g. MP3)
 	                         ogg      Ogg files (Vorbis, FLAC, Opus, Theora, etc.)
 	                         riff     little-endian (Windows) wave files
@@ -56,7 +57,7 @@ using the `--min-size` one can hopefully extract only real MPEG files.
 	                       removed from the set of formats to extract. E.g. extract
 	                       everything except wave files:
 
-	                         audioextract --formats=all,-wave data.bin
+	                         ./build/audioextract --formats=all,-wave data.bin
 
 	-o, --output=DIR       Directory where extracted files should be written. (default: ".")
 	-m, --min-size=SIZE    Minumum size of extracted files (skip smaller). (default: 0)
