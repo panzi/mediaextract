@@ -19,6 +19,7 @@
 #include "midi.h"
 #include "mod.h"
 #include "s3m.h"
+#include "it.h"
 
 enum fileformat {
 	NONE  =   0,
@@ -30,13 +31,14 @@ enum fileformat {
 	MIDI  =  32,
 	MOD   =  64,
 	S3M   = 128,
+	IT    = 256,
 // TODO:
-//	IT    = 256,
 //	XM    = 512,
 };
 
-#define ALL_FORMATS     (OGG | RIFF | AIFF | MPEG | ID3v2 | MIDI | MOD | S3M)
-#define DEFAULT_FORMATS (OGG | RIFF | AIFF |        ID3v2 | MIDI | MOD | S3M)
+#define ALL_FORMATS     (OGG | RIFF | AIFF | MPEG | ID3v2 | MIDI | MOD | S3M | IT)
+#define DEFAULT_FORMATS (OGG | RIFF | AIFF |        ID3v2 | MIDI | MOD | S3M | IT)
+#define TRACKER_FORMATS (MOD | S3M | IT)
 
 int usage(int argc, char **argv)
 {
@@ -56,11 +58,14 @@ int usage(int argc, char **argv)
 		"                           default  the default set of formats (AIFF, ID3v2, Ogg, RIFF, MIDI, MOD)\n"
 		"                           aiff     big-endian (Apple) wave files\n"
 		"                           id3v2    MPEG files with ID3v2 tags at the start\n"
+		"                           it       ImpulseTracker files\n"
 		"                           midi     MIDI files\n"
-		"                           mod      MOD files\n"
+		"                           mod      FastTracker files\n"
 		"                           mpeg     any MPEG files (e.g. MP3)\n"
 		"                           ogg      Ogg files (Vorbis, FLAC, Opus, Theora, etc.)\n"
 		"                           riff     little-endian (Windows) wave files\n"
+		"                           s3m      ScreamTracker files\n"
+		"                           tracker  all tracker files (MOD, S3M, IT)\n"
 		"                           wave     both RIFF and AIFF wave files\n"
 		"\n"
 		"                         WARNING: Because MPEG files do not have a nice file magic, using\n"
@@ -126,6 +131,11 @@ const unsigned char *findmagic(const unsigned char *start, const unsigned char *
 		else if (formats & ID3v2 && IS_ID3v2_MAGIC(start))
 		{
 			*format = ID3v2;
+			return start;
+		}
+		else if (formats & IT && magic == IT_MAGIC)
+		{
+			*format = IT;
 			return start;
 		}
 		else if (formats & MPEG && IS_MPEG_MAGIC(start))
@@ -388,6 +398,15 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 				else ++ ptr;
 				break;
 
+			case IT:
+				if (it_isfile(ptr, end, &length))
+				{
+					WRITE_FILE(ptr, length, "it");
+					ptr += length;
+				}
+				else ++ ptr;
+				break;
+
 			case NONE:
 				++ ptr;
 				break;
@@ -471,6 +490,14 @@ int parse_formats(const char *formats)
 		else if (strncasecmp("s3m", start, len) == 0)
 		{
 			mask = S3M;
+		}
+		else if (strncasecmp("it", start, len) == 0)
+		{
+			mask = IT;
+		}
+		else if (strncasecmp("tracker", start, len) == 0)
+		{
+			mask = TRACKER_FORMATS;
 		}
 		else if (strncasecmp("all", start, len) == 0)
 		{
