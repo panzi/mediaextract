@@ -15,6 +15,7 @@
 #include "wave.h"
 #include "ogg.h"
 #include "mpg123.h"
+#include "mp4.h"
 #include "id3.h"
 #include "midi.h"
 #include "mod.h"
@@ -22,22 +23,23 @@
 #include "it.h"
 
 enum fileformat {
-	NONE   =   0,
-	OGG    =   1,
-	RIFF   =   2,
-	AIFF   =   4,
-	MPG123 =   8,
-	ID3v2  =  16,
-	MIDI   =  32,
-	MOD    =  64,
-	S3M    = 128,
-	IT     = 256,
+	NONE   =    0,
+	OGG    =    1,
+	RIFF   =    2,
+	AIFF   =    4,
+	MPG123 =    8,
+	ID3v2  =   16,
+	MP4    =   32,
+	MIDI   =   64,
+	MOD    =  128,
+	S3M    =  256,
+	IT     =  512,
 // TODO:
-//	XM     = 512,
+//	XM     = 1024,
 };
 
-#define ALL_FORMATS     (OGG | RIFF | AIFF | MPG123 | ID3v2 | MIDI | MOD | S3M | IT)
-#define DEFAULT_FORMATS (OGG | RIFF | AIFF |          ID3v2 | MIDI |       S3M | IT)
+#define ALL_FORMATS     (OGG | RIFF | AIFF | MPG123 | MP4 | ID3v2 | MIDI | MOD | S3M | IT)
+#define DEFAULT_FORMATS (OGG | RIFF | AIFF |          MP4 | ID3v2 | MIDI |       S3M | IT)
 #define TRACKER_FORMATS (MOD | S3M  | IT)
 
 int usage(int argc, char **argv)
@@ -62,6 +64,7 @@ int usage(int argc, char **argv)
 		"                           midi     MIDI files\n"
 		"                           mod      FastTracker files\n"
 		"                           mpg123   any MPEG layer 1/2/3 files (e.g. MP3)\n"
+		"                           mp4      MP4 files\n"
 		"                           ogg      Ogg files (Vorbis, FLAC, Opus, Theora, etc.)\n"
 		"                           riff     little-endian (Windows) wave files\n"
 		"                           s3m      ScreamTracker III files\n"
@@ -120,11 +123,7 @@ int probalby_mod_text(const unsigned char *str, size_t length)
 
 const unsigned char *findmagic(const unsigned char *start, const unsigned char *end, int formats, enum fileformat *format)
 {
-	if ((intptr_t)end < 4)
-		return NULL;
-	end -= 4;
-
-	for (; start < end; ++ start)
+	for (size_t length = end - start; length >= 4; ++ start, -- length)
 	{
 		uint32_t magic = MAGIC(start);
 
@@ -158,28 +157,28 @@ const unsigned char *findmagic(const unsigned char *start, const unsigned char *
 			*format = IT;
 			return start;
 		}
+		else if (formats & MP4 && length > MP4_HEADER_SIZE && MAGIC(start + MP4_MAGIC_OFFSET) == MP4_MAGIC)
+		{
+			*format = MP4;
+			return start;
+		}
 		else if (formats & MPG123 && IS_MPG123_MAGIC(start))
 		{
 			*format = MPG123;
 			return start;
 		}
-		else
+		else if (formats & S3M && length > S3M_MAGIC_OFFSET + 4 && MAGIC(start + S3M_MAGIC_OFFSET) == S3M_MAGIC)
 		{
-			size_t length = (size_t)(end - start);
-			
-			if (formats & S3M && length >= S3M_MAGIC_OFFSET && MAGIC(start + S3M_MAGIC_OFFSET) == S3M_MAGIC)
+			*format = S3M;
+			return start;
+		}
+		else if (formats & MOD && length > MOD_MAGIC_OFFSET + 4)
+		{
+			const unsigned char *modmagic = start + MOD_MAGIC_OFFSET;
+			if (IS_MOD_MAGIC(modmagic))
 			{
-				*format = S3M;
+				*format = MOD;
 				return start;
-			}
-			else if (formats & MOD && length >= MOD_MAGIC_OFFSET)
-			{
-				const unsigned char *modmagic = start + MOD_MAGIC_OFFSET;
-				if (IS_MOD_MAGIC(modmagic))
-				{
-					*format = MOD;
-					return start;
-				}
 			}
 		}
 	}
@@ -254,6 +253,7 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 	size_t namelen = strlen(outdir) + strlen(filename) + 24;
 
 	struct mpg123_info mpg123;
+	struct mp4_info mp4;
 	size_t count = 0; // e.g. for tracks count in midi
 	const unsigned char *audio_start = NULL;
 
@@ -382,6 +382,15 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 				else ++ ptr;
 				break;
 
+			case MP4:
+				if (mp4_isfile(ptr, end, &mp4))
+				{
+					WRITE_FILE(ptr, mp4.length, mp4.ext);
+					ptr += mp4.length;
+				}
+				else ++ ptr;
+				break;
+
 			case MIDI:
 				if (midi_isheader(ptr, end, &length, &count))
 				{
@@ -494,6 +503,10 @@ int parse_formats(const char *formats)
 		else if (strncasecmp("mpg123", start, len) == 0)
 		{
 			mask = MPG123;
+		}
+		else if (strncasecmp("mp4", start, len) == 0)
+		{
+			mask = MP4;
 		}
 		else if (strncasecmp("id3v2", start, len) == 0)
 		{

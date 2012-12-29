@@ -5,6 +5,7 @@ OBJ=\
 	$(BUILDDIR)/wave.o \
 	$(BUILDDIR)/ogg.o \
 	$(BUILDDIR)/mpg123.o \
+	$(BUILDDIR)/mp4.o \
 	$(BUILDDIR)/id3.o \
 	$(BUILDDIR)/midi.o \
 	$(BUILDDIR)/mod.o \
@@ -21,7 +22,7 @@ all: $(BIN)
 $(BIN): $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) -o $@
 
-$(BUILDDIR)/audioextract.o: audioextract.c audioextract.h ogg.h wave.h mpg123.h id3.h midi.h mod.h s3m.h it.h
+$(BUILDDIR)/audioextract.o: audioextract.c audioextract.h ogg.h wave.h mpg123.h mp4.h id3.h midi.h mod.h s3m.h it.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
 $(BUILDDIR)/wave.o: wave.c audioextract.h wave.h
@@ -31,6 +32,9 @@ $(BUILDDIR)/ogg.o: ogg.c audioextract.h ogg.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
 $(BUILDDIR)/mpg123.o: mpg123.c audioextract.h mpg123.h
+	$(CC) $(CFLAGS) $< -o $@ -c
+
+$(BUILDDIR)/mp4.o: mp4.c audioextract.h mp4.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
 $(BUILDDIR)/id3.o: id3.c audioextract.h id3.h

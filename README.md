@@ -42,6 +42,7 @@ small, so using the `--min-size` one can hopefully extract only real MPEG files.
 	                         midi     MIDI files
 	                         mod      FastTracker files
 	                         mpg123   any MPEG layer 1/2/3 files (e.g. MP3)
+	                         mp4      MP4 files
 	                         ogg      Ogg files (Vorbis, FLAC, Opus, Theora, etc.)
 	                         riff     little-endian (Windows) wave files
 	                         s3m      ScreamTracker III files
