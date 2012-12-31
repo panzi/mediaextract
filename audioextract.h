@@ -35,6 +35,6 @@
 
 #define MAGIC(STR) (*(const uint32_t*)(STR))
 
-int probalby_mod_text(const unsigned char *str, size_t length);
+int probalby_mod_text(const uint8_t *str, size_t length);
 
 #endif /*  AUDIOEXTRACT_H__ */

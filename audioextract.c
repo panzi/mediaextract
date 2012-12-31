@@ -105,12 +105,12 @@ int usage(int argc, char **argv)
 	return 255;
 }
 
-int probalby_mod_text(const unsigned char *str, size_t length)
+int probalby_mod_text(const uint8_t *str, size_t length)
 {
 	size_t non_ascii = 0;
-	for (const unsigned char *end = str + length; str < end; ++ str)
+	for (const uint8_t *end = str + length; str < end; ++ str)
 	{
-		unsigned char c = *str;
+		uint8_t c = *str;
 
 		if (c > 0 && c < ' ')
 			return 0;
@@ -136,7 +136,7 @@ const char *basename(const char *path)
 
 int write_file(const char *outdir, const char *filename, size_t offset,
                const char *ext, char *pathbuf, size_t pathbuflen,
-               const unsigned char *data, size_t length,
+               const uint8_t *data, size_t length,
                size_t minsize, size_t maxsize, int quiet)
 {
 	snprintf(pathbuf, pathbuflen, "%s/%s_%08zx.%s", outdir, filename, offset, ext);
@@ -176,8 +176,8 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 	int fd = -1;
 	struct stat statdata;
 	size_t filesize = 0;
-	unsigned char *filedata = NULL;
-	const unsigned char *ptr = NULL, *end = NULL;
+	uint8_t *filedata = NULL;
+	const uint8_t *ptr = NULL, *end = NULL;
 	enum fileformat format = NONE;
 
 	size_t length = 0;
@@ -191,7 +191,7 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 	struct mpg123_info mpg123;
 	struct mp4_info mp4;
 	size_t count = 0; // e.g. for tracks count in midi
-	const unsigned char *audio_start = NULL;
+	const uint8_t *audio_start = NULL;
 	size_t input_len = 0;
 
 	if (!quiet)
@@ -243,38 +243,38 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 	{
 		uint32_t magic = MAGIC(ptr);
 		
-		if (formats & OGG && magic == OGG_MAGIC && ogg_ispage(ptr, end, &length) && ogg_isinitial(ptr))
+		if (formats & OGG && magic == OGG_MAGIC && ogg_ispage(ptr, input_len, &length) && ogg_isinitial(ptr))
 		{
 			audio_start = ptr;
 
 			do {
 				ptr += length;
-			} while (ogg_ispage(ptr, end, &length));
+			} while (ogg_ispage(ptr, (size_t)(end - ptr), &length));
 					
 			WRITE_FILE(audio_start, ptr - audio_start, "ogg");
 			continue;
 		}
 		
-		if (formats & RIFF && magic == RIFF_MAGIC && wave_ischunk(ptr, end, &length))
+		if (formats & RIFF && magic == RIFF_MAGIC && wave_ischunk(ptr, input_len, &length))
 		{
 			WRITE_FILE(ptr, length, "wav");
 			ptr += length;
 			continue;
 		}
 		
-		if (formats & AIFF && magic == FORM_MAGIC && aiff_ischunk(ptr, end, &length))
+		if (formats & AIFF && magic == FORM_MAGIC && aiff_ischunk(ptr, input_len, &length))
 		{
 			WRITE_FILE(ptr, length, "aif");
 			ptr += length;
 			continue;
 		}
 		
-		if (formats & MIDI && magic == MIDI_MAGIC && midi_isheader(ptr, end, &length, &count))
+		if (formats & MIDI && magic == MIDI_MAGIC && midi_isheader(ptr, input_len, &length, &count))
 		{
 			audio_start = ptr;
 			do {
 				ptr += length;
-			} while (count-- > 0 && midi_istrack(ptr, end, &length));
+			} while (count-- > 0 && midi_istrack(ptr, (size_t)(end - ptr), &length));
 
 			if (count != 0 && !quiet)
 			{
@@ -286,7 +286,7 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 		}
 		
 		format = NONE;
-		if (formats & ID3v2 && IS_ID3v2_MAGIC(ptr) && id3v2_istag(ptr, end, 0, &length))
+		if (formats & ID3v2 && IS_ID3v2_MAGIC(ptr) && id3v2_istag(ptr, input_len, 0, &length))
 		{
 			format = ID3v2;
 		}
@@ -297,7 +297,7 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 			length = 0;
 		}
 
-		if (format & (ID3v2 | MPG123) && mpg123_isframe(ptr + length, end, &mpg123))
+		if (format & (ID3v2 | MPG123) && mpg123_isframe(ptr + length, input_len - length, &mpg123))
 		{
 			uint8_t version = mpg123.version;
 			uint8_t layer   = mpg123.layer;
@@ -307,16 +307,16 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 
 			do {
 				ptr += mpg123.frame_size;
-			} while (mpg123_isframe(ptr, end, &mpg123)
+			} while (mpg123_isframe(ptr, (size_t)(end - ptr), &mpg123)
 			      && mpg123.version == version
 			      && mpg123.layer   == layer);
 					
-			if (id3v1_istag(ptr, end, &length))
+			if (id3v1_istag(ptr, (size_t)(end - ptr), &length))
 			{
 				ptr += length;
 			}
 
-			if (formats & ID3v2 && id3v2_istag(ptr, end, 1, &length))
+			if (formats & ID3v2 && id3v2_istag(ptr, (size_t)(end - ptr), 1, &length))
 			{
 				ptr += length;
 			}
@@ -329,7 +329,7 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 			continue;
 		}
 		
-		if (formats & IT && magic == IT_MAGIC && it_isfile(ptr, end, &length))
+		if (formats & IT && magic == IT_MAGIC && it_isfile(ptr, input_len, &length))
 		{
 			WRITE_FILE(ptr, length, "it");
 			ptr += length;
@@ -338,7 +338,7 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 
 		if (formats & MP4 && input_len > MP4_HEADER_SIZE &&
 			MAGIC(ptr + MP4_MAGIC_OFFSET) == MP4_MAGIC &&
-			mp4_isfile(ptr, end, &mp4))
+			mp4_isfile(ptr, input_len, &mp4))
 		{
 			WRITE_FILE(ptr, mp4.length, mp4.ext);
 			ptr += mp4.length;
@@ -347,7 +347,7 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 		
 		if (formats & S3M && input_len > S3M_MAGIC_OFFSET + 4 &&
 			MAGIC(ptr + S3M_MAGIC_OFFSET) == S3M_MAGIC &&
-			s3m_isfile(ptr, end, &length))
+			s3m_isfile(ptr, input_len, &length))
 		{
 			WRITE_FILE(ptr, length, "s3m");
 			ptr += length;
@@ -356,8 +356,8 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 
 		if (formats & MOD && input_len > MOD_MAGIC_OFFSET + 4)
 		{
-			const unsigned char *modmagic = ptr + MOD_MAGIC_OFFSET;
-			if (IS_MOD_MAGIC(modmagic) && mod_isfile(ptr, end, &length))
+			const uint8_t *modmagic = ptr + MOD_MAGIC_OFFSET;
+			if (IS_MOD_MAGIC(modmagic) && mod_isfile(ptr, input_len, &length))
 			{
 				WRITE_FILE(ptr, length, "mod");
 				ptr += length;
@@ -549,7 +549,8 @@ int main(int argc, char **argv)
 						"See --help for usage information.\n", optarg);
 					return 255;
 				}
-				else if ((sizeunit && endptr[1]) || tmp < 0 || tmp > (size_t)(-1))
+				/* tmp might be bigger than max. size_t on 32bit plattforms */
+				else if ((sizeunit && endptr[1]) || tmp < 0L || (size_t)tmp > (size_t)(-1))
 				{
 					perror("strtoull");
 					fprintf(stderr, "error: Illegal size: \"%s\"\n"

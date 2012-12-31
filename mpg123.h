@@ -18,6 +18,6 @@ struct mpg123_info {
 	uint8_t  layer;
 };
 
-int mpg123_isframe(const unsigned char *start, const unsigned char *end, struct mpg123_info *info);
+int mpg123_isframe(const uint8_t *data, size_t input_len, struct mpg123_info *info);
 
 #endif /* AUDIOEXTRACT_MPG123_H__ */

@@ -12,6 +12,6 @@ struct mp4_info {
 	const char *ext;
 };
 
-int mp4_isfile(const unsigned char *start, const unsigned char *end, struct mp4_info *info);
+int mp4_isfile(const uint8_t *data, size_t input_len, struct mp4_info *info);
 
 #endif /* AUDIOEXTRACT_MP4_H__ */

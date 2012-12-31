@@ -137,11 +137,10 @@ int mp4_isatom_type(uint32_t type)
 	return 0;
 }
 
-int mp4_isfile(const unsigned char *start, const unsigned char *end, struct mp4_info *info)
+int mp4_isfile(const uint8_t *data, size_t input_len, struct mp4_info *info)
 {
 	const char *ext = 0;
-	size_t input_len = (size_t)(end - start);
-	const struct mp4_type_atom *type = (struct mp4_type_atom *)start;
+	const struct mp4_type_atom *type = (struct mp4_type_atom *)data;
 
 	if (input_len < MP4_HEADER_SIZE || type->type != MP4_MAGIC)
 		return 0;
@@ -156,7 +155,7 @@ int mp4_isfile(const unsigned char *start, const unsigned char *end, struct mp4_
 	if (!ext)
 	{
 		for (const uint32_t *brand = type->compatible_brands,
-			*end = (const uint32_t*)(start + length);
+			*end = (const uint32_t*)(data + length);
 			brand < end; ++ brand)
 		{
 			if (*brand)
@@ -172,7 +171,7 @@ int mp4_isfile(const unsigned char *start, const unsigned char *end, struct mp4_
 	
 	while (length + 8 < input_len)
 	{
-		const struct mp4_atom_head *head = (const struct mp4_atom_head *)(start + length);
+		const struct mp4_atom_head *head = (const struct mp4_atom_head *)(data + length);
 		size_t size = be32toh(head->size);
 		if (size < 8 || !mp4_isatom_type(head->type) || (size_t)(-1) - size < length)
 			break;

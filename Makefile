@@ -12,7 +12,7 @@ OBJ=\
 	$(BUILDDIR)/s3m.o \
 	$(BUILDDIR)/it.o
 CC=gcc
-CFLAGS=-Wall -std=gnu99 -O2 -fmessage-length=0 -g
+CFLAGS=-Wall -pedantic -Wextra -Werror -std=gnu99 -O2 -fmessage-length=0 -g
 BIN=$(BUILDDIR)/audioextract
 
 .PHONY: all clean install uninstall

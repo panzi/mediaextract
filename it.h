@@ -11,6 +11,6 @@
 #define IT_SAMPLE_HEADER_SIZE  80
 #define IT_PATTERN_HEADER_SIZE  4
 
-int it_isfile(const unsigned char *start, const unsigned char *end, size_t *lengthptr);
+int it_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr);
 
 #endif /* AUDIOEXTRACT_IT_H__ */

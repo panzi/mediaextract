@@ -1,18 +1,17 @@
 #include "it.h"
 
-int it_isfile(const unsigned char *start, const unsigned char *end, size_t *lengthptr)
+int it_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 {
-	size_t input_len = (size_t)(end - start);
 	if (input_len < IT_HEADER_SIZE)
 		return 0;
 
-	if (MAGIC(start) != IT_MAGIC || !probalby_mod_text(start + 4, 26))
+	if (MAGIC(data) != IT_MAGIC || !probalby_mod_text(data + 4, 26))
 		return 0;
 
-	uint16_t orders      = le16toh(*(uint16_t *)(start + 0x20));
-	uint16_t instruments = le16toh(*(uint16_t *)(start + 0x22));
-	uint16_t samples     = le16toh(*(uint16_t *)(start + 0x24));
-	uint16_t patterns    = le16toh(*(uint16_t *)(start + 0x26));
+	uint16_t orders      = le16toh(*(uint16_t *)(data + 0x20));
+	uint16_t instruments = le16toh(*(uint16_t *)(data + 0x22));
+	uint16_t samples     = le16toh(*(uint16_t *)(data + 0x24));
+	uint16_t patterns    = le16toh(*(uint16_t *)(data + 0x26));
 
 	size_t length = IT_HEADER_SIZE + orders + instruments * 4 + samples * 4 + patterns * 4;
 
@@ -31,7 +30,7 @@ int it_isfile(const unsigned char *start, const unsigned char *end, size_t *leng
 	}
 
 	/* scan instruments */
-	for (const uint32_t *para = (const uint32_t *)(start + IT_HEADER_SIZE + orders),
+	for (const uint32_t *para = (const uint32_t *)(data + IT_HEADER_SIZE + orders),
 		*para_end = para + instruments;
 		para < para_end; ++ para)
 	{
@@ -41,12 +40,12 @@ int it_isfile(const unsigned char *start, const unsigned char *end, size_t *leng
 	}
 
 	/* scan samples */
-	for (const uint32_t *para = (const uint32_t *)(start + IT_HEADER_SIZE + orders + instruments * 4),
+	for (const uint32_t *para = (const uint32_t *)(data + IT_HEADER_SIZE + orders + instruments * 4),
 		*para_end = para + samples;
 		para < para_end; ++ para)
 	{
 		size_t off = (size_t)le32toh(*para);
-		const unsigned char *ptr = start + off;
+		const unsigned char *ptr = data + off;
 
 		UPDATE_LENGTH(off + IT_SAMPLE_HEADER_SIZE);
 		
@@ -67,12 +66,12 @@ int it_isfile(const unsigned char *start, const unsigned char *end, size_t *leng
 	}
 	
 	/* scan patterns */
-	for (const uint32_t *para = (const uint32_t *)(start + IT_HEADER_SIZE + orders + instruments * 4 + samples * 4),
+	for (const uint32_t *para = (const uint32_t *)(data + IT_HEADER_SIZE + orders + instruments * 4 + samples * 4),
 		*para_end = para + patterns;
 		para < para_end; ++ para)
 	{
 		size_t off = (size_t)le32toh(*para);
-		const unsigned char *ptr = start + off;
+		const unsigned char *ptr = data + off;
 
 		UPDATE_LENGTH(off + IT_PATTERN_HEADER_SIZE);
 

@@ -57,6 +57,6 @@
 
 #define MOD_MAGIC_OFFSET 1080
 
-int mod_isfile(const unsigned char *start, const unsigned char *end, size_t *lengthptr);
+int mod_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr);
 
 #endif /* AUDIOEXTRACT_MOD_H__ */

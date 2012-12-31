@@ -9,6 +9,6 @@
 #define S3M_HEADER_SIZE  96
 #define S3M_SAMPLE_HEADER_SIZE 80
 
-int s3m_isfile(const unsigned char *start, const unsigned char *end, size_t *lengthptr);
+int s3m_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr);
 
 #endif /* AUDIOEXTRACT_S3M_H__ */

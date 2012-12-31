@@ -7,6 +7,6 @@
 #define OGG_HEADER_SIZE 27
 #define ogg_isinitial(data) ((data)[5] & 2)
 
-int ogg_ispage(const unsigned char *start, const unsigned char *end, size_t *lengthptr);
+int ogg_ispage(const uint8_t *data, size_t input_len, size_t *lengthptr);
 
 #endif /*  AUDIOEXTRACT_OGG_H__ */

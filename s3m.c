@@ -1,23 +1,22 @@
 #include "s3m.h"
 
-int s3m_isfile(const unsigned char *start, const unsigned char *end, size_t *lengthptr)
+int s3m_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 {
-	size_t input_len = (size_t)(end - start);
-	if (input_len < S3M_HEADER_SIZE || !probalby_mod_text(start, 28))
+	if (input_len < S3M_HEADER_SIZE || !probalby_mod_text(data, 28))
 		return 0;
 
-	uint8_t mark = start[28];
-	uint8_t type = start[29];
+	uint8_t mark = data[28];
+	uint8_t type = data[29];
 
 	if (mark != 0x1A || type != 16)
 		return 0;
 
-	if (MAGIC(start + S3M_MAGIC_OFFSET) != S3M_MAGIC)
+	if (MAGIC(data + S3M_MAGIC_OFFSET) != S3M_MAGIC)
 		return 0;
 	
-	uint16_t orders   = le16toh(*(uint16_t *)(start + 32));
-	uint16_t samples  = le16toh(*(uint16_t *)(start + 34));
-	uint16_t patterns = le16toh(*(uint16_t *)(start + 36));
+	uint16_t orders   = le16toh(*(uint16_t *)(data + 32));
+	uint16_t samples  = le16toh(*(uint16_t *)(data + 34));
+	uint16_t patterns = le16toh(*(uint16_t *)(data + 36));
 	size_t   length   = S3M_HEADER_SIZE + orders + (samples << 1) + (patterns << 1);
 
 	if (input_len < length)
@@ -35,12 +34,12 @@ int s3m_isfile(const unsigned char *start, const unsigned char *end, size_t *len
 	}
 
 	/* scan samples */
-	for (const uint16_t *para = (const uint16_t *)(start + S3M_HEADER_SIZE + orders),
+	for (const uint16_t *para = (const uint16_t *)(data + S3M_HEADER_SIZE + orders),
 		*para_end = para + samples;
 		para < para_end; ++ para)
 	{
 		size_t off = (size_t)le16toh(*para) << 4;
-		const unsigned char *ptr = start + off;
+		const unsigned char *ptr = data + off;
 
 		UPDATE_LENGTH(off + S3M_SAMPLE_HEADER_SIZE);
 
@@ -61,12 +60,12 @@ int s3m_isfile(const unsigned char *start, const unsigned char *end, size_t *len
 	}
 
 	/* scan patterns */
-	for (const uint16_t *para = (const uint16_t *)(start + S3M_HEADER_SIZE + orders + (samples << 1)),
+	for (const uint16_t *para = (const uint16_t *)(data + S3M_HEADER_SIZE + orders + (samples << 1)),
 		*para_end = para + patterns;
 		para < para_end; ++ para)
 	{
 		size_t off = le16toh(*para) << 4;
-		const unsigned char *ptr = start + off;
+		const unsigned char *ptr = data + off;
 
 		UPDATE_LENGTH(off + 2);
 

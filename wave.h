@@ -12,7 +12,7 @@
 
 #define WAVE_HEADER_SIZE 8
 
-int wave_ischunk(const unsigned char *start, const unsigned char *end, size_t *lengthptr);
-int aiff_ischunk(const unsigned char *start, const unsigned char *end, size_t *lengthptr);
+int wave_ischunk(const uint8_t *data, size_t input_len, size_t *lengthptr);
+int aiff_ischunk(const uint8_t *data, size_t input_len, size_t *lengthptr);
 
 #endif /*  AUDIOEXTRACT_WAVE_H__ */

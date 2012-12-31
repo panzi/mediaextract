@@ -58,22 +58,21 @@ const uint16_t mpeg_frame_samples[4][4] = {
 // Slot size (MPEG unit of measurement) - use [layer]
 const uint8_t mpeg_slot_size[4] = { 0, 1, 1, 4 }; // Rsvd, 3, 2, 1
 
-int mpg123_isframe(const unsigned char *start, const unsigned char *end, struct mpg123_info *info)
+int mpg123_isframe(const uint8_t *data, size_t input_len, struct mpg123_info *info)
 {
-	size_t input_len = (size_t)(end - start);
 	if (input_len < MPG123_HEADER_SIZE)
 		return 0;
 	
 	// Quick validity check
-	if (!IS_MPG123_MAGIC(start))
+	if (!IS_MPG123_MAGIC(data))
 		return 0;
 	
 	// Data to be extracted from the header
-	uint8_t   ver = (start[1] & 0x18) >> 3;   // Version index
-	uint8_t   lyr = (start[1] & 0x06) >> 1;   // Layer index
-	uint8_t   pad = (start[2] & 0x02) >> 1;   // Padding? 0/1
-	uint8_t   brx = (start[2] & 0xf0) >> 4;   // Bitrate index
-	uint8_t   srx = (start[2] & 0x0c) >> 2;   // SampRate index
+	uint8_t   ver = (data[1] & 0x18) >> 3;   // Version index
+	uint8_t   lyr = (data[1] & 0x06) >> 1;   // Layer index
+	uint8_t   pad = (data[2] & 0x02) >> 1;   // Padding? 0/1
+	uint8_t   brx = (data[2] & 0xf0) >> 4;   // Bitrate index
+	uint8_t   srx = (data[2] & 0x0c) >> 2;   // SampRate index
 	
 	// Lookup real values of these fields
 	uint32_t  bitrate   = mpeg_bitrates[ver][lyr][brx] * 1000;
