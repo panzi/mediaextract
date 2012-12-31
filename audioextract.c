@@ -112,79 +112,14 @@ int probalby_mod_text(const unsigned char *str, size_t length)
 	{
 		unsigned char c = *str;
 
-		if (c == '\n' || c == '\r')
+		if (c > 0 && c < ' ')
 			return 0;
 
-		if (c >= 0x80 && c < 0xFF)
+		if (c > '~' && c < 0xFF)
 			++ non_ascii;
 	}
 
 	return length / 2 > non_ascii;
-}
-
-const unsigned char *findmagic(const unsigned char *start, const unsigned char *end, int formats, enum fileformat *format)
-{
-	for (size_t length = end - start; length >= 4; ++ start, -- length)
-	{
-		uint32_t magic = MAGIC(start);
-
-		if (formats & OGG && magic == OGG_MAGIC)
-		{
-			*format = OGG;
-			return start;
-		}
-		else if (formats & RIFF && magic == RIFF_MAGIC)
-		{
-			*format = RIFF;
-			return start;
-		}
-		else if (formats & AIFF && magic == FORM_MAGIC)
-		{
-			*format = AIFF;
-			return start;
-		}
-		else if (formats & MIDI && magic == MIDI_MAGIC)
-		{
-			*format = MIDI;
-			return start;
-		}
-		else if (formats & ID3v2 && IS_ID3v2_MAGIC(start))
-		{
-			*format = ID3v2;
-			return start;
-		}
-		else if (formats & IT && magic == IT_MAGIC)
-		{
-			*format = IT;
-			return start;
-		}
-		else if (formats & MP4 && length > MP4_HEADER_SIZE && MAGIC(start + MP4_MAGIC_OFFSET) == MP4_MAGIC)
-		{
-			*format = MP4;
-			return start;
-		}
-		else if (formats & MPG123 && IS_MPG123_MAGIC(start))
-		{
-			*format = MPG123;
-			return start;
-		}
-		else if (formats & S3M && length > S3M_MAGIC_OFFSET + 4 && MAGIC(start + S3M_MAGIC_OFFSET) == S3M_MAGIC)
-		{
-			*format = S3M;
-			return start;
-		}
-		else if (formats & MOD && length > MOD_MAGIC_OFFSET + 4)
-		{
-			const unsigned char *modmagic = start + MOD_MAGIC_OFFSET;
-			if (IS_MOD_MAGIC(modmagic))
-			{
-				*format = MOD;
-				return start;
-			}
-		}
-	}
-
-	return NULL;
 }
 
 const char *basename(const char *path)
@@ -257,6 +192,7 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 	struct mp4_info mp4;
 	size_t count = 0; // e.g. for tracks count in midi
 	const unsigned char *audio_start = NULL;
+	size_t input_len = 0;
 
 	if (!quiet)
 		printf("Extracting %s\n", filepath);
@@ -295,152 +231,141 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 	}
 
 #define WRITE_FILE(data, length, ext) \
-	if (write_file(outdir, filename, (size_t)((data) - filedata), (ext), outfilename, namelen, (data), (length), minsize, maxsize, quiet)) \
+	if (write_file(outdir, filename, (size_t)((data) - filedata), (ext), \
+		outfilename, namelen, (data), (length), minsize, maxsize, quiet)) \
 	{ \
 		++ numfiles; \
 	}
 	
 	ptr = filedata;
-	for (end = filedata + filesize; (ptr = findmagic(ptr, end, formats, &format));)
+	end = filedata + filesize;
+	for (input_len = filesize; input_len >= 4; input_len = (size_t)(end - ptr))
 	{
-		switch (format)
+		uint32_t magic = MAGIC(ptr);
+		
+		if (formats & OGG && magic == OGG_MAGIC && ogg_ispage(ptr, end, &length) && ogg_isinitial(ptr))
 		{
-			case OGG:
-				if (ogg_ispage(ptr, end, &length) && ogg_isinitial(ptr))
-				{
-					audio_start = ptr;
+			audio_start = ptr;
 
-					do {
-						ptr += length;
-					} while (ogg_ispage(ptr, end, &length));
+			do {
+				ptr += length;
+			} while (ogg_ispage(ptr, end, &length));
 					
-					WRITE_FILE(audio_start, ptr - audio_start, "ogg");
-				}
-				else ++ ptr;
-				break;
-
-			case RIFF:
-				if (wave_ischunk(ptr, end, &length))
-				{
-					WRITE_FILE(ptr, length, "wav");
-					ptr += length;
-				}
-				else ++ ptr;
-				break;
-
-			case AIFF:
-				if (aiff_ischunk(ptr, end, &length))
-				{
-					WRITE_FILE(ptr, length, "aif");
-					ptr += length;
-				}
-				else ++ ptr;
-				break;
-
-			case ID3v2:
-			case MPG123:
-				if (format == ID3v2)
-				{
-					if (!id3v2_istag(ptr, end, 0, &length))
-					{
-						++ ptr;
-						break;
-					}
-				}
-				else
-					length = 0;
-
-				if (mpg123_isframe(ptr + length, end, &mpg123))
-				{
-					uint8_t version = mpg123.version;
-					uint8_t layer   = mpg123.layer;
-
-					audio_start = ptr;
-					ptr += length;
-
-					do {
-						ptr += mpg123.frame_size;
-					} while (mpg123_isframe(ptr, end, &mpg123)
-					      && mpg123.version == version
-					      && mpg123.layer   == layer);
-					
-					if (id3v1_istag(ptr, end, &length))
-					{
-						ptr += length;
-					}
-
-					if (formats & ID3v2 && id3v2_istag(ptr, end, 1, &length))
-					{
-						ptr += length;
-					}
-					
-					WRITE_FILE(audio_start, ptr - audio_start,
-						layer == 1 ? "mp1" :
-						layer == 2 ? "mp2" :
-						layer == 3 ? "mp3" :
-						             "mpg");
-				}
-				else ++ ptr;
-				break;
-
-			case MP4:
-				if (mp4_isfile(ptr, end, &mp4))
-				{
-					WRITE_FILE(ptr, mp4.length, mp4.ext);
-					ptr += mp4.length;
-				}
-				else ++ ptr;
-				break;
-
-			case MIDI:
-				if (midi_isheader(ptr, end, &length, &count))
-				{
-					audio_start = ptr;
-					do {
-						ptr += length;
-					} while (count-- > 0 && midi_istrack(ptr, end, &length));
-
-					if (count != 0 && !quiet)
-					{
-						fprintf(stderr, "warning: midi file misses %zu tracks\n", count);
-					}
-
-					WRITE_FILE(audio_start, ptr - audio_start, "mid");
-				}
-				else ++ ptr;
-				break;
-
-			case MOD:
-				if (mod_isfile(ptr, end, &length))
-				{
-					WRITE_FILE(ptr, length, "mod");
-					ptr += length;
-				}
-				else ++ ptr;
-				break;
-
-			case S3M:
-				if (s3m_isfile(ptr, end, &length))
-				{
-					WRITE_FILE(ptr, length, "s3m");
-					ptr += length;
-				}
-				else ++ ptr;
-				break;
-
-			case IT:
-				if (it_isfile(ptr, end, &length))
-				{
-					WRITE_FILE(ptr, length, "it");
-					ptr += length;
-				}
-				else ++ ptr;
-				break;
-
-			case NONE:
-				++ ptr;
-				break;
+			WRITE_FILE(audio_start, ptr - audio_start, "ogg");
+			continue;
 		}
+		
+		if (formats & RIFF && magic == RIFF_MAGIC && wave_ischunk(ptr, end, &length))
+		{
+			WRITE_FILE(ptr, length, "wav");
+			ptr += length;
+			continue;
+		}
+		
+		if (formats & AIFF && magic == FORM_MAGIC && aiff_ischunk(ptr, end, &length))
+		{
+			WRITE_FILE(ptr, length, "aif");
+			ptr += length;
+			continue;
+		}
+		
+		if (formats & MIDI && magic == MIDI_MAGIC && midi_isheader(ptr, end, &length, &count))
+		{
+			audio_start = ptr;
+			do {
+				ptr += length;
+			} while (count-- > 0 && midi_istrack(ptr, end, &length));
+
+			if (count != 0 && !quiet)
+			{
+				fprintf(stderr, "warning: midi file misses %zu tracks\n", count);
+			}
+
+			WRITE_FILE(audio_start, ptr - audio_start, "mid");
+			continue;
+		}
+		
+		format = NONE;
+		if (formats & ID3v2 && IS_ID3v2_MAGIC(ptr) && id3v2_istag(ptr, end, 0, &length))
+		{
+			format = ID3v2;
+		}
+
+		if (formats & MPG123 && IS_MPG123_MAGIC(ptr))
+		{
+			format = MPG123;
+			length = 0;
+		}
+
+		if (format & (ID3v2 | MPG123) && mpg123_isframe(ptr + length, end, &mpg123))
+		{
+			uint8_t version = mpg123.version;
+			uint8_t layer   = mpg123.layer;
+
+			audio_start = ptr;
+			ptr += length;
+
+			do {
+				ptr += mpg123.frame_size;
+			} while (mpg123_isframe(ptr, end, &mpg123)
+			      && mpg123.version == version
+			      && mpg123.layer   == layer);
+					
+			if (id3v1_istag(ptr, end, &length))
+			{
+				ptr += length;
+			}
+
+			if (formats & ID3v2 && id3v2_istag(ptr, end, 1, &length))
+			{
+				ptr += length;
+			}
+					
+			WRITE_FILE(audio_start, ptr - audio_start,
+				layer == 1 ? "mp1" :
+				layer == 2 ? "mp2" :
+				layer == 3 ? "mp3" :
+				             "mpg");
+			continue;
+		}
+		
+		if (formats & IT && magic == IT_MAGIC && it_isfile(ptr, end, &length))
+		{
+			WRITE_FILE(ptr, length, "it");
+			ptr += length;
+			continue;
+		}
+
+		if (formats & MP4 && input_len > MP4_HEADER_SIZE &&
+			MAGIC(ptr + MP4_MAGIC_OFFSET) == MP4_MAGIC &&
+			mp4_isfile(ptr, end, &mp4))
+		{
+			WRITE_FILE(ptr, mp4.length, mp4.ext);
+			ptr += mp4.length;
+			continue;
+		}
+		
+		if (formats & S3M && input_len > S3M_MAGIC_OFFSET + 4 &&
+			MAGIC(ptr + S3M_MAGIC_OFFSET) == S3M_MAGIC &&
+			s3m_isfile(ptr, end, &length))
+		{
+			WRITE_FILE(ptr, length, "s3m");
+			ptr += length;
+			continue;
+		}
+
+		if (formats & MOD && input_len > MOD_MAGIC_OFFSET + 4)
+		{
+			const unsigned char *modmagic = ptr + MOD_MAGIC_OFFSET;
+			if (IS_MOD_MAGIC(modmagic) && mod_isfile(ptr, end, &length))
+			{
+				WRITE_FILE(ptr, length, "mod");
+				ptr += length;
+				continue;
+			}
+		}
+
+		++ ptr;
 	}
 
 	goto cleanup;
