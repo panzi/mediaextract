@@ -21,6 +21,7 @@
 #include "mod.h"
 #include "s3m.h"
 #include "it.h"
+#include "asf.h"
 
 enum fileformat {
 	NONE   =    0,
@@ -36,10 +37,11 @@ enum fileformat {
 	IT     =  512,
 // TODO:
 //	XM     = 1024,
+	ASF    = 2048
 };
 
-#define ALL_FORMATS     (OGG | RIFF | AIFF | MPG123 | MP4 | ID3v2 | MIDI | MOD | S3M | IT)
-#define DEFAULT_FORMATS (OGG | RIFF | AIFF |          MP4 | ID3v2 | MIDI |       S3M | IT)
+#define ALL_FORMATS     (OGG | RIFF | AIFF | MPG123 | MP4 | ID3v2 | MIDI | MOD | S3M | IT | ASF)
+#define DEFAULT_FORMATS (OGG | RIFF | AIFF |          MP4 | ID3v2 | MIDI |       S3M | IT | ASF)
 #define TRACKER_FORMATS (MOD | S3M  | IT)
 
 int usage(int argc, char **argv)
@@ -55,17 +57,19 @@ int usage(int argc, char **argv)
 		"  -h, --help             Print this help message.\n"
 		"  -q, --quiet            Do not print status messages.\n"
 		"  -f, --formats=FORMATS  Comma separated list of formats (file magics) to extract.\n"
+		"\n"
 		"                         Supported formats:\n"
 		"                           all      all supported formats\n"
-		"                           default  the default set of formats (AIFF, ID3v2, IT, MIDI, MP4,\n"
-		"                                    Ogg, RIFF, S3M)\n"
+		"                           default  the default set of formats (AIFF, ASF, ID3v2, IT, MIDI,\n"
+		"                                    MP4, Ogg, RIFF, S3M)\n"
 		"                           aiff     big-endian (Apple) wave files\n"
-		"                           id3v2    MP1/2/3 files with ID3v2 tags at the start\n"
+		"                           asf      Advanced Systems Format files (also WMA and WMV)\n"
+		"                           id3v2    MP1/2/3 files with ID3v2 tags\n"
 		"                           it       ImpulseTracker files\n"
 		"                           midi     MIDI files\n"
 		"                           mod      FastTracker files\n"
 		"                           mpg123   any MPEG layer 1/2/3 files (e.g. MP3)\n"
-		"                           mp4      MP4 files\n"
+		"                           mp4      MP4 files (M4A, M4V, 3GPP etc.)\n"
 		"                           ogg      Ogg files (Vorbis, FLAC, Opus, Theora, etc.)\n"
 		"                           riff     little-endian (Windows) wave files\n"
 		"                           s3m      ScreamTracker III files\n"
@@ -336,6 +340,13 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 			continue;
 		}
 
+		if (formats & ASF && magic == ASF_MAGIC && asf_isfile(ptr, input_len, &length))
+		{
+			WRITE_FILE(ptr, length, "asf");
+			ptr += length;
+			continue;
+		}
+
 		if (formats & MP4 && input_len > MP4_HEADER_SIZE &&
 			MAGIC(ptr + MP4_MAGIC_OFFSET) == MP4_MAGIC &&
 			mp4_isfile(ptr, input_len, &mp4))
@@ -453,6 +464,10 @@ int parse_formats(const char *formats)
 		else if (strncasecmp("it", start, len) == 0)
 		{
 			mask = IT;
+		}
+		else if (strncasecmp("asf", start, len) == 0)
+		{
+			mask = ASF;
 		}
 		else if (strncasecmp("tracker", start, len) == 0)
 		{

@@ -21,6 +21,15 @@ the file `data.bin` and store them in the `~/Music` directory.
 
 	audioextract -f wave,ogg -o ~/Music data.bin
 
+This will then write files like such into `~/Music`:
+
+	data.bin_00000000.ogg
+	data.bin_00FFB2E3.wav
+	data.bin_01F3CD45.aif
+
+The hexadecimal number in the written file names give the offset where in the
+data file the audio file was found.
+
 Extract .mp3, .mp2 and .mp1 files (with or without ID3v2 tags). The `mpg123`
 option yields a lot of false positives because there is no nice way to
 unambigiously detect MPEG files. These false positives are however usually very
@@ -33,17 +42,19 @@ small, so using the `--min-size` one can hopefully extract only real MPEG files.
 	-h, --help             Print this help message.
 	-q, --quiet            Do not print status messages.
 	-f, --formats=FORMATS  Comma separated list of formats (file magics) to extract.
+
 	                       Supported formats:
 	                         all      all supported formats
-	                         default  the default set of formats (AIFF, ID3v2, IT, MIDI, MP4,
-	                                  Ogg, RIFF, S3M)
+	                         default  the default set of formats (AIFF, ASF, ID3v2, IT, MIDI,
+	                                  MP4, Ogg, RIFF, S3M)
 	                         aiff     big-endian (Apple) wave files
-	                         id3v2    MP1/2/3 files with ID3v2 tags at the start
+	                         asf      Advanced Systems Format files (also WMA and WMV)
+	                         id3v2    MP1/2/3 files with ID3v2 tags
 	                         it       ImpulseTracker files
 	                         midi     MIDI files
 	                         mod      FastTracker files
 	                         mpg123   any MPEG layer 1/2/3 files (e.g. MP3)
-	                         mp4      MP4 files
+	                         mp4      MP4 files (M4A, M4V, 3GPP etc.)
 	                         ogg      Ogg files (Vorbis, FLAC, Opus, Theora, etc.)
 	                         riff     little-endian (Windows) wave files
 	                         s3m      ScreamTracker III files
