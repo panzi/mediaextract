@@ -133,7 +133,7 @@ int probalby_mod_text(const uint8_t *str, size_t length)
 const char *basename(const char *path)
 {
 	const char *ptr = strrchr(path, '/');
-#ifdef __WINDOWS__
+#if defined(__WINDOWS__) || defined(__CYGWIN__)
 	/* Windows supports both / and \ */
 	const char *ptr2 = strrchr(path, '\\');
 	if (ptr2 > ptr)
@@ -167,7 +167,7 @@ int write_file(const char *outdir, const char *filename, size_t offset,
 	int outfd = creat(pathbuf, 0644);
 	if (outfd < 0)
 	{
-		perror("creat");
+		perror(pathbuf);
 		return 0;
 	}
 
@@ -206,21 +206,21 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 	if (!quiet)
 		printf("Extracting %s\n", filepath);
 
-	fd = open(filepath, O_RDONLY);
+	fd = open(filepath, O_RDONLY, 0644);
 	if (fd < 0)
 	{
-		perror("open");
+		perror(filepath);
 		goto error;
 	}
 
 	if (fstat(fd, &statdata) < 0)
 	{
-		perror("stat");
+		perror(filepath);
 		goto error;
 	}
 	if (S_ISDIR(statdata.st_mode))
 	{
-		fprintf(stderr, "error: Is a directory: %s\n", filepath);
+		fprintf(stderr, "%s: Is a directory\n", filepath);
 		goto error;
 	}
 	filesize = statdata.st_size;
