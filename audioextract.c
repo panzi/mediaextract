@@ -147,7 +147,7 @@ int write_file(const char *outdir, const char *filename, size_t offset,
                const uint8_t *data, size_t length,
                size_t minsize, size_t maxsize, int quiet)
 {
-	snprintf(pathbuf, pathbuflen, "%s/%s_%08zx.%s", outdir, filename, offset, ext);
+	snprintf(pathbuf, pathbuflen, "%s%c%s_%08zx.%s", outdir, PATH_SEP, filename, offset, ext);
 	
 	if (length < minsize)
 	{

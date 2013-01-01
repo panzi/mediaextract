@@ -85,6 +85,16 @@
 
 #endif
 
+#ifdef __WINDOWS__
+
+#	define PATH_SEP '\\'
+
+#else
+
+#	define PATH_SEP '/'
+
+#endif
+
 #define MAGIC(STR) (*(const uint32_t*)(STR))
 
 struct file_info {
