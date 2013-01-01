@@ -12,7 +12,8 @@
 #include <strings.h>
 
 #include "audioextract.h"
-#include "wave.h"
+#include "riff.h"
+#include "aiff.h"
 #include "ogg.h"
 #include "mpg123.h"
 #include "mp4.h"
@@ -64,17 +65,17 @@ int usage(int argc, char **argv)
 		"                                    MP4, Ogg, RIFF, S3M)\n"
 		"                           aiff     big-endian (Apple) wave files\n"
 		"                           asf      Advanced Systems Format files (also WMA and WMV)\n"
-		"                           id3v2    MP1/2/3 files with ID3v2 tags\n"
+		"                           id3v2    MPEG layer 1/2/3 files with ID3v2 tags\n"
 		"                           it       ImpulseTracker files\n"
 		"                           midi     MIDI files\n"
 		"                           mod      FastTracker files\n"
-		"                           mpg123   any MPEG layer 1/2/3 files (e.g. MP3)\n"
+		"                           mpg123   MPEG layer 1/2/3 files (MP1, MP2, MP3)\n"
 		"                           mp4      MP4 files (M4A, M4V, 3GPP etc.)\n"
 		"                           ogg      Ogg files (Vorbis, FLAC, Opus, Theora, etc.)\n"
-		"                           riff     little-endian (Windows) wave files\n"
+		"                           riff     Resource Interchange File Format files (ANI, AVI, MMM,\n"
+		"                                    PAL, RDI, RMI, WAV)\n"
 		"                           s3m      ScreamTracker III files\n"
 		"                           tracker  all tracker files (MOD, S3M, IT)\n"
-		"                           wave     both RIFF and AIFF wave files\n"
 		"\n"
 		"                         WARNING: Because MP1/2/3 files do not have a nice file magic, using\n"
 		"                         the 'mpg123' format may cause *a lot* of false positives. Nowadays\n"
@@ -82,16 +83,16 @@ int usage(int argc, char **argv)
 		"                         'id3v2' format is the better option anyway.\n"
 		"\n"
 		"                         The detection accuracy of MOD files is not much better and thus\n"
-		"                         they are alos per default disabled.\n"
+		"                         they are also per default disabled.\n"
 		"\n"
 		"                         NOTE: When using only the 'mpg123' format but not 'id3v2' any ID3v2\n"
 		"                         tag will be stripped. ID3v1 tags will still be kept.\n"
 		"\n"
 		"                         If '-' is written before a format name the format will be\n"
 		"                         removed from the set of formats to extract. E.g. extract\n"
-		"                         everything except wave files:\n"
+		"                         everything except tracker files:\n"
 		"\n"
-		"                           %s --formats=all,-wave data.bin\n"
+		"                           %s --formats=all,-tracker data.bin\n"
 		"\n"
 		"  -o, --output=DIR       Directory where extracted files should be written. (default: \".\")\n"
 		"  -m, --min-size=SIZE    Minumum size of extracted files (skip smaller). (default: 0)\n"
@@ -190,10 +191,11 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 
 	size_t numfiles = 0;
 	const char *filename = basename(filepath);
-	size_t namelen = strlen(outdir) + strlen(filename) + 24;
+	// max. ext length is 4 characters
+	size_t namelen = strlen(outdir) + strlen(filename) + 25;
 
 	struct mpg123_info mpg123;
-	struct mp4_info mp4;
+	struct file_info info = {0, 0};
 	size_t count = 0; // e.g. for tracks count in midi
 	const uint8_t *audio_start = NULL;
 	size_t input_len = 0;
@@ -258,18 +260,18 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 			WRITE_FILE(audio_start, ptr - audio_start, "ogg");
 			continue;
 		}
-		
-		if (formats & RIFF && magic == RIFF_MAGIC && wave_ischunk(ptr, input_len, &length))
+
+		if (formats & RIFF && magic == RIFF_MAGIC && riff_isfile(ptr, input_len, &info))
 		{
-			WRITE_FILE(ptr, length, "wav");
-			ptr += length;
+			WRITE_FILE(ptr, info.length, info.ext);
+			ptr += info.length;
 			continue;
 		}
 		
-		if (formats & AIFF && magic == FORM_MAGIC && aiff_ischunk(ptr, input_len, &length))
+		if (formats & AIFF && magic == FORM_MAGIC && aiff_isfile(ptr, input_len, &info))
 		{
-			WRITE_FILE(ptr, length, "aif");
-			ptr += length;
+			WRITE_FILE(ptr, info.length, info.ext);
+			ptr += info.length;
 			continue;
 		}
 		
@@ -349,13 +351,13 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 
 		if (formats & MP4 && input_len > MP4_HEADER_SIZE &&
 			MAGIC(ptr + MP4_MAGIC_OFFSET) == MP4_MAGIC &&
-			mp4_isfile(ptr, input_len, &mp4))
+			mp4_isfile(ptr, input_len, &info))
 		{
-			WRITE_FILE(ptr, mp4.length, mp4.ext);
-			ptr += mp4.length;
+			WRITE_FILE(ptr, info.length, info.ext);
+			ptr += info.length;
 			continue;
 		}
-		
+
 		if (formats & S3M && input_len > S3M_MAGIC_OFFSET + 4 &&
 			MAGIC(ptr + S3M_MAGIC_OFFSET) == S3M_MAGIC &&
 			s3m_isfile(ptr, input_len, &length))

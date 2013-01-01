@@ -137,7 +137,7 @@ int mp4_isatom_type(uint32_t type)
 	return 0;
 }
 
-int mp4_isfile(const uint8_t *data, size_t input_len, struct mp4_info *info)
+int mp4_isfile(const uint8_t *data, size_t input_len, struct file_info *info)
 {
 	const char *ext = 0;
 	const struct mp4_type_atom *type = (struct mp4_type_atom *)data;

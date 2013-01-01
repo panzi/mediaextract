@@ -7,11 +7,6 @@
 #define MP4_MAGIC_OFFSET  4
 #define MP4_HEADER_SIZE  16
 
-struct mp4_info {
-	size_t length;
-	const char *ext;
-};
-
-int mp4_isfile(const uint8_t *data, size_t input_len, struct mp4_info *info);
+int mp4_isfile(const uint8_t *data, size_t input_len, struct file_info *info);
 
 #endif /* AUDIOEXTRACT_MP4_H__ */

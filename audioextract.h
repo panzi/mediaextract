@@ -35,6 +35,11 @@
 
 #define MAGIC(STR) (*(const uint32_t*)(STR))
 
+struct file_info {
+	size_t length;
+	const char *ext;
+};
+
 int probalby_mod_text(const uint8_t *str, size_t length);
 
-#endif /*  AUDIOEXTRACT_H__ */
+#endif /* AUDIOEXTRACT_H__ */

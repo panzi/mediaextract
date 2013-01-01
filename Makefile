@@ -2,7 +2,8 @@ PREFIX=/usr/local
 BUILDDIR=build
 OBJ=\
 	$(BUILDDIR)/audioextract.o \
-	$(BUILDDIR)/wave.o \
+	$(BUILDDIR)/riff.o \
+	$(BUILDDIR)/aiff.o \
 	$(BUILDDIR)/ogg.o \
 	$(BUILDDIR)/mpg123.o \
 	$(BUILDDIR)/mp4.o \
@@ -23,10 +24,13 @@ all: $(BIN)
 $(BIN): $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) -o $@
 
-$(BUILDDIR)/audioextract.o: audioextract.c audioextract.h ogg.h wave.h mpg123.h mp4.h id3.h midi.h mod.h s3m.h it.h asf.h
+$(BUILDDIR)/audioextract.o: audioextract.c audioextract.h ogg.h riff.h aiff.h mpg123.h mp4.h id3.h midi.h mod.h s3m.h it.h asf.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
-$(BUILDDIR)/wave.o: wave.c audioextract.h wave.h
+$(BUILDDIR)/riff.o: riff.c audioextract.h riff.h
+	$(CC) $(CFLAGS) $< -o $@ -c
+
+$(BUILDDIR)/aiff.o: aiff.c audioextract.h aiff.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
 $(BUILDDIR)/ogg.o: ogg.c audioextract.h ogg.h

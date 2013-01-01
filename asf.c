@@ -59,11 +59,7 @@ int asf_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 	const struct asf_header *header = (const struct asf_header *)data;
 
 	if (input_len < ASF_HEADER_SIZE || memcmp(header->object_id, ASF_Header_Object_GUID, ASF_GUID_SIZE) != 0)
-	{
-		printf("%zu < %d: %d, object id miss-match: %d\n", input_len, ASF_HEADER_SIZE,
-			input_len < ASF_HEADER_SIZE, memcmp(header->object_id, ASF_Header_Object_GUID, ASF_GUID_SIZE) != 0);
 		return 0;
-	}
 
 	uint64_t header_object_size  = le64toh(header->object_size);
 	uint32_t header_object_count = le32toh(header->header_object_count);

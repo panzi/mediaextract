@@ -49,17 +49,17 @@ small, so using the `--min-size` one can hopefully extract only real MPEG files.
 	                                  MP4, Ogg, RIFF, S3M)
 	                         aiff     big-endian (Apple) wave files
 	                         asf      Advanced Systems Format files (also WMA and WMV)
-	                         id3v2    MP1/2/3 files with ID3v2 tags
+	                         id3v2    MPEG layer 1/2/3 files with ID3v2 tags
 	                         it       ImpulseTracker files
 	                         midi     MIDI files
 	                         mod      FastTracker files
-	                         mpg123   any MPEG layer 1/2/3 files (e.g. MP3)
+	                         mpg123   MPEG layer 1/2/3 files (MP1, MP2, MP3)
 	                         mp4      MP4 files (M4A, M4V, 3GPP etc.)
 	                         ogg      Ogg files (Vorbis, FLAC, Opus, Theora, etc.)
-	                         riff     little-endian (Windows) wave files
+	                         riff     Resource Interchange File Format files (ANI, AVI, MMM,
+	                                  PAL, RDI, RMI, WAV)
 	                         s3m      ScreamTracker III files
 	                         tracker  all tracker files (MOD, S3M, IT)
-	                         wave     both RIFF and AIFF wave files
 
 	                       WARNING: Because MP1/2/3 files do not have a nice file magic, using
 	                       the 'mpg123' format may cause *a lot* of false positives. Nowadays
@@ -67,16 +67,16 @@ small, so using the `--min-size` one can hopefully extract only real MPEG files.
 	                       'id3v2' format is the better option anyway.
 
 	                       The detection accuracy of MOD files is not much better and thus
-	                       they are alos per default disabled.
+	                       they are also per default disabled.
 
 	                       NOTE: When using only the 'mpg123' format but not 'id3v2' any ID3v2
 	                       tag will be stripped. ID3v1 tags will still be kept.
 
 	                       If '-' is written before a format name the format will be
 	                       removed from the set of formats to extract. E.g. extract
-	                       everything except wave files:
+	                       everything except tracker files:
 
-	                         audioextract --formats=all,-wave data.bin
+	                         audioextract --formats=all,-tracker data.bin
 
 	-o, --output=DIR       Directory where extracted files should be written. (default: ".")
 	-m, --min-size=SIZE    Minumum size of extracted files (skip smaller). (default: 0)
