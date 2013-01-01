@@ -672,7 +672,7 @@ int main(int argc, char **argv)
 	}
 
 	if (!quiet)
-		printf("Extracted %lu file(s).\n", sumnumfiles);
+		printf("Extracted %zu file(s).\n", sumnumfiles);
 
 	if (failures > 0)
 	{

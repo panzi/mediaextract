@@ -17,7 +17,7 @@
 
 #endif
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__CYGWIN__)
 
 #	include <endian.h>
 
