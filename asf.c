@@ -35,7 +35,6 @@ struct asf_file_properties {
 };
 
 const char *asf_body_object_guids[] = {
-	ASF_Header_Object_GUID,
 	ASF_Data_Object_GUID,
 	ASF_Simple_Index_Object_GUID,
 	ASF_Index_Object_GUID,
