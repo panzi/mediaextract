@@ -45,10 +45,11 @@ small, so using the `--min-size` one can hopefully extract only real MPEG files.
 
 	                       Supported formats:
 	                         all      all supported formats
-	                         default  the default set of formats (AIFF, ASF, ID3v2, IT, MIDI,
-	                                  MP4, Ogg, RIFF, S3M)
+	                         default  the default set of formats (AIFF, ASF, BINK, ID3v2, IT,
+	                                  MIDI, MP4, Ogg, RIFF, S3M)
 	                         aiff     big-endian (Apple) wave files
 	                         asf      Advanced Systems Format files (also WMA and WMV)
+	                         bink     BINK files
 	                         id3v2    MPEG layer 1/2/3 files with ID3v2 tags
 	                         it       ImpulseTracker files
 	                         midi     MIDI files

@@ -23,6 +23,7 @@
 #include "s3m.h"
 #include "it.h"
 #include "asf.h"
+#include "bink.h"
 
 enum fileformat {
 	NONE   =    0,
@@ -38,11 +39,12 @@ enum fileformat {
 	IT     =  512,
 // TODO:
 //	XM     = 1024,
-	ASF    = 2048
+	ASF    = 2048,
+	BINK   = 4096
 };
 
-#define ALL_FORMATS     (OGG | RIFF | AIFF | MPG123 | MP4 | ID3v2 | MIDI | MOD | S3M | IT | ASF)
-#define DEFAULT_FORMATS (OGG | RIFF | AIFF |          MP4 | ID3v2 | MIDI |       S3M | IT | ASF)
+#define ALL_FORMATS     (OGG | RIFF | AIFF | MPG123 | MP4 | ID3v2 | MIDI | MOD | S3M | IT | ASF | BINK)
+#define DEFAULT_FORMATS (OGG | RIFF | AIFF |          MP4 | ID3v2 | MIDI |       S3M | IT | ASF | BINK)
 #define TRACKER_FORMATS (MOD | S3M  | IT)
 
 int usage(int argc, char **argv)
@@ -61,10 +63,11 @@ int usage(int argc, char **argv)
 		"\n"
 		"                         Supported formats:\n"
 		"                           all      all supported formats\n"
-		"                           default  the default set of formats (AIFF, ASF, ID3v2, IT, MIDI,\n"
-		"                                    MP4, Ogg, RIFF, S3M)\n"
+		"                           default  the default set of formats (AIFF, ASF, BINK, ID3v2, IT,\n"
+		"                                    MIDI, MP4, Ogg, RIFF, S3M)\n"
 		"                           aiff     big-endian (Apple) wave files\n"
 		"                           asf      Advanced Systems Format files (also WMA and WMV)\n"
+		"                           bink     BINK files\n"
 		"                           id3v2    MPEG layer 1/2/3 files with ID3v2 tags\n"
 		"                           it       ImpulseTracker files\n"
 		"                           midi     MIDI files\n"
@@ -222,7 +225,12 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 	}
 	filesize = statdata.st_size;
 
-	filedata = mmap(0, filesize, PROT_READ, MAP_PRIVATE, fd, 0);
+	if (filesize == 0)
+	{
+		goto cleanup;
+	}
+
+	filedata = mmap(NULL, filesize, PROT_READ, MAP_PRIVATE, fd, 0);
 	if (filedata == MAP_FAILED)
 	{
 		perror("mmap");
@@ -349,6 +357,13 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 			continue;
 		}
 
+		if (formats & BINK && IS_BINK_MAGIC(magic) && bink_isfile(ptr, input_len, &length))
+		{
+			WRITE_FILE(ptr, length, "bik");
+			ptr += length;
+			continue;
+		}
+
 		if (formats & MP4 && input_len > MP4_HEADER_SIZE &&
 			MAGIC(ptr + MP4_MAGIC_OFFSET) == MP4_MAGIC &&
 			mp4_isfile(ptr, input_len, &info))
@@ -470,6 +485,10 @@ int parse_formats(const char *formats)
 		else if (strncasecmp("asf", start, len) == 0)
 		{
 			mask = ASF;
+		}
+		else if (strncasecmp("bink", start, len) == 0)
+		{
+			mask = BINK;
 		}
 		else if (strncasecmp("tracker", start, len) == 0)
 		{
@@ -653,7 +672,7 @@ int main(int argc, char **argv)
 	}
 
 	if (!quiet)
-		printf("Extracted %lu file(s).\n", numfiles);
+		printf("Extracted %lu file(s).\n", sumnumfiles);
 
 	if (failures > 0)
 	{
