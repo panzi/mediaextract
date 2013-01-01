@@ -25,43 +25,56 @@ all: $(BIN)
 $(BIN): $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) -o $@
 
-$(BUILDDIR)/audioextract.o: audioextract.c audioextract.h ogg.h riff.h aiff.h mpg123.h mp4.h id3.h midi.h mod.h s3m.h it.h asf.h bink.h
+$(BUILDDIR)/audioextract.o: src/audioextract.c \
+		src/audioextract.h \
+		src/ogg.h \
+		src/riff.h \
+		src/aiff.h \
+		src/mpg123.h \
+		src/mp4.h \
+		src/id3.h \
+		src/midi.h \
+		src/mod.h \
+		src/s3m.h \
+		src/it.h \
+		src/asf.h \
+		src/bink.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
-$(BUILDDIR)/riff.o: riff.c audioextract.h riff.h
+$(BUILDDIR)/riff.o: src/riff.c src/audioextract.h src/riff.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
-$(BUILDDIR)/aiff.o: aiff.c audioextract.h aiff.h
+$(BUILDDIR)/aiff.o: src/aiff.c src/audioextract.h src/aiff.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
-$(BUILDDIR)/ogg.o: ogg.c audioextract.h ogg.h
+$(BUILDDIR)/ogg.o: src/ogg.c src/audioextract.h src/ogg.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
-$(BUILDDIR)/mpg123.o: mpg123.c audioextract.h mpg123.h
+$(BUILDDIR)/mpg123.o: src/mpg123.c src/audioextract.h src/mpg123.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
-$(BUILDDIR)/mp4.o: mp4.c audioextract.h mp4.h
+$(BUILDDIR)/mp4.o: src/mp4.c src/audioextract.h src/mp4.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
-$(BUILDDIR)/id3.o: id3.c audioextract.h id3.h
+$(BUILDDIR)/id3.o: src/id3.c src/audioextract.h src/id3.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
-$(BUILDDIR)/midi.o: midi.c audioextract.h midi.h
+$(BUILDDIR)/midi.o: src/midi.c src/audioextract.h src/midi.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
-$(BUILDDIR)/mod.o: mod.c audioextract.h mod.h
+$(BUILDDIR)/mod.o: src/mod.c src/audioextract.h src/mod.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
-$(BUILDDIR)/s3m.o: s3m.c audioextract.h s3m.h
+$(BUILDDIR)/s3m.o: src/s3m.c src/audioextract.h src/s3m.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
-$(BUILDDIR)/it.o: it.c audioextract.h it.h
+$(BUILDDIR)/it.o: src/it.c src/audioextract.h src/it.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
-$(BUILDDIR)/asf.o: asf.c audioextract.h asf.h
+$(BUILDDIR)/asf.o: src/asf.c src/audioextract.h src/asf.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
-$(BUILDDIR)/bink.o: bink.c audioextract.h bink.h
+$(BUILDDIR)/bink.o: src/bink.c src/audioextract.h src/bink.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
 install: $(PREFIX)/bin/audioextract
