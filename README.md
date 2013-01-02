@@ -46,7 +46,7 @@ small, so using the `--min-size` one can hopefully extract only real MPEG files.
 	                       Supported formats:
 	                         all      all supported formats
 	                         default  the default set of formats (AIFF, ASF, BINK, ID3v2, IT,
-	                                  MIDI, MP4, Ogg, RIFF, S3M)
+	                                  MIDI, MP4, Ogg, RIFF, S3M, XM)
 	                         aiff     big-endian (Apple) wave files
 	                         asf      Advanced Systems Format files (also WMA and WMV)
 	                         bink     BINK files
@@ -60,7 +60,8 @@ small, so using the `--min-size` one can hopefully extract only real MPEG files.
 	                         riff     Resource Interchange File Format files (ANI, AVI, MMM,
 	                                  PAL, RDI, RMI, WAV)
 	                         s3m      ScreamTracker III files
-	                         tracker  all tracker files (MOD, S3M, IT)
+	                         xm       Extended Module files
+	                         tracker  all tracker files (MOD, S3M, IT, XM)
 
 	                       WARNING: Because MP1/2/3 files do not have a nice file magic, using
 	                       the 'mpg123' format may cause *a lot* of false positives. Nowadays

@@ -12,11 +12,28 @@ int it_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 	uint16_t instruments = le16toh(*(uint16_t *)(data + 0x22));
 	uint16_t samples     = le16toh(*(uint16_t *)(data + 0x24));
 	uint16_t patterns    = le16toh(*(uint16_t *)(data + 0x26));
+	uint16_t special     = le16toh(*(uint16_t *)(data + 0x2E));
 
 	size_t length = IT_HEADER_SIZE + orders + instruments * 4 + samples * 4 + patterns * 4;
 
 	if (input_len < length)
 		return 0;
+
+	if (special & 1)
+	{
+		size_t message_length = le16toh(*(uint16_t *)(data + 0x36));
+		size_t message_start  = le32toh(*(uint32_t *)(data + 0x38));
+
+		if ((size_t)(-1) - message_length < message_start)
+			return 0;
+
+		size_t message_end = message_start + message_length;
+		if (message_start < input_len && message_end > length)
+		{
+			/* truncated messages are ok */
+			length = message_end < input_len ? message_end : input_len;
+		}
+	}
 
 #define UPDATE_LENGTH(len) \
 	{ \

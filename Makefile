@@ -11,6 +11,7 @@ OBJ=\
 	$(BUILDDIR)/midi.o \
 	$(BUILDDIR)/mod.o \
 	$(BUILDDIR)/s3m.o \
+	$(BUILDDIR)/xm.o \
 	$(BUILDDIR)/it.o \
 	$(BUILDDIR)/asf.o \
 	$(BUILDDIR)/bink.o
@@ -36,6 +37,7 @@ $(BUILDDIR)/audioextract.o: src/audioextract.c \
 		src/midi.h \
 		src/mod.h \
 		src/s3m.h \
+		src/xm.h \
 		src/it.h \
 		src/asf.h \
 		src/bink.h
@@ -66,6 +68,9 @@ $(BUILDDIR)/mod.o: src/mod.c src/audioextract.h src/mod.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
 $(BUILDDIR)/s3m.o: src/s3m.c src/audioextract.h src/s3m.h
+	$(CC) $(CFLAGS) $< -o $@ -c
+
+$(BUILDDIR)/xm.o: src/xm.c src/audioextract.h src/xm.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
 $(BUILDDIR)/it.o: src/it.c src/audioextract.h src/it.h

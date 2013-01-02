@@ -21,6 +21,7 @@
 #include "midi.h"
 #include "mod.h"
 #include "s3m.h"
+#include "xm.h"
 #include "it.h"
 #include "asf.h"
 #include "bink.h"
@@ -37,15 +38,14 @@ enum fileformat {
 	MOD    =  128,
 	S3M    =  256,
 	IT     =  512,
-// TODO:
-//	XM     = 1024,
+	XM     = 1024,
 	ASF    = 2048,
 	BINK   = 4096
 };
 
-#define ALL_FORMATS     (OGG | RIFF | AIFF | MPG123 | MP4 | ID3v2 | MIDI | MOD | S3M | IT | ASF | BINK)
-#define DEFAULT_FORMATS (OGG | RIFF | AIFF |          MP4 | ID3v2 | MIDI |       S3M | IT | ASF | BINK)
-#define TRACKER_FORMATS (MOD | S3M  | IT)
+#define ALL_FORMATS     (OGG | RIFF | AIFF | MPG123 | MP4 | ID3v2 | MIDI | MOD | S3M | IT | XM | ASF | BINK)
+#define DEFAULT_FORMATS (OGG | RIFF | AIFF |          MP4 | ID3v2 | MIDI |       S3M | IT | XM | ASF | BINK)
+#define TRACKER_FORMATS (MOD | S3M  | IT   | XM)
 
 int usage(int argc, char **argv)
 {
@@ -64,7 +64,7 @@ int usage(int argc, char **argv)
 		"                         Supported formats:\n"
 		"                           all      all supported formats\n"
 		"                           default  the default set of formats (AIFF, ASF, BINK, ID3v2, IT,\n"
-		"                                    MIDI, MP4, Ogg, RIFF, S3M)\n"
+		"                                    MIDI, MP4, Ogg, RIFF, S3M, XM)\n"
 		"                           aiff     big-endian (Apple) wave files\n"
 		"                           asf      Advanced Systems Format files (also WMA and WMV)\n"
 		"                           bink     BINK files\n"
@@ -78,7 +78,8 @@ int usage(int argc, char **argv)
 		"                           riff     Resource Interchange File Format files (ANI, AVI, MMM,\n"
 		"                                    PAL, RDI, RMI, WAV)\n"
 		"                           s3m      ScreamTracker III files\n"
-		"                           tracker  all tracker files (MOD, S3M, IT)\n"
+		"                           xm       Extended Module files\n"
+		"                           tracker  all tracker files (MOD, S3M, IT, XM)\n"
 		"\n"
 		"                         WARNING: Because MP1/2/3 files do not have a nice file magic, using\n"
 		"                         the 'mpg123' format may cause *a lot* of false positives. Nowadays\n"
@@ -350,6 +351,13 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 			continue;
 		}
 
+		if (formats & XM && magic == XM_MAGIC && xm_isfile(ptr, input_len, &length))
+		{
+			WRITE_FILE(ptr, length, "xm");
+			ptr += length;
+			continue;
+		}
+
 		if (formats & ASF && magic == ASF_MAGIC && asf_isfile(ptr, input_len, &length))
 		{
 			WRITE_FILE(ptr, length, "asf");
@@ -481,6 +489,10 @@ int parse_formats(const char *formats)
 		else if (strncasecmp("it", start, len) == 0)
 		{
 			mask = IT;
+		}
+		else if (strncasecmp("xm", start, len) == 0)
+		{
+			mask = XM;
 		}
 		else if (strncasecmp("asf", start, len) == 0)
 		{
