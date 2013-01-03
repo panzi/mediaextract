@@ -26,7 +26,7 @@
 #include "asf.h"
 #include "bink.h"
 
-#if defined(__WINDOWS__) || !defined(__CYGWIN__)
+#if defined(__WINDOWS__) && !defined(__CYGWIN__)
 #	define ZU_FMT "%u"
 #	define EXTRACTED_FILE_FMT "%s%c%s_%08x.%s"
 #else
