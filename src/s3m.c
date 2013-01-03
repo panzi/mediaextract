@@ -8,18 +8,23 @@ int s3m_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 	uint8_t mark = data[28];
 	uint8_t type = data[29];
 
-	if (mark != 0x1A || type != 16)
+	if (mark != 0x1A || type != 0x10)
 		return 0;
 
 	if (MAGIC(data + S3M_MAGIC_OFFSET) != S3M_MAGIC)
 		return 0;
 	
-	uint16_t orders   = le16toh(*(uint16_t *)(data + 32));
-	uint16_t samples  = le16toh(*(uint16_t *)(data + 34));
-	uint16_t patterns = le16toh(*(uint16_t *)(data + 36));
-	size_t   length   = S3M_HEADER_SIZE + orders + (samples << 1) + (patterns << 1);
+	uint16_t orders       = le16toh(*(uint16_t *)(data + 32));
+	uint16_t samples      = le16toh(*(uint16_t *)(data + 34));
+	uint16_t patterns     = le16toh(*(uint16_t *)(data + 36));
+	uint16_t tracker_vers = le16toh(*(uint16_t *)(data + 40));
+	uint16_t format_vers  = le16toh(*(uint16_t *)(data + 42));
+	size_t   length       = S3M_HEADER_SIZE + orders +
+		((size_t)samples << 1) + ((size_t)patterns << 1);
 
-	if (input_len < length)
+	if (input_len < length ||
+		tracker_vers < 0x1000 || tracker_vers >= 0x6000 ||
+		format_vers < 1 || format_vers > 2)
 		return 0;
 
 #define UPDATE_LENGTH(len) \

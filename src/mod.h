@@ -17,10 +17,10 @@
 	(magic[0] == 'T' && \
 	 magic[1] == 'D' && \
 	 magic[2] == 'Z' && \
-	 magic[3] >= '0' && magic[3] <= '9')
+	 magic[3] >  '0' && magic[3] <= '9')
 
 #define IS_MOD_XCHN_MAGIC(magic) \
-	(magic[0] >= '0' && magic[0] <= '9' && \
+	(magic[0] >  '0' && magic[0] <= '9' && \
 	 magic[1] == 'C' && \
 	 magic[2] == 'H' && \
 	 magic[3] == 'N')
