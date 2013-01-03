@@ -74,7 +74,7 @@ int usage(int argc, char **argv)
 		"                           mod      FastTracker files\n"
 		"                           mpg123   MPEG layer 1/2/3 files (MP1, MP2, MP3)\n"
 		"                           mp4      MP4 files (M4A, M4V, 3GPP etc.)\n"
-		"                           ogg      Ogg files (Vorbis, FLAC, Opus, Theora, etc.)\n"
+		"                           ogg      Ogg files (Vorbis, Opus, Theora, etc.)\n"
 		"                           riff     Resource Interchange File Format files (ANI, AVI, MMM,\n"
 		"                                    PAL, RDI, RMI, WAV)\n"
 		"                           s3m      ScreamTracker III files\n"
