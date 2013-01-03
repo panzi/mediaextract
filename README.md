@@ -9,6 +9,20 @@ Setup
 	make
 	make install PREFIX=/usr
 
+Cross compile for Windows:
+
+	make
+	make install TARGET=win32
+
+Or:
+
+	make
+	make install TARGET=win64
+
+Note that 32bit binaries can only read files up to about 4 GB
+because of memory limitations of the 32bit address space. 64bit
+binaries can read up to about 16 EB (16 Exabyte).
+
 Usage
 -----
 
@@ -56,7 +70,7 @@ small, so using the `--min-size` one can hopefully extract only real MPEG files.
 	                         mod      FastTracker files
 	                         mpg123   MPEG layer 1/2/3 files (MP1, MP2, MP3)
 	                         mp4      MP4 files (M4A, M4V, 3GPP etc.)
-	                         ogg      Ogg files (Vorbis, FLAC, Opus, Theora, etc.)
+	                         ogg      Ogg files (Vorbis, Opus, Theora, etc.)
 	                         riff     Resource Interchange File Format files (ANI, AVI, MMM,
 	                                  PAL, RDI, RMI, WAV)
 	                         s3m      ScreamTracker III files
