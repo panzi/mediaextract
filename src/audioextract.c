@@ -86,7 +86,7 @@ int usage(int argc, char **argv)
 		"                           id3v2    MPEG layer 1/2/3 files with ID3v2 tags\n"
 		"                           it       ImpulseTracker files\n"
 		"                           midi     MIDI files\n"
-		"                           mod      FastTracker files\n"
+		"                           mod      Noisetracker/Soundtracker/Protracker Module files\n"
 		"                           mpg123   MPEG layer 1/2/3 files (MP1, MP2, MP3)\n"
 		"                           mp4      MP4 files (M4A, M4V, 3GPP etc.)\n"
 		"                           ogg      Ogg files (Vorbis, Opus, Theora, etc.)\n"

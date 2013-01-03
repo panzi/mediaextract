@@ -65,7 +65,7 @@ small, so using the `--min-size` one can hopefully extract only real MPEG files.
 	                         id3v2    MPEG layer 1/2/3 files with ID3v2 tags
 	                         it       ImpulseTracker files
 	                         midi     MIDI files
-	                         mod      FastTracker files
+	                         mod      Noisetracker/Soundtracker/Protracker Module files
 	                         mpg123   MPEG layer 1/2/3 files (MP1, MP2, MP3)
 	                         mp4      MP4 files (M4A, M4V, 3GPP etc.)
 	                         ogg      Ogg files (Vorbis, Opus, Theora, etc.)
