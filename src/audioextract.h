@@ -102,6 +102,18 @@ struct file_info {
 	const char *ext;
 };
 
+struct extract_options {
+	const char *filepath;
+	const char *outdir;
+	size_t minsize;
+	size_t maxsize;
+	int formats;
+	int quiet;
+};
+
 int probalby_mod_text(const uint8_t *str, size_t length);
+int extract(const struct extract_options *options, size_t *numfilesptr);
+int do_extract(const uint8_t *filedata, size_t filesize,
+               const struct extract_options *options, size_t *numfilesptr);
 
 #endif /* AUDIOEXTRACT_H__ */

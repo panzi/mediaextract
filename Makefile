@@ -2,6 +2,7 @@ PREFIX=/usr/local
 BUILDDIR=build
 OBJ=\
 	$(BUILDDIR)/audioextract.o \
+	$(BUILDDIR)/audioextract_posix.o \
 	$(BUILDDIR)/riff.o \
 	$(BUILDDIR)/aiff.o \
 	$(BUILDDIR)/ogg.o \
@@ -41,6 +42,9 @@ $(BUILDDIR)/audioextract.o: src/audioextract.c \
 		src/it.h \
 		src/asf.h \
 		src/bink.h
+	$(CC) $(CFLAGS) $< -o $@ -c
+
+$(BUILDDIR)/audioextract_posix.o: src/audioextract_posix.c src/audioextract.h
 	$(CC) $(CFLAGS) $< -o $@ -c
 
 $(BUILDDIR)/riff.o: src/riff.c src/audioextract.h src/riff.h

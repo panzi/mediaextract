@@ -143,23 +143,21 @@ const char *basename(const char *path)
 	return ptr ? ptr + 1 : path;
 }
 
-int write_file(const char *outdir, const char *filename, size_t offset,
-               const char *ext, char *pathbuf, size_t pathbuflen,
-               const uint8_t *data, size_t length,
-               size_t minsize, size_t maxsize, int quiet)
+int write_file(const uint8_t *data, size_t length, const struct extract_options *options,
+               const char *filename, size_t offset, const char *ext, char *pathbuf, size_t pathbuflen)
 {
-	snprintf(pathbuf, pathbuflen, "%s%c%s_%08zx.%s", outdir, PATH_SEP, filename, offset, ext);
+	snprintf(pathbuf, pathbuflen, "%s%c%s_%08zx.%s", options->outdir, PATH_SEP, filename, offset, ext);
 	
-	if (length < minsize)
+	if (length < options->minsize)
 	{
-		if (!quiet)
+		if (!options->quiet)
 			fprintf(stderr, "Skipped too small (%zu) %s\n", length, pathbuf);
 
 		return 0;
 	}
-	else if (length > maxsize)
+	else if (length > options->maxsize)
 	{
-		if (!quiet)
+		if (!options->quiet)
 			fprintf(stderr, "Skipped too large (%zu) %s\n", length, pathbuf);
 
 		return 0;
@@ -172,7 +170,7 @@ int write_file(const char *outdir, const char *filename, size_t offset,
 		return 0;
 	}
 
-	if (!quiet)
+	if (!options->quiet)
 		printf("Writing %s\n", pathbuf);
 
 	write(outfd, data, length);
@@ -180,63 +178,26 @@ int write_file(const char *outdir, const char *filename, size_t offset,
 	return 1;
 }
 
-int extract(const char *filepath, const char *outdir, size_t minsize, size_t maxsize, int formats, int quiet, size_t *numfilesptr)
+int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_options *options, size_t *numfilesptr)
 {
-	int fd = -1;
-	struct stat statdata;
-	size_t filesize = 0;
-	uint8_t *filedata = NULL;
 	const uint8_t *ptr = NULL, *end = NULL;
 	enum fileformat format = NONE;
 
 	size_t length = 0;
 	int success = 1;
+	int formats = options->formats;
 	char *outfilename = NULL;
 
 	size_t numfiles = 0;
-	const char *filename = basename(filepath);
+	const char *filename = basename(options->filepath);
 	// max. ext length is 4 characters
-	size_t namelen = strlen(outdir) + strlen(filename) + 25;
+	size_t namelen = strlen(options->outdir) + strlen(filename) + 25;
 
 	struct mpg123_info mpg123;
 	struct file_info info = {0, 0};
 	size_t count = 0; // e.g. for tracks count in midi
 	const uint8_t *audio_start = NULL;
 	size_t input_len = 0;
-
-	if (!quiet)
-		printf("Extracting %s\n", filepath);
-
-	fd = open(filepath, O_RDONLY, 0644);
-	if (fd < 0)
-	{
-		perror(filepath);
-		goto error;
-	}
-
-	if (fstat(fd, &statdata) < 0)
-	{
-		perror(filepath);
-		goto error;
-	}
-	if (S_ISDIR(statdata.st_mode))
-	{
-		fprintf(stderr, "%s: Is a directory\n", filepath);
-		goto error;
-	}
-	filesize = statdata.st_size;
-
-	if (filesize == 0)
-	{
-		goto cleanup;
-	}
-
-	filedata = mmap(NULL, filesize, PROT_READ, MAP_PRIVATE, fd, 0);
-	if (filedata == MAP_FAILED)
-	{
-		perror("mmap");
-		goto error;
-	}
 
 	outfilename = malloc(namelen);
 	if (outfilename == NULL)
@@ -246,8 +207,7 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 	}
 
 #define WRITE_FILE(data, length, ext) \
-	if (write_file(outdir, filename, (size_t)((data) - filedata), (ext), \
-		outfilename, namelen, (data), (length), minsize, maxsize, quiet)) \
+	if (write_file((data), length, options, filename, (size_t)((data) - filedata), (ext), outfilename, namelen)) \
 	{ \
 		++ numfiles; \
 	}
@@ -291,7 +251,7 @@ int extract(const char *filepath, const char *outdir, size_t minsize, size_t max
 				ptr += length;
 			} while (count-- > 0 && midi_istrack(ptr, (size_t)(end - ptr), &length));
 
-			if (count != 0 && !quiet)
+			if (count != 0 && !(options->quiet))
 			{
 				fprintf(stderr, "warning: midi file misses %zu tracks\n", count);
 			}
@@ -412,12 +372,6 @@ error:
 cleanup:
 	if (outfilename)
 		free(outfilename);
-
-	if (filedata)
-		munmap(filedata, filesize);
-
-	if (fd >= 0)
-		close(fd);
 
 	if (numfilesptr)
 		*numfilesptr = numfiles;
@@ -547,14 +501,11 @@ const struct option long_options[] = {
 
 int main(int argc, char **argv)
 {
-	int i = 0, opt = 0, quiet = 0;
+	struct extract_options options = { NULL, ".", 0, (size_t)-1, DEFAULT_FORMATS, 0 };
+	int i = 0, opt = 0;
 	size_t failures = 0;
 	size_t sumnumfiles = 0;
 	size_t numfiles = 0;
-	size_t minsize = 0;
-	size_t maxsize = (size_t)-1;
-	int formats = DEFAULT_FORMATS;
-	const char *outdir = ".";
 	long long tmp = 0;
 	size_t size = 0;
 	char sizeunit = 'B';
@@ -565,10 +516,10 @@ int main(int argc, char **argv)
 		switch (opt)
 		{
 			case 'f':
-				formats = parse_formats(optarg);
-				if (formats < 0)
+				options.formats = parse_formats(optarg);
+				if (options.formats < 0)
 					return 255;
-				else if (formats == 0)
+				else if (options.formats == 0)
 				{
 					fprintf(stderr, "error: No formats specified.\n"
 						"See --help for usage information.\n");
@@ -577,14 +528,14 @@ int main(int argc, char **argv)
 				break;
 
 			case 'o':
-				outdir = optarg;
+				options.outdir = optarg;
 				break;
 
 			case 'h':
 				return usage(argc, argv);
 
 			case 'q':
-				quiet = 1;
+				options.quiet = 1;
 				break;
 
 			case 'x':
@@ -658,9 +609,9 @@ int main(int argc, char **argv)
 						return 255;
 				}
 				if (opt == 'm')
-					minsize = size;
+					options.minsize = size;
 				else
-					maxsize = size;
+					options.maxsize = size;
 				break;
 		}
 	}
@@ -673,17 +624,22 @@ int main(int argc, char **argv)
 
 	for (i = optind; i < argc; ++ i)
 	{
-		if (extract(argv[i], outdir, minsize, maxsize, formats, quiet, &numfiles))
+		options.filepath = argv[i];
+
+		if (!options.quiet)
+			printf("Extracting %s\n", options.filepath);
+
+		if (extract(&options, &numfiles))
 		{
 			sumnumfiles += numfiles;
 		}
 		else {
-			fprintf(stderr, "Error processing file: %s\n", argv[i]);
+			fprintf(stderr, "Error processing file: %s\n", options.filepath);
 			failures += 1;
 		}
 	}
 
-	if (!quiet)
+	if (!options.quiet)
 		printf("Extracted %zu file(s).\n", sumnumfiles);
 
 	if (failures > 0)
