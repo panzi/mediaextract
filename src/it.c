@@ -12,12 +12,24 @@ int it_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 	uint16_t instruments = le16toh(*(uint16_t *)(data + 0x22));
 	uint16_t samples     = le16toh(*(uint16_t *)(data + 0x24));
 	uint16_t patterns    = le16toh(*(uint16_t *)(data + 0x26));
+	uint16_t version     = le16toh(*(uint16_t *)(data + 0x28));
+	uint16_t compat_vers = le16toh(*(uint16_t *)(data + 0x2A));
 	uint16_t special     = le16toh(*(uint16_t *)(data + 0x2E));
 
 	size_t length = IT_HEADER_SIZE + orders + instruments * 4 + samples * 4 + patterns * 4;
 
 	if (input_len < length)
 		return 0;
+
+	if (version == 0x0888 && compat_vers == 0x0888)
+	{
+		// this seems to be ok
+	}
+	else if (((version < 0x0200 || version >= 0x0300) && (version < 0x1020 || version > 0x1050)) ||
+		compat_vers < 0x0100 || compat_vers > 0x0217)
+	{
+		return 0;
+	}
 
 	if (special & 1)
 	{
