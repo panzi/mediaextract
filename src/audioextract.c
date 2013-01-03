@@ -26,6 +26,14 @@
 #include "asf.h"
 #include "bink.h"
 
+#if defined(__WINDOWS__) || !defined(__CYGWIN__)
+#	define ZU_FMT "%u"
+#	define EXTRACTED_FILE_FMT "%s%c%s_%08x.%s"
+#else
+#	define ZU_FMT "%zu"
+#	define EXTRACTED_FILE_FMT "%s%c%s_%08zx.%s"
+#endif
+
 enum fileformat {
 	NONE   =    0,
 	OGG    =    1,
@@ -146,36 +154,27 @@ const char *basename(const char *path)
 int write_file(const uint8_t *data, size_t length, const struct extract_options *options,
                const char *filename, size_t offset, const char *ext, char *pathbuf, size_t pathbuflen)
 {
-	snprintf(pathbuf, pathbuflen, "%s%c%s_%08zx.%s", options->outdir, PATH_SEP, filename, offset, ext);
+	snprintf(pathbuf, pathbuflen, EXTRACTED_FILE_FMT, options->outdir, PATH_SEP, filename, offset, ext);
 	
 	if (length < options->minsize)
 	{
 		if (!options->quiet)
-			fprintf(stderr, "Skipped too small (%zu) %s\n", length, pathbuf);
+			fprintf(stderr, "Skipped too small (" ZU_FMT ") %s\n", length, pathbuf);
 
 		return 0;
 	}
 	else if (length > options->maxsize)
 	{
 		if (!options->quiet)
-			fprintf(stderr, "Skipped too large (%zu) %s\n", length, pathbuf);
+			fprintf(stderr, "Skipped too large (" ZU_FMT ") %s\n", length, pathbuf);
 
-		return 0;
-	}
-
-	int outfd = creat(pathbuf, 0644);
-	if (outfd < 0)
-	{
-		perror(pathbuf);
 		return 0;
 	}
 
 	if (!options->quiet)
 		printf("Writing %s\n", pathbuf);
 
-	write(outfd, data, length);
-	close(outfd);
-	return 1;
+	return write_data(pathbuf, data, length);
 }
 
 int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_options *options, size_t *numfilesptr)
@@ -253,7 +252,7 @@ int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_op
 
 			if (count != 0 && !(options->quiet))
 			{
-				fprintf(stderr, "warning: midi file misses %zu tracks\n", count);
+				fprintf(stderr, "warning: midi file misses " ZU_FMT " tracks\n", count);
 			}
 
 			WRITE_FILE(audio_start, ptr - audio_start, "mid");
@@ -640,11 +639,11 @@ int main(int argc, char **argv)
 	}
 
 	if (!options.quiet)
-		printf("Extracted %zu file(s).\n", sumnumfiles);
+		printf("Extracted " ZU_FMT " file(s).\n", sumnumfiles);
 
 	if (failures > 0)
 	{
-		fprintf(stderr, "%zu error(s) during extraction.\n", failures);
+		fprintf(stderr, ZU_FMT " error(s) during extraction.\n", failures);
 		return 1;
 	}
 	return 0;

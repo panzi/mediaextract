@@ -1,5 +1,25 @@
 #include "audioextract.h"
 
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+
+int write_data(const char *filename, const uint8_t *data, size_t length)
+{
+	int outfd = creat(filename, 0644);
+	if (outfd < 0)
+	{
+		perror(filename);
+		return 0;
+	}
+
+	write(outfd, data, length);
+	close(outfd);
+	return 1;
+}
+
 int extract(const struct extract_options *options, size_t *numfilesptr)
 {
 	struct stat statdata;

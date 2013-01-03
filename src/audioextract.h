@@ -5,11 +5,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
 
 #if (defined(_WIN16) || defined(_WIN32) || defined(_WIN64)) && !defined(__WINDOWS__)
 
@@ -62,7 +57,7 @@
 /* assume little-endian for Windows
  * currently only Windows on the XBox 360 uses big-endian */
 
-#	include <arpa/inet.h>
+#	include <winsock2.h>
 
 #	define htobe16 htons
 #	define htole16(x) (x)
@@ -115,5 +110,6 @@ int probalby_mod_text(const uint8_t *str, size_t length);
 int extract(const struct extract_options *options, size_t *numfilesptr);
 int do_extract(const uint8_t *filedata, size_t filesize,
                const struct extract_options *options, size_t *numfilesptr);
+int write_data(const char *filename, const uint8_t *data, size_t length);
 
 #endif /* AUDIOEXTRACT_H__ */
