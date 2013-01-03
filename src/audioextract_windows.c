@@ -56,7 +56,7 @@ int extract(const struct extract_options *options, size_t *numfilesptr)
 
 	if (filesize.QuadPart == 0)
 		goto cleanup;
-	else if (filesize.QuadPart > (size_t)-1)
+	else if ((ULONGLONG)filesize.QuadPart > (size_t)-1)
 	{
 		fprintf(stderr, "error: cannot map file of this size\n");
 		goto error;

@@ -27,8 +27,15 @@
 #include "bink.h"
 
 #if defined(__WINDOWS__) && !defined(__CYGWIN__)
-#	define ZU_FMT "%u"
-#	define EXTRACTED_FILE_FMT "%s%c%s_%08x.%s"
+#	ifdef _WIN64
+#		define ZU_FMT "%l64u"
+#		define EXTRACTED_FILE_FMT "%s%c%s_%08l64x.%s"
+#		pragma GCC diagnostic ignored "-Wformat"
+#		pragma GCC diagnostic ignored "-Wformat-extra-args"
+#	else
+#		define ZU_FMT "%u"
+#		define EXTRACTED_FILE_FMT "%s%c%s_%08x.%s"
+#	endif
 #else
 #	define ZU_FMT "%zu"
 #	define EXTRACTED_FILE_FMT "%s%c%s_%08zx.%s"

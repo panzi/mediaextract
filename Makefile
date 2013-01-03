@@ -1,7 +1,11 @@
 PREFIX=/usr/local
-BUILDDIR=build
 TARGET=posix
+INCLUDE=
+LIBDIRS=
+LIBS=
+LDFLAGS=
 PLATFORM=posix
+BUILDDIR=build-$(TARGET)
 OBJ=\
 	$(BUILDDIR)/audioextract.o \
 	$(BUILDDIR)/audioextract_$(PLATFORM).o \
@@ -19,24 +23,26 @@ OBJ=\
 	$(BUILDDIR)/asf.o \
 	$(BUILDDIR)/bink.o
 CC=gcc
-COMMON_CFLAGS=-Wall -pedantic -Wextra -Werror -std=gnu99 -O2 -fmessage-length=0 -g
+LD=gcc
+COMMON_CFLAGS=-Wall -Werror -pedantic -Wextra -std=gnu99 -O2 -fmessage-length=0 -g $(INCLUDE) $(LIBDIRS)
 CFLAGS=$(COMMON_CFLAGS)
 APPNAME=audioextract
 BIN=$(BUILDDIR)/$(APPNAME)
-LIBS=
 
 ifeq ($(TARGET),win32)
 	PLATFORM=windows
 	CC=i686-pc-mingw32-gcc
-	CFLAGS=$(COMMON_CFLAGS) -m32 -liberty
-	LIBS=-lws2_32
+	LD=i686-pc-mingw32-gcc
+	CFLAGS=$(COMMON_CFLAGS) -m32
+	LIBS=-lws2_32 -liberty
 	APPNAME=audioextract.exe
 else
 ifeq ($(TARGET),win64)
 	PLATFORM=windows
-	CC=x86_64-pc-mingw32-gcc
-	CFLAGS=$(COMMON_CFLAGS) -m64 -liberty
-	LIBS=-lws2_64
+	CC=x86_64-w64-mingw32-gcc
+	LD=x86_64-w64-mingw32-gcc
+	CFLAGS=$(COMMON_CFLAGS) -m64
+	LIBS=-lws2_32 -liberty
 	APPNAME=audioextract64.exe
 endif
 endif
@@ -46,7 +52,7 @@ endif
 all: $(BIN)
 
 $(BIN): $(OBJ)
-	$(CC) $(CFLAGS) $(OBJ) -o $@ $(LIBS)
+	$(LD) $(LIBDIRS) $(LDFLAGS) $(OBJ) -o $@ $(LIBS)
 
 $(BUILDDIR)/audioextract.o: src/audioextract.c \
 		src/audioextract.h \
