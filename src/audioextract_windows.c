@@ -3,6 +3,14 @@
 #include <windows.h>
 #include <stdio.h>
 
+#ifdef _WIN64
+#	define ZU_FMT "%l64u"
+#	pragma GCC diagnostic ignored "-Wformat"
+#	pragma GCC diagnostic ignored "-Wformat-extra-args"
+#else
+#	define ZU_FMT "%u"
+#endif
+
 static void PrintError(const char *msg)
 {
 	char ErrStr[512];
@@ -58,7 +66,8 @@ int extract(const struct extract_options *options, size_t *numfilesptr)
 		goto cleanup;
 	else if ((ULONGLONG)filesize.QuadPart > (size_t)-1)
 	{
-		fprintf(stderr, "error: cannot map file of this size\n");
+		fprintf(stderr, "error: cannot map file of this size (file size: %l64u bytes, max. possible: "
+			ZU_FMT " bytes)\n", (ULONGLONG)filesize.QuadPart, (size_t)-1);
 		goto error;
 	}
 

@@ -17,9 +17,9 @@ Or:
 
 	make TARGET=win64
 
-Note that 32bit binaries can only read files up to about 4 GB
-because of memory limitations of the 32bit address space. 64bit
-binaries can read up to about 16 EB (16 Exabyte).
+Note that 32bit binaries can only read files up to about 2 GB because of the
+limitations of the 32bit address space. 64bit binaries can read up to about
+8 EB (8 Exabyte).
 
 Usage
 -----

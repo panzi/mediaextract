@@ -24,7 +24,7 @@ OBJ=\
 	$(BUILDDIR)/bink.o
 CC=gcc
 LD=gcc
-COMMON_CFLAGS=-Wall -Werror -pedantic -Wextra -std=gnu99 -O2 -fmessage-length=0 -g $(INCLUDE) $(LIBDIRS)
+COMMON_CFLAGS=-Wall -Werror -pedantic -Wextra -std=gnu99 -O2 -g $(INCLUDE) $(LIBDIRS) -D_FILE_OFFSET_BITS=64
 CFLAGS=$(COMMON_CFLAGS)
 APPNAME=audioextract
 BIN=$(BUILDDIR)/$(APPNAME)

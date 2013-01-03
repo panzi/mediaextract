@@ -45,13 +45,19 @@ int extract(const struct extract_options *options, size_t *numfilesptr)
 		fprintf(stderr, "%s: Is a directory\n", options->filepath);
 		goto error;
 	}
-	filesize = statdata.st_size;
 
-	if (filesize == 0)
+	if (statdata.st_size == 0)
 	{
 		goto cleanup;
 	}
+	else if ((uint64_t)statdata.st_size > (size_t)-1)
+	{
+		fprintf(stderr, "error: cannot map file of this size (file size: %llu bytes, max. possible: %zu bytes)\n",
+			(long long unsigned int)statdata.st_size, (size_t)-1);
+		goto error;
+	}
 
+	filesize = statdata.st_size;
 	filedata = mmap(NULL, filesize, PROT_READ, MAP_PRIVATE, fd, 0);
 	if (filedata == MAP_FAILED)
 	{
