@@ -2,9 +2,6 @@
 
 /* see: http://www.johnloomis.org/cpe102/asgn/asgn1/riff.html */
 
-#define OPTIONAL 0
-#define REQUIRED 1
-
 struct riff_chunk_spec {
 	const char *type;
 	const struct riff_chunk_spec *body;
@@ -22,7 +19,7 @@ static const struct riff_chunk_spec riff_empty_body[] = {
 
 /* WAVE */
 static const struct riff_chunk_spec riff_wav_body[] = {
-	{ "fmt ", 0, REQUIRED },
+	{ "fmt ", 0, 1 },
 	{ 0, 0, 0 }
 };
 
@@ -30,26 +27,26 @@ static const struct riff_chunk_spec riff_wav_body[] = {
 // TODO: AVI 2.0? only makes sense for files > 4 GB
 // http://www.the-labs.com/Video/odmlff2-avidef.pdf
 static const struct riff_chunk_spec riff_avi_hdrl_body[] = {
-	{ "avih", 0, REQUIRED },
+	{ "avih", 0, 1 },
 	{ 0, 0, 0 }
 };
 
 static const struct riff_chunk_spec riff_avi_body[] = {
-	{ "hdrl", 0, REQUIRED },
-	{ "movi", 0, REQUIRED },
+	{ "hdrl", 0, 1 },
+	{ "movi", 0, 1 },
 	{ 0, 0, 0 }
 };
 
 /* ACON */
 static const struct riff_chunk_spec riff_ani_fram_body[] = {
-	{ "icon", 0, REQUIRED },
+	{ "icon", 0, 1 },
 	{ 0, 0, 0 }
 };
 
 static const struct riff_chunk_spec riff_ani_body[] = {
-	{ "INFO", riff_empty_body, OPTIONAL },
-	{ "anih", 0, REQUIRED },
-	{ "fram", riff_ani_fram_body, REQUIRED },
+	{ "INFO", riff_empty_body, 0 },
+	{ "anih", 0, 1 },
+	{ "fram", riff_ani_fram_body, 1 },
 	{ 0, 0, 0 }
 };
 
@@ -60,18 +57,18 @@ static const struct riff_chunk_spec riff_rmi_body[] = {
 
 /* PAL */
 static const struct riff_chunk_spec riff_pal_body[] = {
-	{ "data", 0, REQUIRED },
+	{ "data", 0, 1 },
 	{ 0, 0, 0 }
 };
 
 static const struct riff_file_spec riff_file_specs[] = {
-	{ { "WAVE", riff_wav_body,   REQUIRED }, "wav" },
-	{ { "AVI ", riff_avi_body,   REQUIRED }, "avi" },
-	{ { "ACON", riff_ani_body,   REQUIRED }, "ani" },
-	{ { "RMID", riff_rmi_body,   REQUIRED }, "rmi" },
-	{ { "PAL ", riff_pal_body,   REQUIRED }, "pal" },
-	{ { "RDIB", riff_empty_body, REQUIRED }, "rdi" },
-	{ { "RMMP", riff_empty_body, REQUIRED }, "mmm" },
+	{ { "WAVE", riff_wav_body,   1 }, "wav" },
+	{ { "AVI ", riff_avi_body,   1 }, "avi" },
+	{ { "ACON", riff_ani_body,   1 }, "ani" },
+	{ { "RMID", riff_rmi_body,   1 }, "rmi" },
+	{ { "PAL ", riff_pal_body,   1 }, "pal" },
+	{ { "RDIB", riff_empty_body, 1 }, "rdi" },
+	{ { "RMMP", riff_empty_body, 1 }, "mmm" },
 	{ { 0, 0, 0 }, 0 }
 };
 
