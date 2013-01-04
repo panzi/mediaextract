@@ -52,7 +52,7 @@ int xm_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 
 	// x1A should be 0x1A but can be 0x00 in stripped XM files
 	// I don't really support stripped XM files because many other things are 0 in them too (e.g. the file magic),
-	// but sometimes this value is 0x00 even if the file is not stripped. And once I saw als 0x20 here in an otherwise
+	// but sometimes this value is 0x00 even if the file is not stripped. And once I saw 0x20 here in an otherwise
 	// working file.
 	if (memcmp(header->id, XM_ID, XM_ID_SIZE) != 0 || (header->x1A != 0x1A && header->x1A != 0x00 && header->x1A != 0x20))
 		return 0;

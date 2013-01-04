@@ -3,7 +3,8 @@
 
 #include "audioextract.h"
 
-#define RIFF_MAGIC MAGIC("RIFF")
+#define RIFF_MAGIC      MAGIC("RIFF")
+#define RIFF_LIST_MAGIC MAGIC("LIST")
 
 #define RIFF_HEADER_SIZE 12
 
