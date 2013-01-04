@@ -50,11 +50,6 @@ static const struct riff_chunk_spec riff_ani_body[] = {
 	{ 0, 0, 0 }
 };
 
-/* RMID */
-static const struct riff_chunk_spec riff_rmi_body[] = {
-	{ 0, 0, 0 }
-};
-
 /* PAL */
 static const struct riff_chunk_spec riff_pal_body[] = {
 	{ "data", 0, 1 },
@@ -65,7 +60,7 @@ static const struct riff_file_spec riff_file_specs[] = {
 	{ { "WAVE", riff_wav_body,   1 }, "wav" },
 	{ { "AVI ", riff_avi_body,   1 }, "avi" },
 	{ { "ACON", riff_ani_body,   1 }, "ani" },
-	{ { "RMID", riff_rmi_body,   1 }, "rmi" },
+	{ { "RMID", riff_empty_body, 1 }, "rmi" },
 	{ { "PAL ", riff_pal_body,   1 }, "pal" },
 	{ { "RDIB", riff_empty_body, 1 }, "rdi" },
 	{ { "RMMP", riff_empty_body, 1 }, "mmm" },
