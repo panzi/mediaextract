@@ -587,41 +587,41 @@ int parse_size_p(const char *str, uint64_t *size)
 int parse_size(const char *str, size_t *size)
 {
 	uint64_t sz = 0;
-	if (strcasecmp("max", str))
+	if (strcasecmp("max", str) == 0)
 	{
 		if (size) *size = SIZE_MAX;
-		return 0;
+		return 1;
 	}
 	else if (parse_size_p(str, &sz))
 	{
 		/* might be bigger than max. size_t on 32bit plattforms */
 		if (sz <= SIZE_MAX) {
 			if (size) *size = (size_t)sz;
-			return 0;
+			return 1;
 		}
 		errno = ERANGE;
 	}
-	return 1;
+	return 0;
 }
 
 int parse_offset(const char *str, uint64_t *size)
 {
 	uint64_t sz = 0;
-	if (strcasecmp("max", str))
+	if (strcasecmp("max", str) == 0)
 	{
 		if (size) *size = INT64_MAX;
-		return 0;
+		return 1;
 	}
 	else if (parse_size_p(str, &sz))
 	{
 		/* offset is always signed 64bit (because of compiler flags) */
 		if (sz <= INT64_MAX) {
 			if (size) *size = sz;
-			return 0;
+			return 1;
 		}
 		errno = ERANGE;
 	}
-	return 1;
+	return 0;
 }
 
 const struct option long_options[] = {
@@ -645,7 +645,7 @@ int main(int argc, char **argv)
 	size_t numfiles = 0;
 	size_t size = 0;
 
-	while ((opt = getopt_long(argc, argv, "f:o:hqm:x:", long_options, NULL)) != -1)
+	while ((opt = getopt_long(argc, argv, "f:o:hqm:x:n:i:", long_options, NULL)) != -1)
 	{
 		switch (opt)
 		{
@@ -697,6 +697,10 @@ int main(int argc, char **argv)
 					return 255;
 				}
 				break;
+
+			default:
+				fprintf(stderr, SEE_HELP);
+				return 255;
 		}
 	}
 
@@ -713,6 +717,7 @@ int main(int argc, char **argv)
 		if (!options.quiet)
 			printf("Extracting %s\n", options.filepath);
 
+		numfiles = 0;
 		if (extract(&options, &numfiles))
 		{
 			sumnumfiles += numfiles;
