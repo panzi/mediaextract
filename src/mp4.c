@@ -1,11 +1,11 @@
 #include "mp4.h"
 
-struct ftype {
+struct ftyp {
 	const char *brand;
 	const char *ext;
 };
 
-struct ftype mp4_ftypes[] = {
+struct ftyp mp4_ftyps[] = {
 	{ "3g2a", "3g2" },
 	{ "3g2b", "3g2" },
 	{ "3g2c", "3g2" },
@@ -114,12 +114,12 @@ struct mp4_type_atom {
 
 const char *mp4_find_ext(uint32_t brand)
 {
-	for (struct ftype *ftype = mp4_ftypes; ftype->brand; ++ ftype)
+	for (struct ftyp *ftyp = mp4_ftyps; ftyp->brand; ++ ftyp)
 	{
-		if (MAGIC(ftype->brand) == brand)
+		if (MAGIC(ftyp->brand) == brand)
 		{
-			if (!ftype->ext) return "mp4";
-			return ftype->ext;
+			if (!ftyp->ext) return "mp4";
+			return ftyp->ext;
 		}
 	}
 	return NULL;
@@ -144,9 +144,9 @@ int mp4_isfile(const uint8_t *data, size_t input_len, struct file_info *info)
 
 	if (input_len < MP4_HEADER_SIZE || type->type != MP4_MAGIC)
 		return 0;
-	
+
 	size_t length = be32toh(type->size);
-	
+
 	if (length < MP4_HEADER_SIZE)
 		return 0;
 
@@ -168,8 +168,8 @@ int mp4_isfile(const uint8_t *data, size_t input_len, struct file_info *info)
 
 	if (!ext)
 		return 0;
-	
-	while (length + 8 < input_len)
+
+	while (length < input_len - 8)
 	{
 		const struct mp4_atom_head *head = (const struct mp4_atom_head *)(data + length);
 		size_t size = be32toh(head->size);
