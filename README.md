@@ -66,18 +66,20 @@ small, so using the `--min-size` one can hopefully extract only real MPEG files.
 	-o, --output=DIR       Directory where extracted files should be written. (default: ".")
 	-i, --offset=OFFSET    Start processing at byte OFFSET. (default: 0)
 	-n, --length=LENGTH    Only process LENGTH bytes.
-	                       (default and maximum: 9223372036854775807)
+	                       (default and maximum: 8E)
 	-m, --min-size=SIZE    Minumum size of extracted files (skip smaller). (default: 0)
 	-x, --max-size=SIZE    Maximum size of extracted files (skip larger).
-	                       (default and maximum: 18446744073709551615)
+	                       (default and maximum: 16E)
 
 	                       The last character of OFFSET, LENGTH and SIZE may be one of the
 	                       following:
-	                         B (or none)  for bytes
-	                         k            for Kilobytes (units of 1024 bytes)
+	                         B (or none)  for Bytes
+	                         k            for Kilobytes (units of 1024 Bytes)
 	                         M            for Megabytes (units of 1024 Kilobytes)
 	                         G            for Gigabytes (units of 1024 Megabytes)
 	                         T            for Terabytes (units of 1024 Gigabytes)
+	                         P            for Petabytes (units of 1024 Terabytes)
+	                         E            for Exabyte   (units of 1024 Petabytes)
 
 	                       The special value "max" selects the maximum alowed value.
 
