@@ -81,7 +81,7 @@ int usage(int argc, char **argv)
 		"  -n, --length=LENGTH    Only process LENGTH bytes.\n"
 		"                         (default and maximum: %"PRIuz")\n"
 
-#ifndef __LP64__
+#if !defined(__LP64__) && !defined(_WIN64)
 
 		"\n"
 		"                         NOTE: This program is compiled as a 32bit binary. This means\n"
