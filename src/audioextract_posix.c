@@ -41,6 +41,7 @@ int extract(const struct extract_options *options, size_t *numfilesptr)
 		perror(options->filepath);
 		goto error;
 	}
+
 	if (S_ISDIR(statdata.st_mode))
 	{
 		fprintf(stderr, "%s: Is a directory\n", options->filepath);
@@ -49,19 +50,29 @@ int extract(const struct extract_options *options, size_t *numfilesptr)
 
 	if (statdata.st_size == 0 || options->length == 0)
 	{
+		printf("%s: Skipping empty file.\n", options->filepath);
 		goto cleanup;
 	}
 	else if (statdata.st_size < 0)
 	{
-		fprintf(stderr, "error: file has negative size (%"PRIi64")?\n", (int64_t)statdata.st_size);
+		fprintf(stderr, "%s: File has negative size (%"PRIi64")?\n",
+			options->filepath,
+			(int64_t)statdata.st_size);
 		goto error;
 	}
+	else if ((uint64_t)statdata.st_size <= options->offset)
+	{
+		printf("%s: Skipping file because offset is bigger than file.\n",
+			options->filepath);
+		goto cleanup;
+	}
 
-	length = (uint64_t)options->length > (uint64_t)statdata.st_size ? (size_t)statdata.st_size : options->length;
+	uint64_t rest = (uint64_t)statdata.st_size - options->offset;
+	length   = (uint64_t)options->length > rest ? (size_t)rest : options->length;
 	filedata = mmap(NULL, length, PROT_READ, MAP_PRIVATE, fd, (off_t)(options->offset));
 	if (filedata == MAP_FAILED)
 	{
-		perror("mmap");
+		perror(options->filepath);
 		goto error;
 	}
 

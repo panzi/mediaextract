@@ -14,7 +14,7 @@ static void PrintError(const char *msg)
 {
 	char ErrStr[512];
 	FormatMessage(
-		FORMAT_MESSAGE_FROM_SYSTEM,
+		FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 		NULL, GetLastError(), 
 		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 		ErrStr, 512, NULL);
@@ -64,17 +64,24 @@ int extract(const struct extract_options *options, size_t *numfilesptr)
 	}
 
 	if (filesize.QuadPart == 0 || options->length == 0)
+	{
+		printf("%s: Skipping empty file.\n", options->filepath);
 		goto cleanup;
-	else if ((ULONGLONG)filesize.QuadPart > options->length)
-		length = options->length;
-	else
-		length = filesize.QuadPart;
-
-	hMap = CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
+	}
+	else if ((uint64_t)filesize.QuadPart <= options->offset)
+	{
+		printf("%s: Skipping file because offset is bigger than file.\n",
+			options->filepath);
+		goto cleanup;
+	}
+	
+	uint64_t rest = filesize.QuadPart - options->offset;
+	length = (uint64_t)options->length > (uint64_t)rest ? rest : options->length;
+	hMap   = CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
 
 	if (hMap == NULL)
 	{
-		PrintError("CreateFileMapping");
+		PrintError(options->filepath);
 		goto error;
 	}
 
@@ -82,7 +89,7 @@ int extract(const struct extract_options *options, size_t *numfilesptr)
 
 	if (filedata == NULL)
 	{
-		PrintError("MapViewOfFile");
+		PrintError(options->filepath);
 		goto error;
 	}
 

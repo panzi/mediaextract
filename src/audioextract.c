@@ -64,9 +64,22 @@ enum fileformat {
 #define DEFAULT_FORMATS (OGG | RIFF | AIFF |          MP4 | ID3v2 | MIDI |       S3M | IT | XM | ASF | BINK)
 #define TRACKER_FORMATS (MOD | S3M  | IT   | XM)
 
-int usage(int argc, char **argv)
+static int usage(int argc, char **argv);
+static const char *basename(const char *path);
+static int parse_formats(const char *formats);
+static int parse_size_p(const char *str, uint64_t *size);
+static int parse_size(const char *str, size_t *size);
+static int parse_offset(const char *str, uint64_t *size);
+static int format_size(uint64_t in, double *out);
+
+static int usage(int argc, char **argv)
 {
-	const char *progname = argc <= 0 ? "audioextract" : argv[0]; 
+	const char *progname = argc <= 0 ? "audioextract" : argv[0];
+	double default_length = 0;
+	double default_size   = 0;
+	char   length_unit = format_size((SIZE_MAX>>1), &default_length);
+	char   size_unit   = format_size(SIZE_MAX,      &default_size);
+
 	fprintf(stderr,
 		"audioextract - extracts audio files that are embedded within other files\n"
 		"\n"
@@ -79,10 +92,12 @@ int usage(int argc, char **argv)
 		"  -o, --output=DIR       Directory where extracted files should be written. (default: \".\")\n"
 		"  -i, --offset=OFFSET    Start processing at byte OFFSET. (default: 0)\n"
 		"  -n, --length=LENGTH    Only process LENGTH bytes.\n"
-		"                         (default and maximum: %"PRIuz")\n"
+		"                         (default and maximum: %g%c)\n",
+		progname, default_length, length_unit);
 
 #if !defined(__LP64__) && !defined(_WIN64)
 
+	fprintf(stderr,
 		"\n"
 		"                         NOTE: This program is compiled as a 32bit binary. This means\n"
 		"                         the maximum amount of bytes that can be processed at once are\n"
@@ -92,21 +107,24 @@ int usage(int argc, char **argv)
 		"\n"
 		"                         This also means that extracted files can never be larger than\n"
 		"                         2 GB.\n"
-		"\n"
+		"\n");
 
 #endif
 
+	fprintf(stderr,
 		"  -m, --min-size=SIZE    Minumum size of extracted files (skip smaller). (default: 0)\n"
 		"  -x, --max-size=SIZE    Maximum size of extracted files (skip larger).\n"
-		"                         (default and maximum: %"PRIuz")\n"
+		"                         (default and maximum: %g%c)\n"
 		"\n"
 		"                         The last character of OFFSET, LENGTH and SIZE may be one of the\n"
 		"                         following:\n"
-		"                           B (or none)  for bytes\n"
-		"                           k            for Kilobytes (units of 1024 bytes)\n"
+		"                           B (or none)  for Bytes\n"
+		"                           k            for Kilobytes (units of 1024 Bytes)\n"
 		"                           M            for Megabytes (units of 1024 Kilobytes)\n"
 		"                           G            for Gigabytes (units of 1024 Megabytes)\n"
 		"                           T            for Terabytes (units of 1024 Gigabytes)\n"
+		"                           P            for Petabytes (units of 1024 Terabytes)\n"
+		"                           E            for Exabyte   (units of 1024 Petabytes)\n"
 		"\n"
 		"                         The special value \"max\" selects the maximum alowed value.\n"
 		"\n"
@@ -149,7 +167,7 @@ int usage(int argc, char **argv)
 		"\n"
 		"                           %s --formats=all,-tracker data.bin\n"
 		"\n",
-		progname, (SIZE_MAX>>1), SIZE_MAX, progname);
+		default_size, size_unit, progname);
 	return 255;
 }
 
@@ -203,7 +221,11 @@ int write_file(const uint8_t *data, size_t length, const struct extract_options 
 	}
 
 	if (!options->quiet)
-		printf("Writing %s\n", pathbuf);
+	{
+		double slice_size = 0;
+		char slice_unit = format_size(length, &slice_size);
+		printf("Writing %g%c to %s\n", slice_size, slice_unit, pathbuf);
+	}
 
 	return write_data(pathbuf, data, length);
 }
@@ -232,8 +254,19 @@ int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_op
 	outfilename = malloc(namelen);
 	if (outfilename == NULL)
 	{
-		perror("malloc");
+		perror(options->filepath);
 		goto error;
+	}
+
+	if (!options->quiet)
+	{
+		double slice_size = 0;
+		char slice_unit = format_size(filesize, &slice_size);
+		printf("Extracting 0x%08"PRIx64" ... 0x%08"PRIx64" (%g%c) from %s\n",
+			options->offset,
+			options->offset + filesize,
+			slice_size, slice_unit,
+			options->filepath);
 	}
 
 #define WRITE_FILE(data, length, ext) \
@@ -536,9 +569,11 @@ int parse_size_p(const char *str, uint64_t *size)
 	{
 		case '\0':
 		case 'B':
+		case 'b':
 			break;
 
 		case 'k':
+		case 'K':
 			if (UINT64_MAX / 1024ll < sz)
 			{
 				errno = ERANGE;
@@ -572,6 +607,24 @@ int parse_size_p(const char *str, uint64_t *size)
 				return 0;
 			}
 			sz *= 1024ll * 1024ll * 1024ll * 1024ll;
+			break;
+
+		case 'P':
+			if (UINT64_MAX / (1024ll * 1024ll * 1024ll * 1024ll * 1024ll) < sz)
+			{
+				errno = ERANGE;
+				return 0;
+			}
+			sz *= 1024ll * 1024ll * 1024ll * 1024ll * 1024ll;
+			break;
+
+		case 'E':
+			if (UINT64_MAX / (1024ll * 1024ll * 1024ll * 1024ll * 1024ll * 1024ll) < sz)
+			{
+				errno = ERANGE;
+				return 0;
+			}
+			sz *= 1024ll * 1024ll * 1024ll * 1024ll * 1024ll * 1024ll;
 			break;
 
 		default:
@@ -622,6 +675,50 @@ int parse_offset(const char *str, uint64_t *size)
 		errno = ERANGE;
 	}
 	return 0;
+}
+
+int format_size(uint64_t in, double *out)
+{
+	double size = 0;
+	char unit = 'B';
+
+	if (in >= 1024ll * 1024ll * 1024ll * 1024ll * 1024ll * 1024ll)
+	{
+		size = (double)in / (double)(1024ll * 1024ll * 1024ll * 1024ll * 1024ll * 1024ll);
+		unit = 'E';
+	}
+	else if (in >= 1024ll * 1024ll * 1024ll * 1024ll * 1024ll)
+	{
+		size = (double)in / (double)(1024ll * 1024ll * 1024ll * 1024ll * 1024ll);
+		unit = 'P';
+	}
+	else if (in >= 1024ll * 1024ll * 1024ll * 1024ll)
+	{
+		size = (double)in / (double)(1024ll * 1024ll * 1024ll * 1024ll);
+		unit = 'T';
+	}
+	else if (in >= 1024ll * 1024ll * 1024ll)
+	{
+		size = (double)in / (double)(1024ll * 1024ll * 1024ll);
+		unit = 'G';
+	}
+	else if (in >= 1024ll * 1024ll)
+	{
+		size = (double)in / (double)(1024ll * 1024ll);
+		unit = 'M';
+	}
+	else if (in >= 1024ll)
+	{
+		size = (double)in / (double)1024ll;
+		unit = 'K';
+	}
+	else
+	{
+		size = (double)in;
+	}
+
+	if (out) *out = size;
+	return unit;
 }
 
 const struct option long_options[] = {
@@ -710,13 +807,16 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	if (options.length == 0)
+	{
+		if (!options.quiet)
+			printf("Nothing to extract for 0-length range.\n");
+		return 0;
+	}
+
 	for (i = optind; i < argc; ++ i)
 	{
 		options.filepath = argv[i];
-
-		if (!options.quiet)
-			printf("Extracting %s\n", options.filepath);
-
 		numfiles = 0;
 		if (extract(&options, &numfiles))
 		{
