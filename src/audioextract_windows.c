@@ -2,15 +2,13 @@
 
 #include <windows.h>
 #include <stdio.h>
+#include <inttypes.h>
 
 #ifdef _WIN64
-#	define ZU_FMT "%l64u"
+#	define PRIuz PRIu64
 #else
-#	define ZU_FMT "%u"
+#	define PRIuz PRIu32
 #endif
-
-#pragma GCC diagnostic ignored "-Wformat"
-#pragma GCC diagnostic ignored "-Wformat-extra-args"
 
 static void PrintError(const char *msg)
 {
@@ -67,8 +65,9 @@ int extract(const struct extract_options *options, size_t *numfilesptr)
 		goto cleanup;
 	else if ((ULONGLONG)filesize.QuadPart > (size_t)-1)
 	{
-		fprintf(stderr, "error: cannot map file of this size (file size: %l64u bytes, max. possible: "
-			ZU_FMT " bytes)\n", (ULONGLONG)filesize.QuadPart, (size_t)-1);
+		fprintf(stderr, "error: cannot map file of this size (file size: %"PRIu64
+			" bytes, max. possible: %"PRIuz" bytes)\n",
+			(ULONGLONG)filesize.QuadPart, (size_t)-1);
 		goto error;
 	}
 

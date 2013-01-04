@@ -10,6 +10,7 @@
 
 #include <getopt.h>
 #include <strings.h>
+#include <inttypes.h>
 
 #include "audioextract.h"
 #include "riff.h"
@@ -28,16 +29,14 @@
 
 #if defined(__WINDOWS__) && !defined(__CYGWIN__)
 #	ifdef _WIN64
-#		define ZU_FMT "%l64u"
-#		define EXTRACTED_FILE_FMT "%s%c%s_%08l64x.%s"
-#		pragma GCC diagnostic ignored "-Wformat"
-#		pragma GCC diagnostic ignored "-Wformat-extra-args"
+#		define PRIuz PRIu64
+#		define EXTRACTED_FILE_FMT "%s%c%s_%08"PRIx64".%s"
 #	else
-#		define ZU_FMT "%u"
-#		define EXTRACTED_FILE_FMT "%s%c%s_%08x.%s"
+#		define PRIuz PRIu32
+#		define EXTRACTED_FILE_FMT "%s%c%s_%08"PRIx32".%s"
 #	endif
 #else
-#	define ZU_FMT "%zu"
+#	define PRIuz "zu"
 #	define EXTRACTED_FILE_FMT "%s%c%s_%08zx.%s"
 #endif
 
@@ -166,14 +165,14 @@ int write_file(const uint8_t *data, size_t length, const struct extract_options 
 	if (length < options->minsize)
 	{
 		if (!options->quiet)
-			fprintf(stderr, "Skipped too small (" ZU_FMT ") %s\n", length, pathbuf);
+			fprintf(stderr, "Skipped too small (%"PRIuz ") %s\n", length, pathbuf);
 
 		return 0;
 	}
 	else if (length > options->maxsize)
 	{
 		if (!options->quiet)
-			fprintf(stderr, "Skipped too large (" ZU_FMT ") %s\n", length, pathbuf);
+			fprintf(stderr, "Skipped too large (%"PRIuz") %s\n", length, pathbuf);
 
 		return 0;
 	}
@@ -259,7 +258,7 @@ int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_op
 
 			if (count != 0 && !(options->quiet))
 			{
-				fprintf(stderr, "warning: midi file misses " ZU_FMT " tracks\n", count);
+				fprintf(stderr, "warning: midi file misses %"PRIuz" tracks\n", count);
 			}
 
 			WRITE_FILE(audio_start, ptr - audio_start, "mid");
@@ -512,7 +511,7 @@ int main(int argc, char **argv)
 	size_t failures = 0;
 	size_t sumnumfiles = 0;
 	size_t numfiles = 0;
-	long long tmp = 0;
+	unsigned long long tmp = 0;
 	size_t size = 0;
 	char sizeunit = 'B';
 	char *endptr = NULL;
@@ -555,7 +554,7 @@ int main(int argc, char **argv)
 					return 255;
 				}
 				/* tmp might be bigger than max. size_t on 32bit plattforms */
-				else if ((sizeunit && endptr[1]) || tmp < 0L || (size_t)tmp > (size_t)(-1))
+				else if ((sizeunit && endptr[1]) || (size_t)tmp > (size_t)(-1))
 				{
 					perror("strtoull");
 					fprintf(stderr, "error: Illegal size: \"%s\"\n"
@@ -646,11 +645,11 @@ int main(int argc, char **argv)
 	}
 
 	if (!options.quiet)
-		printf("Extracted " ZU_FMT " file(s).\n", sumnumfiles);
+		printf("Extracted %"PRIuz" file(s).\n", sumnumfiles);
 
 	if (failures > 0)
 	{
-		fprintf(stderr, ZU_FMT " error(s) during extraction.\n", failures);
+		fprintf(stderr, "%"PRIuz" error(s) during extraction.\n", failures);
 		return 1;
 	}
 	return 0;
