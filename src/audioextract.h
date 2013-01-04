@@ -124,8 +124,10 @@ struct file_info {
 struct extract_options {
 	const char *filepath;
 	const char *outdir;
-	size_t minsize;
-	size_t maxsize;
+	size_t   minsize;
+	size_t   maxsize;
+	uint64_t offset;
+	size_t   length;
 	int formats;
 	int quiet;
 };

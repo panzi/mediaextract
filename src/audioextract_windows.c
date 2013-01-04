@@ -47,6 +47,8 @@ int extract(const struct extract_options *options, size_t *numfilesptr)
 	HANDLE hFile = CreateFile(options->filepath, GENERIC_READ,
 		FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	HANDLE hMap = NULL;
+	LARGE_INTEGER offset = { .QuadPart = options->offset };
+	SIZE_T length = 0;
 
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
@@ -61,15 +63,12 @@ int extract(const struct extract_options *options, size_t *numfilesptr)
 		goto error;
 	}
 
-	if (filesize.QuadPart == 0)
+	if (filesize.QuadPart == 0 || options->length == 0)
 		goto cleanup;
-	else if ((ULONGLONG)filesize.QuadPart > (size_t)-1)
-	{
-		fprintf(stderr, "error: cannot map file of this size (file size: %"PRIu64
-			" bytes, max. possible: %"PRIuz" bytes)\n",
-			(ULONGLONG)filesize.QuadPart, (size_t)-1);
-		goto error;
-	}
+	else if ((ULONGLONG)filesize.QuadPart > options->length)
+		length = options->length;
+	else
+		length = filesize.QuadPart;
 
 	hMap = CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
 
@@ -79,7 +78,7 @@ int extract(const struct extract_options *options, size_t *numfilesptr)
 		goto error;
 	}
 
-	filedata = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, filesize.QuadPart);
+	filedata = MapViewOfFile(hMap, FILE_MAP_READ, offset.HighPart, offset.LowPart, length);
 
 	if (filedata == NULL)
 	{

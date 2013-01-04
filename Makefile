@@ -23,7 +23,7 @@ OBJ=\
 	$(BUILDDIR)/asf.o \
 	$(BUILDDIR)/bink.o
 CC=gcc
-LD=gcc
+LD=$(CC)
 COMMON_CFLAGS=-Wall -Werror -Wextra -std=gnu99 -O2 -g $(INCLUDE) $(LIBDIRS) -D_FILE_OFFSET_BITS=64
 CFLAGS=$(COMMON_CFLAGS) -pedantic
 APPNAME=audioextract
@@ -32,7 +32,6 @@ BIN=$(BUILDDIR)/$(APPNAME)
 ifeq ($(TARGET),win32)
 	PLATFORM=windows
 	CC=i686-pc-mingw32-gcc
-	LD=i686-pc-mingw32-gcc
 	CFLAGS=$(COMMON_CFLAGS) -m32
 	LIBS=-lws2_32 -liberty
 	APPNAME=audioextract.exe
@@ -40,7 +39,6 @@ else
 ifeq ($(TARGET),win64)
 	PLATFORM=windows
 	CC=x86_64-w64-mingw32-gcc
-	LD=x86_64-w64-mingw32-gcc
 	CFLAGS=$(COMMON_CFLAGS) -m64
 	LIBS=-lws2_32 -liberty
 	APPNAME=audioextract64.exe
@@ -113,6 +111,7 @@ $(BUILDDIR)/asf.o: src/asf.c src/audioextract.h src/asf.h
 $(BUILDDIR)/bink.o: src/bink.c src/audioextract.h src/bink.h
 	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
 
+ifeq ($(PLATFORM),posix)
 install: $(PREFIX)/bin/$(APPNAME)
 
 $(PREFIX)/bin/$(APPNAME): $(BIN)
@@ -120,6 +119,7 @@ $(PREFIX)/bin/$(APPNAME): $(BIN)
 
 uninstall:
 	rm -f "$(PREFIX)/bin/$(APPNAME)"
+endif
 
 clean:
 	rm -f $(BIN) $(OBJ)

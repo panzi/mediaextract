@@ -6,20 +6,30 @@ Extract audio files that are embedded within other files.
 Setup
 -----
 
+	mkdir build-posix
 	make
 	make install PREFIX=/usr
 
 Cross compile for Windows:
 
+	mkdir build-win32
 	make TARGET=win32
 
 Or:
 
+	mkdir build-win64
 	make TARGET=win64
 
-Note that 32bit binaries can only read files up to about 2 GB because of the
-limitations of the 32bit address space. 64bit binaries can read up to about
-8 EB (8 Exabyte).
+**NOTE:** 32bit binaries can only process 2 GB of a file at once. The rest of
+bigger files will be ignored. You need to run this program several times with
+different `--offset` values to process such a file whole.
+
+This also means that using a 32bit binary extracted files can never be larger
+than 2 GB.
+
+This is because `audioextract` uses `mmap` to read files, wich maps files to
+memory. On 32bit the address space of the main memory is simply not big enough.
+64bit binaries can read up to 8 EB (8 Exabytes) at once.
 
 Usage
 -----
@@ -53,6 +63,24 @@ small, so using the `--min-size` one can hopefully extract only real MPEG files.
 
 	-h, --help             Print this help message.
 	-q, --quiet            Do not print status messages.
+	-o, --output=DIR       Directory where extracted files should be written. (default: ".")
+	-i, --offset=OFFSET    Start processing at byte OFFSET. (default: 0)
+	-n, --length=LENGTH    Only process LENGTH bytes.
+	                       (default and maximum: 9223372036854775807)
+	-m, --min-size=SIZE    Minumum size of extracted files (skip smaller). (default: 0)
+	-x, --max-size=SIZE    Maximum size of extracted files (skip larger).
+	                       (default and maximum: 18446744073709551615)
+
+	                       The last character of OFFSET, LENGTH and SIZE may be one of the
+	                       following:
+	                         B (or none)  for bytes
+	                         k            for Kilobytes (units of 1024 bytes)
+	                         M            for Megabytes (units of 1024 Kilobytes)
+	                         G            for Gigabytes (units of 1024 Megabytes)
+	                         T            for Terabytes (units of 1024 Gigabytes)
+
+	                       The special value "max" selects the maximum alowed value.
+
 	-f, --formats=FORMATS  Comma separated list of formats (file magics) to extract.
 
 	                       Supported formats:
@@ -91,15 +119,3 @@ small, so using the `--min-size` one can hopefully extract only real MPEG files.
 	                       everything except tracker files:
 
 	                         audioextract --formats=all,-tracker data.bin
-
-	-o, --output=DIR       Directory where extracted files should be written. (default: ".")
-	-m, --min-size=SIZE    Minumum size of extracted files (skip smaller). (default: 0)
-	-x, --max-size=SIZE    Maximum size of extracted files (skip larger).
-	                       (default: max. possible size_t value)
-
-	                       The last character of SIZE may be one of the following:
-	                         B (or none)  for bytes
-	                         k            for Kilobytes (units of 1024 bytes)
-	                         M            for Megabytes (units of 1024 Kilobytes)
-	                         G            for Gigabytes (units of 1024 Megabytes)
-	                         T            for Terabytes (units of 1024 Gigabytes)

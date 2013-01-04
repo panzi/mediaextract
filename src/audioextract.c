@@ -11,6 +11,7 @@
 #include <getopt.h>
 #include <strings.h>
 #include <inttypes.h>
+#include <errno.h>
 
 #include "audioextract.h"
 #include "riff.h"
@@ -39,6 +40,8 @@
 #	define PRIuz "zu"
 #	define EXTRACTED_FILE_FMT "%s%c%s_%08zx.%s"
 #endif
+
+#define SEE_HELP "See --help for usage information.\n"
 
 enum fileformat {
 	NONE   =    0,
@@ -73,6 +76,40 @@ int usage(int argc, char **argv)
 		"Options:\n"
 		"  -h, --help             Print this help message.\n"
 		"  -q, --quiet            Do not print status messages.\n"
+		"  -o, --output=DIR       Directory where extracted files should be written. (default: \".\")\n"
+		"  -i, --offset=OFFSET    Start processing at byte OFFSET. (default: 0)\n"
+		"  -n, --length=LENGTH    Only process LENGTH bytes.\n"
+		"                         (default and maximum: %"PRIuz")\n"
+
+#ifndef __LP64__
+
+		"\n"
+		"                         NOTE: This program is compiled as a 32bit binary. This means\n"
+		"                         the maximum amount of bytes that can be processed at once are\n"
+		"                         limited to 2 GB. The rest of bigger files will be ignored. You\n"
+		"                         need to run this program several times with different offsets\n"
+		"                         to process such a file whole.\n"
+		"\n"
+		"                         This also means that extracted files can never be larger than\n"
+		"                         2 GB.\n"
+		"\n"
+
+#endif
+
+		"  -m, --min-size=SIZE    Minumum size of extracted files (skip smaller). (default: 0)\n"
+		"  -x, --max-size=SIZE    Maximum size of extracted files (skip larger).\n"
+		"                         (default and maximum: %"PRIuz")\n"
+		"\n"
+		"                         The last character of OFFSET, LENGTH and SIZE may be one of the\n"
+		"                         following:\n"
+		"                           B (or none)  for bytes\n"
+		"                           k            for Kilobytes (units of 1024 bytes)\n"
+		"                           M            for Megabytes (units of 1024 Kilobytes)\n"
+		"                           G            for Gigabytes (units of 1024 Megabytes)\n"
+		"                           T            for Terabytes (units of 1024 Gigabytes)\n"
+		"\n"
+		"                         The special value \"max\" selects the maximum alowed value.\n"
+		"\n"
 		"  -f, --formats=FORMATS  Comma separated list of formats (file magics) to extract.\n"
 		"\n"
 		"                         Supported formats:\n"
@@ -111,20 +148,8 @@ int usage(int argc, char **argv)
 		"                         everything except tracker files:\n"
 		"\n"
 		"                           %s --formats=all,-tracker data.bin\n"
-		"\n"
-		"  -o, --output=DIR       Directory where extracted files should be written. (default: \".\")\n"
-		"  -m, --min-size=SIZE    Minumum size of extracted files (skip smaller). (default: 0)\n"
-		"  -x, --max-size=SIZE    Maximum size of extracted files (skip larger).\n"
-		"                         (default: max. possible size_t value)\n"
-		"\n"
-		"                         The last character of SIZE may be one of the following:\n"
-		"                           B (or none)  for bytes\n"
-		"                           k            for Kilobytes (units of 1024 bytes)\n"
-		"                           M            for Megabytes (units of 1024 Kilobytes)\n"
-		"                           G            for Gigabytes (units of 1024 Megabytes)\n"
-		"                           T            for Terabytes (units of 1024 Gigabytes)\n"
 		"\n",
-		progname, progname);
+		progname, (SIZE_MAX>>1), SIZE_MAX, progname);
 	return 255;
 }
 
@@ -494,27 +519,131 @@ int parse_formats(const char *formats)
 	return parsed;
 }
 
+int parse_size_p(const char *str, uint64_t *size)
+{
+	char sizeunit = 'B';
+	char *endptr = NULL;
+	uint64_t sz = strtoull(str, &endptr, 10);
+	sizeunit = *endptr;
+
+	if (endptr == optarg || (sizeunit && endptr[1]))
+	{
+		errno = EINVAL;
+		return 0;
+	}
+
+	switch (sizeunit)
+	{
+		case '\0':
+		case 'B':
+			break;
+
+		case 'k':
+			if (UINT64_MAX / 1024ll < sz)
+			{
+				errno = ERANGE;
+				return 0;
+			}
+			sz *= 1024ll;
+			break;
+
+		case 'M':
+			if (UINT64_MAX / (1024ll * 1024ll) < sz)
+			{
+				errno = ERANGE;
+				return 0;
+			}
+			sz *= 1024ll * 1024ll;
+			break;
+
+		case 'G':
+			if (UINT64_MAX / (1024ll * 1024ll * 1024ll) < sz)
+			{
+				errno = ERANGE;
+				return 0;
+			}
+			sz *= 1024ll * 1024ll * 1024ll;
+			break;
+
+		case 'T':
+			if (UINT64_MAX / (1024ll * 1024ll * 1024ll * 1024ll) < sz)
+			{
+				errno = ERANGE;
+				return 0;
+			}
+			sz *= 1024ll * 1024ll * 1024ll * 1024ll;
+			break;
+
+		default:
+			errno = EINVAL;
+			return 0;
+	}
+
+	if (size) *size = sz;
+
+	return 1;
+}
+
+int parse_size(const char *str, size_t *size)
+{
+	uint64_t sz = 0;
+	if (strcasecmp("max", str))
+	{
+		if (size) *size = SIZE_MAX;
+		return 0;
+	}
+	else if (parse_size_p(str, &sz))
+	{
+		/* might be bigger than max. size_t on 32bit plattforms */
+		if (sz <= SIZE_MAX) {
+			if (size) *size = (size_t)sz;
+			return 0;
+		}
+		errno = ERANGE;
+	}
+	return 1;
+}
+
+int parse_offset(const char *str, uint64_t *size)
+{
+	uint64_t sz = 0;
+	if (strcasecmp("max", str))
+	{
+		if (size) *size = INT64_MAX;
+		return 0;
+	}
+	else if (parse_size_p(str, &sz))
+	{
+		/* offset is always signed 64bit (because of compiler flags) */
+		if (sz <= INT64_MAX) {
+			if (size) *size = sz;
+			return 0;
+		}
+		errno = ERANGE;
+	}
+	return 1;
+}
+
 const struct option long_options[] = {
 	{"formats",  required_argument, 0,  'f' },
 	{"output",   required_argument, 0,  'o' },
 	{"help",     no_argument,       0,  'h' },
 	{"quiet",    no_argument,       0,  'q' },
 	{"min-size", required_argument, 0,  'm' },
-	{"max-size", no_argument,       0,  'x' },
-	{0,         0,                  0,  0 }
+	{"max-size", required_argument, 0,  'x' },
+	{"length",   required_argument, 0,  'n' },
+	{"offset",   required_argument, 0,  'i' },
+	{0,         0,                  0,  0   }
 };
 
 int main(int argc, char **argv)
 {
-	struct extract_options options = { NULL, ".", 0, (size_t)-1, DEFAULT_FORMATS, 0 };
+	struct extract_options options = { NULL, ".", 0, SIZE_MAX, 0, (SIZE_MAX>>1), DEFAULT_FORMATS, 0 };
 	int i = 0, opt = 0;
 	size_t failures = 0;
 	size_t sumnumfiles = 0;
 	size_t numfiles = 0;
-	unsigned long long tmp = 0;
 	size_t size = 0;
-	char sizeunit = 'B';
-	char *endptr = NULL;
 
 	while ((opt = getopt_long(argc, argv, "f:o:hqm:x:", long_options, NULL)) != -1)
 	{
@@ -526,8 +655,7 @@ int main(int argc, char **argv)
 					return 255;
 				else if (options.formats == 0)
 				{
-					fprintf(stderr, "error: No formats specified.\n"
-						"See --help for usage information.\n");
+					fprintf(stderr, "error: No formats specified.\n"SEE_HELP);
 					return 255;
 				}
 				break;
@@ -545,85 +673,36 @@ int main(int argc, char **argv)
 
 			case 'x':
 			case 'm':
-				tmp = strtoull(optarg, &endptr, 10);
-				sizeunit = *endptr;
-				if (endptr == optarg)
+			case 'n':
+				if (!parse_size(optarg, &size))
 				{
-					fprintf(stderr, "error: Illegal size: \"%s\"\n"
-						"See --help for usage information.\n", optarg);
+					perror(optarg);
+					fprintf(stderr, SEE_HELP);
 					return 255;
 				}
-				/* tmp might be bigger than max. size_t on 32bit plattforms */
-				else if ((sizeunit && endptr[1]) || (size_t)tmp > (size_t)(-1))
-				{
-					perror("strtoull");
-					fprintf(stderr, "error: Illegal size: \"%s\"\n"
-						"See --help for usage information.\n", optarg);
-					return 255;
-				}
-				size = tmp;
-				switch (sizeunit)
-				{
-					case '\0':
-					case 'B':
-						break;
 
-					case 'k':
-						if ((size_t)(-1) / 1024ll < size)
-						{
-							fprintf(stderr, "error: Illegal size (integer overflow): \"%s\"\n"
-								"See --help for usage information.\n", optarg);
-							return 255;
-						}
-						size *= 1024ll;
-						break;
-
-					case 'M':
-						if ((size_t)(-1) / (1024ll * 1024ll) < size)
-						{
-							fprintf(stderr, "error: Illegal size (integer overflow): \"%s\"\n"
-								"See --help for usage information.\n", optarg);
-							return 255;
-						}
-						size *= 1024ll * 1024ll;
-						break;
-
-					case 'G':
-						if ((size_t)(-1) / (1024ll * 1024ll * 1024ll) < size)
-						{
-							fprintf(stderr, "error: Illegal size (integer overflow): \"%s\"\n"
-								"See --help for usage information.\n", optarg);
-							return 255;
-						}
-						size *= 1024ll * 1024ll * 1024ll;
-						break;
-
-					case 'T':
-						if ((size_t)(-1) / (1024ll * 1024ll * 1024ll * 1024ll) < size)
-						{
-							fprintf(stderr, "error: Illegal size (integer overflow): \"%s\"\n"
-								"See --help for usage information.\n", optarg);
-							return 255;
-						}
-						size *= 1024ll * 1024ll * 1024ll * 1024ll;
-						break;
-
-					default:
-						fprintf(stderr, "error: Illegal size: \"%s\"\n"
-							"See --help for usage information.\n", optarg);
-						return 255;
-				}
 				if (opt == 'm')
 					options.minsize = size;
-				else
+				else if (opt == 'x')
 					options.maxsize = size;
+				else
+					options.length  = size;
+				break;
+
+			case 'i':
+				if (!parse_offset(optarg, &(options.offset)))
+				{
+					perror(optarg);
+					fprintf(stderr, SEE_HELP);
+					return 255;
+				}
 				break;
 		}
 	}
 
 	if (optind >= argc)
 	{
-		fprintf(stderr, "error: Not enough arguments.\nSee --help for usage information.\n");
+		fprintf(stderr, "error: Not enough arguments.\n"SEE_HELP);
 		return 1;
 	}
 
