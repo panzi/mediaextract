@@ -5,11 +5,12 @@
 
 #ifdef _WIN64
 #	define ZU_FMT "%l64u"
-#	pragma GCC diagnostic ignored "-Wformat"
-#	pragma GCC diagnostic ignored "-Wformat-extra-args"
 #else
 #	define ZU_FMT "%u"
 #endif
+
+#pragma GCC diagnostic ignored "-Wformat"
+#pragma GCC diagnostic ignored "-Wformat-extra-args"
 
 static void PrintError(const char *msg)
 {
