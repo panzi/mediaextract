@@ -70,15 +70,15 @@ static int parse_formats(const char *formats);
 static int parse_size_p(const char *str, uint64_t *size);
 static int parse_size(const char *str, size_t *size);
 static int parse_offset(const char *str, uint64_t *size);
-static int format_size(uint64_t in, double *out);
+static const char *format_size(uint64_t in, double *out);
 
 static int usage(int argc, char **argv)
 {
 	const char *progname = argc <= 0 ? "audioextract" : argv[0];
 	double default_length = 0;
 	double default_size   = 0;
-	char   length_unit = format_size((SIZE_MAX>>1), &default_length);
-	char   size_unit   = format_size(SIZE_MAX,      &default_size);
+	const char *length_unit = format_size((SIZE_MAX>>1), &default_length);
+	const char *size_unit   = format_size(SIZE_MAX,      &default_size);
 
 	fprintf(stderr,
 		"audioextract - extracts audio files that are embedded within other files\n"
@@ -92,7 +92,7 @@ static int usage(int argc, char **argv)
 		"  -o, --output=DIR       Directory where extracted files should be written. (default: \".\")\n"
 		"  -i, --offset=OFFSET    Start processing at byte OFFSET. (default: 0)\n"
 		"  -n, --length=LENGTH    Only process LENGTH bytes.\n"
-		"                         (default and maximum: %g%c)\n",
+		"                         (default and maximum: %g %s)\n",
 		progname, default_length, length_unit);
 
 #if !defined(__LP64__) && !defined(_WIN64)
@@ -114,7 +114,7 @@ static int usage(int argc, char **argv)
 	fprintf(stderr,
 		"  -m, --min-size=SIZE    Minumum size of extracted files (skip smaller). (default: 0)\n"
 		"  -x, --max-size=SIZE    Maximum size of extracted files (skip larger).\n"
-		"                         (default and maximum: %g%c)\n"
+		"                         (default and maximum: %g %s)\n"
 		"\n"
 		"                         The last character of OFFSET, LENGTH and SIZE may be one of the\n"
 		"                         following:\n"
@@ -223,8 +223,8 @@ int write_file(const uint8_t *data, size_t length, const struct extract_options 
 	if (!options->quiet)
 	{
 		double slice_size = 0;
-		char slice_unit = format_size(length, &slice_size);
-		printf("Writing %g%c to %s\n", slice_size, slice_unit, pathbuf);
+		const char *slice_unit = format_size(length, &slice_size);
+		printf("Writing %g %s to %s\n", slice_size, slice_unit, pathbuf);
 	}
 
 	return write_data(pathbuf, data, length);
@@ -261,8 +261,8 @@ int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_op
 	if (!options->quiet)
 	{
 		double slice_size = 0;
-		char slice_unit = format_size(filesize, &slice_size);
-		printf("Extracting 0x%08"PRIx64" ... 0x%08"PRIx64" (%g%c) from %s\n",
+		const char *slice_unit = format_size(filesize, &slice_size);
+		printf("Extracting 0x%08"PRIx64" ... 0x%08"PRIx64" (%g %s) from %s\n",
 			options->offset,
 			options->offset + filesize,
 			slice_size, slice_unit,
@@ -557,22 +557,51 @@ int parse_size_p(const char *str, uint64_t *size)
 	char sizeunit = 'B';
 	char *endptr = NULL;
 	uint64_t sz = strtoull(str, &endptr, 10);
-	sizeunit = *endptr;
 
-	if (endptr == optarg || (sizeunit && endptr[1]))
+	if (endptr == optarg)
 	{
 		errno = EINVAL;
 		return 0;
 	}
 
-	switch (sizeunit)
+	// skip whitespace
+	while (isspace(*endptr)) ++ endptr;
+
+	sizeunit = *endptr;
+	// if something follows
+	if (sizeunit)
+	{
+		const char *suffix = ++ endptr;
+		
+		// find end of word
+		while (*endptr && !isspace(*endptr)) ++ endptr;
+
+		// allow suffix "B" and "iB" for units other than "B"
+		if ((sizeunit == 'B' && endptr != suffix) || (
+			strncasecmp("B",  suffix, endptr - suffix) != 0 &&
+		    strncasecmp("iB", suffix, endptr - suffix) != 0))
+		{
+			errno = EINVAL;
+			return 0;
+		}
+
+		// skip whitespace
+		while (isspace(*endptr)) ++ endptr;
+
+		// but now there may not be anything more
+		if (*endptr)
+		{
+			errno = EINVAL;
+			return 0;
+		}
+	}
+
+	switch (toupper(sizeunit))
 	{
 		case '\0':
 		case 'B':
-		case 'b':
 			break;
 
-		case 'k':
 		case 'K':
 			if (UINT64_MAX / 1024ll < sz)
 			{
@@ -677,40 +706,40 @@ int parse_offset(const char *str, uint64_t *size)
 	return 0;
 }
 
-int format_size(uint64_t in, double *out)
+const char *format_size(uint64_t in, double *out)
 {
 	double size = 0;
-	char unit = 'B';
+	const char *unit = "B";
 
 	if (in >= 1024ll * 1024ll * 1024ll * 1024ll * 1024ll * 1024ll)
 	{
 		size = (double)in / (double)(1024ll * 1024ll * 1024ll * 1024ll * 1024ll * 1024ll);
-		unit = 'E';
+		unit = "EB";
 	}
 	else if (in >= 1024ll * 1024ll * 1024ll * 1024ll * 1024ll)
 	{
 		size = (double)in / (double)(1024ll * 1024ll * 1024ll * 1024ll * 1024ll);
-		unit = 'P';
+		unit = "PB";
 	}
 	else if (in >= 1024ll * 1024ll * 1024ll * 1024ll)
 	{
 		size = (double)in / (double)(1024ll * 1024ll * 1024ll * 1024ll);
-		unit = 'T';
+		unit = "TB";
 	}
 	else if (in >= 1024ll * 1024ll * 1024ll)
 	{
 		size = (double)in / (double)(1024ll * 1024ll * 1024ll);
-		unit = 'G';
+		unit = "GB";
 	}
 	else if (in >= 1024ll * 1024ll)
 	{
 		size = (double)in / (double)(1024ll * 1024ll);
-		unit = 'M';
+		unit = "MB";
 	}
 	else if (in >= 1024ll)
 	{
 		size = (double)in / (double)1024ll;
-		unit = 'K';
+		unit = "kB";
 	}
 	else
 	{
