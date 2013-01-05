@@ -12,6 +12,7 @@
 #include <strings.h>
 #include <inttypes.h>
 #include <errno.h>
+#include <ctype.h>
 
 #include "audioextract.h"
 #include "riff.h"
@@ -89,6 +90,7 @@ static int usage(int argc, char **argv)
 		"Options:\n"
 		"  -h, --help             Print this help message.\n"
 		"  -q, --quiet            Do not print status messages.\n"
+		"  -s, --simulate         Don't write any output files.\n"
 		"  -o, --output=DIR       Directory where extracted files should be written. (default: \".\")\n"
 		"  -i, --offset=OFFSET    Start processing at byte OFFSET. (default: 0)\n"
 		"  -n, --length=LENGTH    Only process LENGTH bytes.\n"
@@ -203,19 +205,27 @@ const char *basename(const char *path)
 int write_file(const uint8_t *data, size_t length, const struct extract_options *options,
                const char *filename, size_t offset, const char *ext, char *pathbuf, size_t pathbuflen)
 {
+	double sz = 0;
+	const char *sz_unit = NULL;
 	snprintf(pathbuf, pathbuflen, EXTRACTED_FILE_FMT, options->outdir, PATH_SEP, filename, offset, ext);
 	
 	if (length < options->minsize)
 	{
 		if (!options->quiet)
-			fprintf(stderr, "Skipped too small (%"PRIuz ") %s\n", length, pathbuf);
+		{
+			sz_unit = format_size(length, &sz);
+			fprintf(stderr, "Skipped too small (%g %s) %s\n", sz, sz_unit, pathbuf);
+		}
 
 		return 0;
 	}
 	else if (length > options->maxsize)
 	{
 		if (!options->quiet)
-			fprintf(stderr, "Skipped too large (%"PRIuz") %s\n", length, pathbuf);
+		{
+			sz_unit = format_size(length, &sz);
+			fprintf(stderr, "Skipped too large (%g %s) %s\n", sz, sz_unit, pathbuf);
+		}
 
 		return 0;
 	}
@@ -227,14 +237,18 @@ int write_file(const uint8_t *data, size_t length, const struct extract_options 
 		printf("Writing %g %s to %s\n", slice_size, slice_unit, pathbuf);
 	}
 
+	if (options->simulate)
+		return 1;
+
 	return write_data(pathbuf, data, length);
 }
 
-int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_options *options, size_t *numfilesptr)
+int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_options *options, size_t *numfilesptr, size_t *sumsizeptr)
 {
 	const uint8_t *ptr = NULL, *end = NULL;
 	enum fileformat format = NONE;
 
+	size_t sumsize = 0;
 	size_t length = 0;
 	int success = 1;
 	int formats = options->formats;
@@ -273,6 +287,7 @@ int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_op
 	if (write_file((data), length, options, filename, (size_t)((data) - filedata), (ext), outfilename, namelen)) \
 	{ \
 		++ numfiles; \
+		sumsize += length; \
 	}
 	
 	ptr = filedata;
@@ -438,6 +453,9 @@ cleanup:
 
 	if (numfilesptr)
 		*numfilesptr = numfiles;
+	
+	if (sumsizeptr)
+		*sumsizeptr = sumsize;
 
 	return success;
 }
@@ -751,27 +769,29 @@ const char *format_size(uint64_t in, double *out)
 }
 
 const struct option long_options[] = {
-	{"formats",  required_argument, 0,  'f' },
-	{"output",   required_argument, 0,  'o' },
-	{"help",     no_argument,       0,  'h' },
-	{"quiet",    no_argument,       0,  'q' },
-	{"min-size", required_argument, 0,  'm' },
-	{"max-size", required_argument, 0,  'x' },
-	{"length",   required_argument, 0,  'n' },
-	{"offset",   required_argument, 0,  'i' },
-	{0,         0,                  0,  0   }
+	{"formats",  required_argument, 0, 'f' },
+	{"output",   required_argument, 0, 'o' },
+	{"help",     no_argument,       0, 'h' },
+	{"quiet",    no_argument,       0, 'q' },
+	{"min-size", required_argument, 0, 'm' },
+	{"max-size", required_argument, 0, 'x' },
+	{"length",   required_argument, 0, 'n' },
+	{"offset",   required_argument, 0, 'i' },
+	{"simulate", no_argument,       0, 's' },
+	{0,          0,                 0,  0  }
 };
 
 int main(int argc, char **argv)
 {
-	struct extract_options options = { NULL, ".", 0, SIZE_MAX, 0, (SIZE_MAX>>1), DEFAULT_FORMATS, 0 };
+	struct extract_options options = { NULL, ".", 0, SIZE_MAX, 0, (SIZE_MAX>>1), DEFAULT_FORMATS, 0, 0 };
 	int i = 0, opt = 0;
 	size_t failures = 0;
 	size_t sumnumfiles = 0;
 	size_t numfiles = 0;
 	size_t size = 0;
+	size_t sumsize = 0;
 
-	while ((opt = getopt_long(argc, argv, "f:o:hqm:x:n:i:", long_options, NULL)) != -1)
+	while ((opt = getopt_long(argc, argv, "f:o:hqm:x:n:i:s", long_options, NULL)) != -1)
 	{
 		switch (opt)
 		{
@@ -824,6 +844,10 @@ int main(int argc, char **argv)
 				}
 				break;
 
+			case 's':
+				options.simulate = 1;
+				break;
+
 			default:
 				fprintf(stderr, SEE_HELP);
 				return 255;
@@ -847,9 +871,11 @@ int main(int argc, char **argv)
 	{
 		options.filepath = argv[i];
 		numfiles = 0;
-		if (extract(&options, &numfiles))
+		size = 0;
+		if (extract(&options, &numfiles, &size))
 		{
 			sumnumfiles += numfiles;
+			sumsize += size;
 		}
 		else {
 			fprintf(stderr, "Error processing file: %s\n", options.filepath);
@@ -858,7 +884,14 @@ int main(int argc, char **argv)
 	}
 
 	if (!options.quiet)
-		printf("Extracted %"PRIuz" file(s).\n", sumnumfiles);
+	{
+		double sz = 0;
+		const char *sz_unit = format_size(sumsize, &sz);
+		if (sumnumfiles == 1)
+			printf("Extracted 1 file of %g %s size.\n", sz, sz_unit);
+		else
+			printf("Extracted %"PRIuz" files of %g %s size.\n", sumnumfiles, sz, sz_unit);
+	}
 
 	if (failures > 0)
 	{

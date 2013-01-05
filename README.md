@@ -63,13 +63,14 @@ small, so using the `--min-size` one can hopefully extract only real MPEG files.
 
 	-h, --help             Print this help message.
 	-q, --quiet            Do not print status messages.
+	-s, --simulate         Don't write any output files.
 	-o, --output=DIR       Directory where extracted files should be written. (default: ".")
 	-i, --offset=OFFSET    Start processing at byte OFFSET. (default: 0)
 	-n, --length=LENGTH    Only process LENGTH bytes.
-	                       (default and maximum: 8E)
+	                       (default and maximum: 8 EB)
 	-m, --min-size=SIZE    Minumum size of extracted files (skip smaller). (default: 0)
 	-x, --max-size=SIZE    Maximum size of extracted files (skip larger).
-	                       (default and maximum: 16E)
+	                       (default and maximum: 16 EB)
 
 	                       The last character of OFFSET, LENGTH and SIZE may be one of the
 	                       following:

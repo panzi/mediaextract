@@ -130,12 +130,15 @@ struct extract_options {
 	size_t   length;
 	int formats;
 	int quiet;
+	int simulate;
 };
 
 int probalby_mod_text(const uint8_t *str, size_t length);
-int extract(const struct extract_options *options, size_t *numfilesptr);
+int extract(const struct extract_options *options,
+            size_t *numfilesptr, size_t *sumsizeptr);
 int do_extract(const uint8_t *filedata, size_t filesize,
-               const struct extract_options *options, size_t *numfilesptr);
+               const struct extract_options *options,
+               size_t *numfilesptr, size_t *sumsizeptr);
 int write_data(const char *filename, const uint8_t *data, size_t length);
 
 #endif /* AUDIOEXTRACT_H__ */

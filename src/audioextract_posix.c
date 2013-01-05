@@ -21,7 +21,7 @@ int write_data(const char *filename, const uint8_t *data, size_t length)
 	return 1;
 }
 
-int extract(const struct extract_options *options, size_t *numfilesptr)
+int extract(const struct extract_options *options, size_t *numfilesptr, size_t *sumsizeptr)
 {
 	struct stat statdata;
 	size_t length = 0;
@@ -76,7 +76,7 @@ int extract(const struct extract_options *options, size_t *numfilesptr)
 		goto error;
 	}
 
-	if (do_extract(filedata, length, options, numfilesptr))
+	if (do_extract(filedata, length, options, numfilesptr, sumsizeptr))
 		goto cleanup;
 
 error:
