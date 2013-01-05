@@ -32,14 +32,14 @@ BIN=$(BUILDDIR)/$(APPNAME)
 ifeq ($(TARGET),win32)
 	PLATFORM=windows
 	CC=i686-pc-mingw32-gcc
-	CFLAGS=$(COMMON_CFLAGS) -m32
+	CFLAGS=$(COMMON_CFLAGS) -m32 -DWINVER=0x500
 	LIBS=-lws2_32 -liberty
 	APPNAME=audioextract.exe
 else
 ifeq ($(TARGET),win64)
 	PLATFORM=windows
 	CC=x86_64-w64-mingw32-gcc
-	CFLAGS=$(COMMON_CFLAGS) -m64
+	CFLAGS=$(COMMON_CFLAGS) -m64 -DWINVER=0x500
 	LIBS=-lws2_32 -liberty
 	APPNAME=audioextract64.exe
 endif

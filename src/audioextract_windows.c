@@ -56,8 +56,7 @@ int extract(const struct extract_options *options, size_t *numfilesptr)
 		goto error;
 	}
 
-	filesize.LowPart = GetFileSize(hFile, (LPDWORD)&(filesize.HighPart));
-	if (filesize.LowPart == INVALID_FILE_SIZE)
+	if (!GetFileSizeEx(hFile, &filesize))
 	{
 		PrintError(options->filepath);
 		goto error;
@@ -67,6 +66,13 @@ int extract(const struct extract_options *options, size_t *numfilesptr)
 	{
 		printf("%s: Skipping empty file.\n", options->filepath);
 		goto cleanup;
+	}
+	else if (filesize.QuadPart < 0)
+	{
+		fprintf(stderr, "%s: File has negative size (%"PRIi64")?\n",
+			options->filepath,
+			filesize.QuadPart);
+		goto error;
 	}
 	else if ((uint64_t)filesize.QuadPart <= options->offset)
 	{
@@ -93,7 +99,7 @@ int extract(const struct extract_options *options, size_t *numfilesptr)
 		goto error;
 	}
 
-	if (do_extract(filedata, filesize.QuadPart, options, numfilesptr))
+	if (do_extract(filedata, length, options, numfilesptr))
 	{
 		goto cleanup;
 	}
