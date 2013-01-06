@@ -230,12 +230,9 @@ int write_file(const uint8_t *data, size_t length, const struct extract_options 
 		return 0;
 	}
 
-	if (!options->quiet)
-	{
-		double slice_size = 0;
-		const char *slice_unit = format_size(length, &slice_size);
-		printf("Writing %g %s to %s\n", slice_size, slice_unit, pathbuf);
-	}
+	double slice_size = 0;
+	const char *slice_unit = format_size(length, &slice_size);
+	printf("Writing %g %s to %s\n", slice_size, slice_unit, pathbuf);
 
 	if (options->simulate)
 		return 1;
@@ -883,15 +880,12 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (!options.quiet)
-	{
-		double sz = 0;
-		const char *sz_unit = format_size(sumsize, &sz);
-		if (sumnumfiles == 1)
-			printf("Extracted 1 file of %g %s size.\n", sz, sz_unit);
-		else
-			printf("Extracted %"PRIuz" files of %g %s size.\n", sumnumfiles, sz, sz_unit);
-	}
+	double sz = 0;
+	const char *sz_unit = format_size(sumsize, &sz);
+	if (sumnumfiles == 1)
+		printf("Extracted 1 file of %g %s size.\n", sz, sz_unit);
+	else
+		printf("Extracted %"PRIuz" files of %g %s size.\n", sumnumfiles, sz, sz_unit);
 
 	if (failures > 0)
 	{
