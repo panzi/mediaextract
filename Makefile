@@ -46,6 +46,7 @@ ifeq ($(TARGET),win64)
 	CFLAGS=$(WINDOWS_CFLAGS) -m64
 	LDFLAGS=-m64
 	LIBS=$(WINDOWS_LIBS)
+	APPNAME=audioextract.exe
 else
 ifeq ($(TARGET),linux32)
 	CFLAGS=$(POSIX_CFLAGS) -m32
