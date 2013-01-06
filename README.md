@@ -6,18 +6,18 @@ Extract audio files that are embedded within other files.
 Setup
 -----
 
-	mkdir build-posix
+	make builddir
 	make
 	make install PREFIX=/usr
 
-Cross compile for Windows:
+Cross compile for Windows (uses `i686-pc-mingw32-gcc`):
 
-	mkdir build-win32
+	make TARGET=win32 builddir
 	make TARGET=win32
 
-Or:
+Or (uses `x86_64-w64-mingw32-gcc`):
 
-	mkdir build-win64
+	make TARGET=win64 builddir
 	make TARGET=win64
 
 **NOTE:** 32bit binaries can only process 2 GB of a file at once. The rest of
@@ -28,8 +28,8 @@ This also means that using a 32bit binary extracted files can never be larger
 than 2 GB.
 
 This is because `audioextract` uses `mmap` to read files, wich maps files to
-memory. On 32bit the address space of the main memory is simply not big enough.
-64bit binaries can read up to 8 EB (8 Exabytes) at once.
+memory. On 32bit platforms the address space of the main memory is simply not
+big enough. 64bit binaries can read up to 8 EB (8 Exabytes) at once.
 
 Usage
 -----

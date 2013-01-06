@@ -1,5 +1,5 @@
 PREFIX=/usr/local
-TARGET=posix
+TARGET=$(shell uname|tr '[A-Z]' '[a-z]')$(shell getconf LONG_BIT)
 INCLUDE=
 LIBDIRS=
 LIBS=
@@ -25,29 +25,48 @@ OBJ=\
 CC=gcc
 LD=$(CC)
 COMMON_CFLAGS=-Wall -Werror -Wextra -std=gnu99 -O2 -g $(INCLUDE) $(LIBDIRS) -D_FILE_OFFSET_BITS=64
-CFLAGS=$(COMMON_CFLAGS) -pedantic
+POSIX_CFLAGS=$(COMMON_CFLAGS) -pedantic
+CFLAGS=$(POSIX_CFLAGS)
+WINDOWS_CFLAGS=$(COMMON_CFLAGS) -DWINVER=0x500
+WINDOWS_LIBS=-lws2_32 -liberty
 APPNAME=audioextract
 BIN=$(BUILDDIR)/$(APPNAME)
 
 ifeq ($(TARGET),win32)
 	PLATFORM=windows
 	CC=i686-pc-mingw32-gcc
-	CFLAGS=$(COMMON_CFLAGS) -m32 -DWINVER=0x500
-	LIBS=-lws2_32 -liberty
+	CFLAGS=$(WINDOWS_CFLAGS) -m32
+	LDFLAGS=-m32
+	LIBS=$(WINDOWS_LIBS)
 	APPNAME=audioextract.exe
 else
 ifeq ($(TARGET),win64)
 	PLATFORM=windows
 	CC=x86_64-w64-mingw32-gcc
-	CFLAGS=$(COMMON_CFLAGS) -m64 -DWINVER=0x500
-	LIBS=-lws2_32 -liberty
-	APPNAME=audioextract64.exe
+	CFLAGS=$(WINDOWS_CFLAGS) -m64
+	LDFLAGS=-m64
+	LIBS=$(WINDOWS_LIBS)
+else
+ifeq ($(TARGET),linux32)
+	CFLAGS=$(POSIX_CFLAGS) -m32
+	LDFLAGS=-m32
+else
+ifeq ($(TARGET),linux64)
+	CFLAGS=$(POSIX_CFLAGS) -m64
+	LDFLAGS=-m64
+endif
+endif
 endif
 endif
 
-.PHONY: all clean install uninstall
+.PHONY: all clean install uninstall builddir
 
 all: $(BIN)
+
+builddir: $(BUILDDIR)
+
+$(BUILDDIR):
+	mkdir -p $(BUILDDIR)
 
 $(BIN): $(OBJ)
 	$(LD) $(LIBDIRS) $(LDFLAGS) $(OBJ) -o $@ $(LIBS)
