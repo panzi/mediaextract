@@ -1,8 +1,10 @@
 #include "ogg.h"
 
-int ogg_ispage(const uint8_t *data, size_t input_len, size_t *lengthptr)
+/* see: http://www.xiph.org/ogg/doc/framing.html */
+
+int ogg_ispage(const uint8_t *data, size_t input_len, struct ogg_info *pageinfo)
 {
-	unsigned char nsegs;
+	uint8_t nsegs;
 	size_t length, i;
 	const uint8_t *segs = data + OGG_HEADER_SIZE;
 
@@ -18,11 +20,11 @@ int ogg_ispage(const uint8_t *data, size_t input_len, size_t *lengthptr)
 	if (data[4] != 0x00)
 		return 0;
 
-	/* header type flag */
+	/* valid header type flags */
 	if ((data[5] & ~7) != 0x00)
 		return 0;
 	
-	nsegs = data[26];
+	nsegs  = data[26];
 	length = OGG_HEADER_SIZE + nsegs;
 
 	/* segment sizes fully available? */
@@ -38,8 +40,11 @@ int ogg_ispage(const uint8_t *data, size_t input_len, size_t *lengthptr)
 	if (input_len < length)
 		return 0;
 	
-	if (lengthptr)
-		*lengthptr = length;
+	if (pageinfo)
+	{
+		pageinfo->length = length;
+		pageinfo->pageno = le32toh(*(const uint32_t *)(data + 18));
+	}
 
 	/* I think we can reasonably assume it is a real page now */
 	return 1;

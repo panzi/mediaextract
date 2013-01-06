@@ -257,6 +257,7 @@ int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_op
 	size_t namelen = strlen(options->outdir) + strlen(filename) + 25;
 
 	struct mpg123_info mpg123;
+	struct ogg_info ogg;
 	struct file_info info = {0, 0};
 	size_t count = 0; // e.g. for tracks count in midi
 	const uint8_t *audio_start = NULL;
@@ -293,14 +294,21 @@ int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_op
 	{
 		uint32_t magic = MAGIC(ptr);
 		
-		if (formats & OGG && magic == OGG_MAGIC && ogg_ispage(ptr, input_len, &length) && ogg_isinitial(ptr))
+		if (formats & OGG && magic == OGG_MAGIC && ogg_ispage(ptr, input_len, &ogg))
 		{
+			uint32_t pageno = ogg.pageno;
 			audio_start = ptr;
 
-			do {
-				ptr += length;
-			} while (ogg_ispage(ptr, (size_t)(end - ptr), &length));
-					
+			for (;;)
+			{
+				ptr += ogg.length;
+				
+				if (!ogg_ispage(ptr, (size_t)(end - ptr), &ogg) || ogg.pageno <= pageno)
+					break;
+
+				pageno = ogg.pageno;
+			}
+
 			WRITE_FILE(audio_start, ptr - audio_start, "ogg");
 			continue;
 		}

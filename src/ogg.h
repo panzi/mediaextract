@@ -5,8 +5,12 @@
 
 #define OGG_MAGIC MAGIC("OggS")
 #define OGG_HEADER_SIZE 27
-#define ogg_isinitial(data) ((data)[5] & 2)
 
-int ogg_ispage(const uint8_t *data, size_t input_len, size_t *lengthptr);
+struct ogg_info {
+	size_t   length;
+	uint32_t pageno;
+};
+
+int ogg_ispage(const uint8_t *data, size_t input_len, struct ogg_info *pageinfo);
 
 #endif /* AUDIOEXTRACT_OGG_H__ */
