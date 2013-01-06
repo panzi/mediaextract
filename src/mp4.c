@@ -5,7 +5,7 @@ struct ftyp {
 	const char *ext;
 };
 
-struct ftyp mp4_ftyps[] = {
+static const struct ftyp mp4_ftyps[] = {
 	{ "3g2a", "3g2" },
 	{ "3g2b", "3g2" },
 	{ "3g2c", "3g2" },
@@ -95,8 +95,8 @@ struct ftyp mp4_ftyps[] = {
 	{ 0     , 0 }
 };
 
-const char *mp4_atom_types[] = {
-	"ftyp", "moov", "mdat", "free", "skip", "wide", "pnot", 0
+static const char *mp4_bodyatom_types[] = {
+	"moov", "mdat", "free", "skip", "wide", "pnot", 0
 };
 
 struct mp4_atom_head {
@@ -112,9 +112,9 @@ struct mp4_type_atom {
 	uint32_t compatible_brands[];
 };
 
-const char *mp4_find_ext(uint32_t brand)
+static const char *mp4_find_ext(uint32_t brand)
 {
-	for (struct ftyp *ftyp = mp4_ftyps; ftyp->brand; ++ ftyp)
+	for (const struct ftyp *ftyp = mp4_ftyps; ftyp->brand; ++ ftyp)
 	{
 		if (MAGIC(ftyp->brand) == brand)
 		{
@@ -125,11 +125,11 @@ const char *mp4_find_ext(uint32_t brand)
 	return NULL;
 }
 
-int mp4_isatom_type(uint32_t type)
+static int mp4_isbodyatom_type(uint32_t type)
 {
-	for (size_t i = 0; mp4_atom_types[i]; ++ i)
+	for (const char **atom = mp4_bodyatom_types; *atom; ++ atom)
 	{
-		if (MAGIC(mp4_atom_types[i]) == type)
+		if (MAGIC(atom) == type)
 		{
 			return 1;
 		}
@@ -147,7 +147,7 @@ int mp4_isfile(const uint8_t *data, size_t input_len, struct file_info *info)
 
 	size_t length = be32toh(type->size);
 
-	if (length < MP4_HEADER_SIZE)
+	if (length < MP4_HEADER_SIZE || input_len < length)
 		return 0;
 
 	ext = mp4_find_ext(type->major_brand);
@@ -169,11 +169,13 @@ int mp4_isfile(const uint8_t *data, size_t input_len, struct file_info *info)
 	if (!ext)
 		return 0;
 
+	/* Now I'm fairly sure it is a mp4 file, so if it now ends
+	 * prematurely I assume it is a truncated mp4 file. */
 	while (length < input_len - 8)
 	{
 		const struct mp4_atom_head *head = (const struct mp4_atom_head *)(data + length);
 		size_t size = be32toh(head->size);
-		if (size < 8 || !mp4_isatom_type(head->type) || (size_t)(-1) - size < length)
+		if (size < 8 || !mp4_isbodyatom_type(head->type) || (size_t)(-1) - size < length)
 			break;
 		length += size;
 		if (length > input_len) length = input_len;
