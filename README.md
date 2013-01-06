@@ -55,9 +55,10 @@ data file the audio file was found.
 Extract .mp3, .mp2 and .mp1 files (with or without ID3v2 tags). The `mpg123`
 option yields a lot of false positives because there is no nice way to
 unambigiously detect MPEG files. These false positives are however usually very
-small, so using the `--min-size` one can hopefully extract only real MPEG files.
+small, so using the `--min-size` option one can hopefully extract only real MPEG
+files.
 
-	audioextract -f id3v2,mpg123 --min-size 100k -o ~/Music data.bin
+	audioextract -f id3v2,mpg123 --min-size=100k -o ~/Music data.bin
 
 ### Options
 
