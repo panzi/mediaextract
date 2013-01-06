@@ -91,12 +91,12 @@ const uint8_t *riff_match(const uint8_t *data, size_t size,
 
 		uint32_t *counts = (uint32_t *)calloc(count, sizeof(uint32_t));
 
-		if (!count) {
-			perror("during parsing RIFF structure");
+		if (!counts) {
+			perror("parsing RIFF structure");
 			return NULL;
 		}
 
-		const uint8_t *end = data + size;
+		const uint8_t *end = data + chunk_size + 8;
 		for (const uint8_t *subdata = data + 12; subdata < end;)
 		{
 			size_t subsize = (size_t)(end - subdata);
