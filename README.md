@@ -38,7 +38,7 @@ Usage
 
 ### Examples
 
-Extract .wav, .aif and .ogg (might actually be .flac, .opus or .ogm) files from
+Extract .wav, .aif and .ogg (might actually be .ogg, .opus or .ogm) files from
 the file `data.bin` and store them in the `~/Music` directory.
 
 	audioextract -f wave,ogg -o ~/Music data.bin
