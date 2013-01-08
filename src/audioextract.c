@@ -28,41 +28,43 @@
 #include "it.h"
 #include "asf.h"
 #include "bink.h"
+#include "au.h"
 
 #if defined(__WINDOWS__) && !defined(__CYGWIN__)
 #	ifdef _WIN64
-#		define PRIuz PRIu64
-#		define EXTRACTED_FILE_FMT "%s%c%s_%08"PRIx64".%s"
+#		define PRIzu PRIu64
+#		define PRIzx PRIx64
 #	else
-#		define PRIuz PRIu32
-#		define EXTRACTED_FILE_FMT "%s%c%s_%08"PRIx32".%s"
+#		define PRIzu PRIu32
+#		define PRIzx PRIx32
 #	endif
 #else
-#	define PRIuz "zu"
-#	define EXTRACTED_FILE_FMT "%s%c%s_%08zx.%s"
+#	define PRIzu "zu"
+#	define PRIzx "zx"
 #endif
 
 #define SEE_HELP "See --help for usage information.\n"
 
 enum fileformat {
-	NONE   =    0,
-	OGG    =    1,
-	RIFF   =    2,
-	AIFF   =    4,
-	MPG123 =    8,
-	ID3v2  =   16,
-	MP4    =   32,
-	MIDI   =   64,
-	MOD    =  128,
-	S3M    =  256,
-	IT     =  512,
-	XM     = 1024,
-	ASF    = 2048,
-	BINK   = 4096
+	NONE   =    0x0,
+	OGG    =    0x1,
+	RIFF   =    0x2,
+	AIFF   =    0x4,
+	MPG123 =    0x8,
+	ID3v2  =   0x10,
+	MP4    =   0x20,
+	MIDI   =   0x40,
+	MOD    =   0x80,
+	S3M    =  0x100,
+	IT     =  0x200,
+	XM     =  0x400,
+	ASF    =  0x800,
+	BINK   = 0x1000,
+	AU     = 0x2000
 };
 
-#define ALL_FORMATS     (OGG | RIFF | AIFF | MPG123 | MP4 | ID3v2 | MIDI | MOD | S3M | IT | XM | ASF | BINK)
-#define DEFAULT_FORMATS (OGG | RIFF | AIFF |          MP4 | ID3v2 | MIDI |       S3M | IT | XM | ASF | BINK)
+#define ALL_FORMATS     (OGG | RIFF | AIFF | MPG123 | MP4 | ID3v2 | MIDI | MOD | S3M | IT | XM | ASF | BINK | AU)
+#define DEFAULT_FORMATS (OGG | RIFF | AIFF |          MP4 | ID3v2 | MIDI |       S3M | IT | XM | ASF | BINK | AU)
 #define TRACKER_FORMATS (MOD | S3M  | IT   | XM)
 
 static int usage(int argc, char **argv);
@@ -138,6 +140,7 @@ static int usage(int argc, char **argv)
 		"                                    MIDI, MP4, Ogg, RIFF, S3M, XM)\n"
 		"                           aiff     big-endian (Apple) wave files\n"
 		"                           asf      Advanced Systems Format files (also WMA and WMV)\n"
+		"                           au       Sun Microsystems audio file format (.au or .snd)\n"
 		"                           bink     BINK files\n"
 		"                           id3v2    MPEG layer 1/2/3 files with ID3v2 tags\n"
 		"                           it       ImpulseTracker files\n"
@@ -207,7 +210,8 @@ int write_file(const uint8_t *data, size_t length, const struct extract_options 
 {
 	double sz = 0;
 	const char *sz_unit = NULL;
-	snprintf(pathbuf, pathbuflen, EXTRACTED_FILE_FMT, options->outdir, PATH_SEP, filename, offset, ext);
+	snprintf(pathbuf, pathbuflen, "%s%c%s_%08"PRIzx".%s",
+		options->outdir, PATH_SEP, filename, offset, ext);
 	
 	if (length < options->minsize)
 	{
@@ -336,7 +340,7 @@ int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_op
 
 			if (count != 0 && !(options->quiet))
 			{
-				fprintf(stderr, "warning: midi file misses %"PRIuz" tracks\n", count);
+				fprintf(stderr, "warning: midi file misses %"PRIzu" tracks\n", count);
 			}
 
 			WRITE_FILE(audio_start, ptr - audio_start, "mid");
@@ -404,6 +408,13 @@ int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_op
 		if (formats & ASF && magic == ASF_MAGIC && asf_isfile(ptr, input_len, &length))
 		{
 			WRITE_FILE(ptr, length, "asf");
+			ptr += length;
+			continue;
+		}
+
+		if (formats & AU && magic == AU_MAGIC && au_isfile(ptr, input_len, &length))
+		{
+			WRITE_FILE(ptr, length, "au");
 			ptr += length;
 			continue;
 		}
@@ -893,11 +904,11 @@ int main(int argc, char **argv)
 	if (sumnumfiles == 1)
 		printf("Extracted 1 file of %g %s size.\n", sz, sz_unit);
 	else
-		printf("Extracted %"PRIuz" files of %g %s size.\n", sumnumfiles, sz, sz_unit);
+		printf("Extracted %"PRIzu" files of %g %s size.\n", sumnumfiles, sz, sz_unit);
 
 	if (failures > 0)
 	{
-		fprintf(stderr, "%"PRIuz" error(s) during extraction.\n", failures);
+		fprintf(stderr, "%"PRIzu" error(s) during extraction.\n", failures);
 		return 1;
 	}
 	return 0;
