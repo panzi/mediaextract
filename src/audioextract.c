@@ -130,7 +130,7 @@ static int usage(int argc, char **argv)
 		"                           G            for Gigabytes (units of 1024 Megabytes)\n"
 		"                           T            for Terabytes (units of 1024 Gigabytes)\n"
 		"                           P            for Petabytes (units of 1024 Terabytes)\n"
-		"                           E            for Exabyte   (units of 1024 Petabytes)\n"
+		"                           E            for Exabytes  (units of 1024 Petabytes)\n"
 		"\n"
 		"                         The special value \"max\" selects the maximum alowed value.\n"
 		"\n"

@@ -81,7 +81,7 @@ files.
 	                         G            for Gigabytes (units of 1024 Megabytes)
 	                         T            for Terabytes (units of 1024 Gigabytes)
 	                         P            for Petabytes (units of 1024 Terabytes)
-	                         E            for Exabyte   (units of 1024 Petabytes)
+	                         E            for Exabytes  (units of 1024 Petabytes)
 
 	                       The special value "max" selects the maximum alowed value.
 
