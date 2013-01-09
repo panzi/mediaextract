@@ -29,6 +29,7 @@
 #include "asf.h"
 #include "bink.h"
 #include "au.h"
+#include "smk.h"
 
 #if defined(__WINDOWS__) && !defined(__CYGWIN__)
 #	ifdef _WIN64
@@ -60,11 +61,12 @@ enum fileformat {
 	XM     =  0x400,
 	ASF    =  0x800,
 	BINK   = 0x1000,
-	AU     = 0x2000
+	AU     = 0x2000,
+	SMK    = 0x4000
 };
 
-#define ALL_FORMATS     (OGG | RIFF | AIFF | MPG123 | MP4 | ID3v2 | MIDI | MOD | S3M | IT | XM | ASF | BINK | AU)
-#define DEFAULT_FORMATS (OGG | RIFF | AIFF |          MP4 | ID3v2 | MIDI |       S3M | IT | XM | ASF | BINK | AU)
+#define ALL_FORMATS     (OGG | RIFF | AIFF | MPG123 | MP4 | ID3v2 | MIDI | MOD | S3M | IT | XM | ASF | BINK | AU | SMK)
+#define DEFAULT_FORMATS (OGG | RIFF | AIFF |          MP4 | ID3v2 | MIDI |       S3M | IT | XM | ASF | BINK | AU | SMK)
 #define TRACKER_FORMATS (MOD | S3M  | IT   | XM)
 
 static int usage(int argc, char **argv);
@@ -152,6 +154,7 @@ static int usage(int argc, char **argv)
 		"                           riff     Resource Interchange File Format files (ANI, AVI, MMM,\n"
 		"                                    PAL, RDI, RMI, WAV)\n"
 		"                           s3m      ScreamTracker III files\n"
+		"                           smk      Smaker files\n"
 		"                           xm       Extended Module files\n"
 		"                           tracker  all tracker files (MOD, S3M, IT, XM)\n"
 		"\n"
@@ -422,6 +425,13 @@ int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_op
 		if (formats & BINK && IS_BINK_MAGIC(magic) && bink_isfile(ptr, input_len, &length))
 		{
 			WRITE_FILE(ptr, length, "bik");
+			ptr += length;
+			continue;
+		}
+
+		if (formats & SMK && IS_SMK_MAGIC(magic) && smk_isfile(ptr, input_len, &length))
+		{
+			WRITE_FILE(ptr, length, "smk");
 			ptr += length;
 			continue;
 		}

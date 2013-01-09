@@ -105,6 +105,7 @@ files.
 	                         riff     Resource Interchange File Format files (ANI, AVI, MMM,
 	                                  PAL, RDI, RMI, WAV)
 	                         s3m      ScreamTracker III files
+	                         smk      Smaker files
 	                         xm       Extended Module files
 	                         tracker  all tracker files (MOD, S3M, IT, XM)
 
