@@ -41,7 +41,7 @@ Usage
 Extract .wav, .aif and .ogg (might actually be .ogg, .opus or .ogm) files from
 the file `data.bin` and store them in the `~/Music` directory.
 
-	audioextract -f wave,ogg -o ~/Music data.bin
+	audioextract -f riff,aiff,ogg -o ~/Music data.bin
 
 This will then write files like such into `~/Music`:
 

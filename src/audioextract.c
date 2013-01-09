@@ -519,10 +519,6 @@ int parse_formats(const char *formats)
 		{
 			mask = AIFF;
 		}
-		else if (strncasecmp("wave", start, len) == 0)
-		{
-			mask = RIFF | AIFF;
-		}
 		else if (strncasecmp("mpg123", start, len) == 0)
 		{
 			mask = MPG123;
