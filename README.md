@@ -89,8 +89,8 @@ files.
 
 	                       Supported formats:
 	                         all      all supported formats
-	                         default  the default set of formats (AIFF, ASF, BINK, ID3v2, IT,
-	                                  MIDI, MP4, Ogg, RIFF, S3M, XM)
+	                         default  the default set of formats (AIFF, ASF, AU, BINK, ID3v2,
+	                                  IT, MIDI, MP4, Ogg, RIFF, S3M, SMK, XM)
 	                         aiff     big-endian (Apple) wave files
 	                         asf      Advanced Systems Format files (also WMA and WMV)
 	                         au       Sun Microsystems audio file format (.au or .snd)
