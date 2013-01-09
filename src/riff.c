@@ -147,7 +147,7 @@ const uint8_t *riff_match(const uint8_t *data, size_t size,
 
 #if 0
 		// If the sub chunk matching code above delivers to many false positives this code could be used
-		// instead. This code is not really correct, because sub chinks could theretically occure in any
+		// instead. This code is not really correct, because sub chunks could theretically occure in any
 		// order, but most of the time they don't.
 
 		const uint8_t *end = data + size;
