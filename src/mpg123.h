@@ -1,7 +1,7 @@
-#ifndef AUDIOEXTRACT_MPG123_H__
-#define AUDIOEXTRACT_MPG123_H__
+#ifndef MEDIAEXTRACT_MPG123_H__
+#define MEDIAEXTRACT_MPG123_H__
 
-#include "audioextract.h"
+#include "mediaextract.h"
 
 #define IS_MPG123_MAGIC(hdr)  \
 	(  ( ((uint8_t)(hdr)[0] & 0xFF) == 0xFF) \
@@ -20,4 +20,4 @@ struct mpg123_info {
 
 int mpg123_isframe(const uint8_t *data, size_t input_len, struct mpg123_info *info);
 
-#endif /* AUDIOEXTRACT_MPG123_H__ */
+#endif /* MEDIAEXTRACT_MPG123_H__ */

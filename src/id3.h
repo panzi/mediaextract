@@ -1,7 +1,7 @@
-#ifndef AUDIOEXTRACT_ID3_H__
-#define AUDIOEXTRACT_ID3_H__
+#ifndef MEDIAEXTRACT_ID3_H__
+#define MEDIAEXTRACT_ID3_H__
 
-#include "audioextract.h"
+#include "mediaextract.h"
 
 #define ID3_MASK    MAGIC("\xff\xff\xff\x00")
 #define ID3v1_MAGIC MAGIC("TAG\0")
@@ -16,4 +16,4 @@
 int id3v1_istag(const uint8_t *data, size_t input_len, size_t *lengthptr);
 int id3v2_istag(const uint8_t *data, size_t input_len, int appended, size_t *lengthptr);
 
-#endif /* AUDIOEXTRACT_ID3_H__ */
+#endif /* MEDIAEXTRACT_ID3_H__ */

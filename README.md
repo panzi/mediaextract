@@ -1,7 +1,7 @@
-Audioextract
+Mediaextract
 ============
 
-Extract audio files that are embedded within other files.
+Extract media files that are embedded within other files.
 
 Setup
 -----
@@ -126,4 +126,4 @@ files.
 	                       removed from the set of formats to extract. E.g. extract
 	                       everything except tracker files:
 
-	                         audioextract --formats=all,-tracker data.bin
+	                         mediaextract --formats=all,-tracker data.bin

@@ -1,7 +1,7 @@
-#ifndef AUDIOEXTRACT_S3M_H__
-#define AUDIOEXTRACT_S3M_H__
+#ifndef MEDIAEXTRACT_S3M_H__
+#define MEDIAEXTRACT_S3M_H__
 
-#include "audioextract.h"
+#include "mediaextract.h"
 
 #define S3M_MAGIC        MAGIC("SCRM")
 #define S3M_SAMPLE_MAGIC MAGIC("SCRS")
@@ -11,4 +11,4 @@
 
 int s3m_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr);
 
-#endif /* AUDIOEXTRACT_S3M_H__ */
+#endif /* MEDIAEXTRACT_S3M_H__ */

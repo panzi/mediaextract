@@ -1,5 +1,5 @@
 /*
- * audioextract
+ * mediaextract
  *
  * Author: Mathaias Panzenböck
  * This is derived from oggextract:
@@ -14,7 +14,7 @@
 #include <errno.h>
 #include <ctype.h>
 
-#include "audioextract.h"
+#include "mediaextract.h"
 #include "riff.h"
 #include "aiff.h"
 #include "ogg.h"
@@ -83,14 +83,14 @@ static const char *format_size(uint64_t in, double *out);
 
 static int usage(int argc, char **argv)
 {
-	const char *progname = argc <= 0 ? "audioextract" : argv[0];
+	const char *progname = argc <= 0 ? "mediaextract" : argv[0];
 	double default_length = 0;
 	double default_size   = 0;
 	const char *length_unit = format_size((SIZE_MAX>>1), &default_length);
 	const char *size_unit   = format_size(SIZE_MAX,      &default_size);
 
 	fprintf(stderr,
-		"audioextract - extracts audio files that are embedded within other files\n"
+		"mediaextract - extracts media files that are embedded within other files\n"
 		"\n"
 		"Usage:\n"
 		"  %s [option...] <filename> [<filename> ...]\n"

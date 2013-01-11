@@ -1,5 +1,5 @@
-#ifndef AUDIOEXTRACT_H__
-#define AUDIOEXTRACT_H__
+#ifndef MEDIAEXTRACT_H__
+#define MEDIAEXTRACT_H__
 
 #include <stdio.h>
 #include <stdint.h>
@@ -141,4 +141,4 @@ int do_extract(const uint8_t *filedata, size_t filesize,
                size_t *numfilesptr, size_t *sumsizeptr);
 int write_data(const char *filename, const uint8_t *data, size_t length);
 
-#endif /* AUDIOEXTRACT_H__ */
+#endif /* MEDIAEXTRACT_H__ */

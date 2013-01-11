@@ -1,7 +1,7 @@
-#ifndef AUDIOEXTRACT_ASF_H__
-#define AUDIOEXTRACT_ASF_H__
+#ifndef MEDIAEXTRACT_ASF_H__
+#define MEDIAEXTRACT_ASF_H__
 
-#include "audioextract.h"
+#include "mediaextract.h"
 
 #define ASF_MAGIC MAGIC("\x30\x26\xB2\x75")
 #define ASF_HEADER_SIZE 134
@@ -73,4 +73,4 @@
 
 int asf_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr);
 
-#endif /* AUDIOEXTRACT_ASF_H__ */
+#endif /* MEDIAEXTRACT_ASF_H__ */

@@ -1,7 +1,7 @@
-#ifndef AUDIOEXTRACT_AIFF_H__
-#define AUDIOEXTRACT_AIFF_H__
+#ifndef MEDIAEXTRACT_AIFF_H__
+#define MEDIAEXTRACT_AIFF_H__
 
-#include "audioextract.h"
+#include "mediaextract.h"
 
 #define FORM_MAGIC MAGIC("FORM")
 #define AIFF_MAGIC MAGIC("AIFF")
@@ -11,4 +11,4 @@
 
 int aiff_isfile(const uint8_t *data, size_t input_len, struct file_info *info);
 
-#endif /* AUDIOEXTRACT_AIFF_H__ */
+#endif /* MEDIAEXTRACT_AIFF_H__ */

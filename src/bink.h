@@ -1,7 +1,7 @@
-#ifndef AUDIOEXTRACT_BINK_H__
-#define AUDIOEXTRACT_BINK_H__
+#ifndef MEDIAEXTRACT_BINK_H__
+#define MEDIAEXTRACT_BINK_H__
 
-#include "audioextract.h"
+#include "mediaextract.h"
 
 #define BINK_MAGIC1 MAGIC("BIKb")
 #define BINK_MAGIC2 MAGIC("BIKd")
@@ -22,4 +22,4 @@
 
 int bink_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr);
 
-#endif /* AUDIOEXTRACT_BINK_H__ */
+#endif /* MEDIAEXTRACT_BINK_H__ */

@@ -1,7 +1,7 @@
-#ifndef AUDIOEXTRACT_BMP_H__
-#define AUDIOEXTRACT_BMP_H__
+#ifndef MEDIAEXTRACT_BMP_H__
+#define MEDIAEXTRACT_BMP_H__
 
-#include "audioextract.h"
+#include "mediaextract.h"
 
 #define IS_BMP_MAGIC(data) ((*(const uint16_t *)(data)) == (*(const uint16_t *)("BM")))
 
@@ -10,4 +10,4 @@
 
 int bmp_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr);
 
-#endif /* AUDIOEXTRACT_BMP_H__ */
+#endif /* MEDIAEXTRACT_BMP_H__ */

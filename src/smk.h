@@ -1,7 +1,7 @@
-#ifndef AUDIOEXTRACT_SMK_H__
-#define AUDIOEXTRACT_SMK_H__
+#ifndef MEDIAEXTRACT_SMK_H__
+#define MEDIAEXTRACT_SMK_H__
 
-#include "audioextract.h"
+#include "mediaextract.h"
 
 #define SMK2_MAGIC MAGIC("SMK2")
 #define SMK4_MAGIC MAGIC("SMK4")
@@ -12,4 +12,4 @@
 
 int smk_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr);
 
-#endif /* AUDIOEXTRACT_SMK_H__ */
+#endif /* MEDIAEXTRACT_SMK_H__ */

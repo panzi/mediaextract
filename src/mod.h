@@ -1,7 +1,7 @@
-#ifndef AUDIOEXTRACT_MOD_H__
-#define AUDIOEXTRACT_MOD_H__
+#ifndef MEDIAEXTRACT_MOD_H__
+#define MEDIAEXTRACT_MOD_H__
 
-#include "audioextract.h"
+#include "mediaextract.h"
 
 #define MOD_4CH_MAGIC1 MAGIC("M.K.")
 #define MOD_4CH_MAGIC2 MAGIC("M!K!")
@@ -59,4 +59,4 @@
 
 int mod_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr);
 
-#endif /* AUDIOEXTRACT_MOD_H__ */
+#endif /* MEDIAEXTRACT_MOD_H__ */

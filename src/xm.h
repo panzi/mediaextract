@@ -1,7 +1,7 @@
-#ifndef AUDIOEXTRACT_XM_H__
-#define AUDIOEXTRACT_XM_H__
+#ifndef MEDIAEXTRACT_XM_H__
+#define MEDIAEXTRACT_XM_H__
 
-#include "audioextract.h"
+#include "mediaextract.h"
 
 #define XM_ID          "Extended Module: "
 #define XM_ID_SIZE     17
@@ -10,4 +10,4 @@
 
 int xm_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr);
 
-#endif /* AUDIOEXTRACT_XM_H__ */
+#endif /* MEDIAEXTRACT_XM_H__ */

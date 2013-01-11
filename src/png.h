@@ -1,7 +1,7 @@
-#ifndef AUDIOEXTRACT_PNG_H__
-#define AUDIOEXTRACT_PNG_H__
+#ifndef MEDIAEXTRACT_PNG_H__
+#define MEDIAEXTRACT_PNG_H__
 
-#include "audioextract.h"
+#include "mediaextract.h"
 
 #define PNG_SIGNATURE "\x89PNG\r\n\x1a\n"
 #define PNG_MAGIC MAGIC(PNG_SIGNATURE)
@@ -15,4 +15,4 @@
 
 int png_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr);
 
-#endif /* AUDIOEXTRACT_PNG_H__ */
+#endif /* MEDIAEXTRACT_PNG_H__ */
