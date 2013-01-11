@@ -69,9 +69,12 @@ enum fileformat {
 	PNG    = 0x10000
 };
 
+#define TRACKER_FORMATS (MOD | S3M  | IT   | XM)
+#define AUDIO_FORMATS   (OGG | RIFF | AIFF | MPG123 | MP4 | ID3v2 | MIDI | MOD | S3M | IT | XM | ASF | AU)
+#define VIDEO_FORMATS   (MP4 | RIFF | ASF  | BINK   | SMK)
+#define IMAGE_FORMATS   (BMP | PNG)
 #define ALL_FORMATS     (OGG | RIFF | AIFF | MPG123 | MP4 | ID3v2 | MIDI | MOD | S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG)
 #define DEFAULT_FORMATS (OGG | RIFF | AIFF |          MP4 | ID3v2 | MIDI |       S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG)
-#define TRACKER_FORMATS (MOD | S3M  | IT   | XM)
 
 static int usage(int argc, char **argv);
 static const char *basename(const char *path);
@@ -144,6 +147,12 @@ static int usage(int argc, char **argv)
 		"                           all      all supported formats\n"
 		"                           default  the default set of formats (AIFF, ASF, AU, BINK, BMP,\n"
 		"                                    ID3v2, IT, MIDI, MP4, Ogg, PNG, RIFF, S3M, SMK, XM)\n"
+		"                           audio    all audio files (AIFF, ASF, AU, ID3v2, IT, MIDI, MP4,\n"
+		"                                    Ogg, RIFF, S3M, XM)\n"
+		"                           image    all image files (BMP, PNG)\n"
+		"                           tracker  all tracker files (MOD, S3M, IT, XM)\n"
+		"                           video    all video files (ASF, BINK, MP4, RIFF, SMK)\n"
+		"\n"
 		"                           aiff     big-endian (Apple) wave files\n"
 		"                           asf      Advanced Systems Format files (also WMA and WMV)\n"
 		"                           au       Sun Microsystems audio file format (.au or .snd)\n"
@@ -162,7 +171,6 @@ static int usage(int argc, char **argv)
 		"                           s3m      ScreamTracker III files\n"
 		"                           smk      Smaker files\n"
 		"                           xm       Extended Module files\n"
-		"                           tracker  all tracker files (MOD, S3M, IT, XM)\n"
 		"\n"
 		"                         WARNING: Because MP1/2/3 files do not have a nice file magic, using\n"
 		"                         the 'mpg123' format may cause *a lot* of false positives. Nowadays\n"
@@ -592,9 +600,21 @@ int parse_formats(const char *formats)
 		{
 			mask = PNG;
 		}
+		else if (strncasecmp("audio", start, len) == 0)
+		{
+			mask = AUDIO_FORMATS;
+		}
+		else if (strncasecmp("image", start, len) == 0)
+		{
+			mask = IMAGE_FORMATS;
+		}
 		else if (strncasecmp("tracker", start, len) == 0)
 		{
 			mask = TRACKER_FORMATS;
+		}
+		else if (strncasecmp("video", start, len) == 0)
+		{
+			mask = VIDEO_FORMATS;
 		}
 		else if (strncasecmp("all", start, len) == 0)
 		{

@@ -91,6 +91,12 @@ files.
 	                         all      all supported formats
 	                         default  the default set of formats (AIFF, ASF, AU, BINK, BMP,
 	                                  ID3v2, IT, MIDI, MP4, Ogg, PNG, RIFF, S3M, SMK, XM)
+	                         audio    all audio files (AIFF, ASF, AU, ID3v2, IT, MIDI, MP4,
+	                                  Ogg, RIFF, S3M, XM)
+	                         image    all image files (BMP, PNG)
+	                         tracker  all tracker files (MOD, S3M, IT, XM)
+	                         video    all video files (ASF, BINK, MP4, RIFF, SMK)
+
 	                         aiff     big-endian (Apple) wave files
 	                         asf      Advanced Systems Format files (also WMA and WMV)
 	                         au       Sun Microsystems audio file format (.au or .snd)
@@ -109,7 +115,6 @@ files.
 	                         s3m      ScreamTracker III files
 	                         smk      Smaker files
 	                         xm       Extended Module files
-	                         tracker  all tracker files (MOD, S3M, IT, XM)
 
 	                       WARNING: Because MP1/2/3 files do not have a nice file magic, using
 	                       the 'mpg123' format may cause *a lot* of false positives. Nowadays
