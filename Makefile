@@ -24,7 +24,8 @@ OBJ=\
 	$(BUILDDIR)/bink.o \
 	$(BUILDDIR)/au.o \
 	$(BUILDDIR)/smk.o \
-	$(BUILDDIR)/bmp.o
+	$(BUILDDIR)/bmp.o \
+	$(BUILDDIR)/png.o
 CC=gcc
 LD=$(CC)
 COMMON_CFLAGS=-Wall -Werror -Wextra -std=gnu99 -O2 -g $(INCLUDE) $(LIBDIRS) -D_FILE_OFFSET_BITS=64
@@ -92,7 +93,8 @@ $(BUILDDIR)/audioextract.o: src/audioextract.c \
 		src/bink.h \
 		src/au.h \
 		src/smk.h \
-		src/bmp.h
+		src/bmp.h \
+		src/png.h
 	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
 
 $(BUILDDIR)/audioextract_$(PLATFORM).o: src/audioextract_$(PLATFORM).c src/audioextract.h
@@ -144,6 +146,9 @@ $(BUILDDIR)/smk.o: src/smk.c src/audioextract.h src/smk.h
 	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
 
 $(BUILDDIR)/bmp.o: src/bmp.c src/audioextract.h src/bmp.h
+	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
+
+$(BUILDDIR)/png.o: src/png.c src/audioextract.h src/png.h
 	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
 
 ifeq ($(PLATFORM),posix)

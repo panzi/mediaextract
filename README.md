@@ -103,6 +103,7 @@ files.
 	                         mpg123   MPEG layer 1/2/3 files (MP1, MP2, MP3)
 	                         mp4      MP4 files (M4A, M4V, 3GPP etc.)
 	                         ogg      Ogg files (Vorbis, Opus, Theora, etc.)
+	                         png      Portable Network Graphics file
 	                         riff     Resource Interchange File Format files (ANI, AVI, MMM,
 	                                  PAL, RDI, RMI, WAV)
 	                         s3m      ScreamTracker III files

@@ -31,6 +31,7 @@
 #include "au.h"
 #include "smk.h"
 #include "bmp.h"
+#include "png.h"
 
 #if defined(__WINDOWS__) && !defined(__CYGWIN__)
 #	ifdef _WIN64
@@ -48,27 +49,28 @@
 #define SEE_HELP "See --help for usage information.\n"
 
 enum fileformat {
-	NONE   =    0x0,
-	OGG    =    0x1,
-	RIFF   =    0x2,
-	AIFF   =    0x4,
-	MPG123 =    0x8,
-	ID3v2  =   0x10,
-	MP4    =   0x20,
-	MIDI   =   0x40,
-	MOD    =   0x80,
-	S3M    =  0x100,
-	IT     =  0x200,
-	XM     =  0x400,
-	ASF    =  0x800,
-	BINK   = 0x1000,
-	AU     = 0x2000,
-	SMK    = 0x4000,
-	BMP    = 0x8000
+	NONE   =     0x0,
+	OGG    =     0x1,
+	RIFF   =     0x2,
+	AIFF   =     0x4,
+	MPG123 =     0x8,
+	ID3v2  =    0x10,
+	MP4    =    0x20,
+	MIDI   =    0x40,
+	MOD    =    0x80,
+	S3M    =   0x100,
+	IT     =   0x200,
+	XM     =   0x400,
+	ASF    =   0x800,
+	BINK   =  0x1000,
+	AU     =  0x2000,
+	SMK    =  0x4000,
+	BMP    =  0x8000,
+	PNG    = 0x10000
 };
 
-#define ALL_FORMATS     (OGG | RIFF | AIFF | MPG123 | MP4 | ID3v2 | MIDI | MOD | S3M | IT | XM | ASF | BINK | AU | SMK | BMP)
-#define DEFAULT_FORMATS (OGG | RIFF | AIFF |          MP4 | ID3v2 | MIDI |       S3M | IT | XM | ASF | BINK | AU | SMK | BMP)
+#define ALL_FORMATS     (OGG | RIFF | AIFF | MPG123 | MP4 | ID3v2 | MIDI | MOD | S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG)
+#define DEFAULT_FORMATS (OGG | RIFF | AIFF |          MP4 | ID3v2 | MIDI |       S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG)
 #define TRACKER_FORMATS (MOD | S3M  | IT   | XM)
 
 static int usage(int argc, char **argv);
@@ -154,6 +156,7 @@ static int usage(int argc, char **argv)
 		"                           mpg123   MPEG layer 1/2/3 files (MP1, MP2, MP3)\n"
 		"                           mp4      MP4 files (M4A, M4V, 3GPP etc.)\n"
 		"                           ogg      Ogg files (Vorbis, Opus, Theora, etc.)\n"
+		"                           png      Portable Network Graphics file\n"
 		"                           riff     Resource Interchange File Format files (ANI, AVI, MMM,\n"
 		"                                    PAL, RDI, RMI, WAV)\n"
 		"                           s3m      ScreamTracker III files\n"
@@ -425,6 +428,14 @@ int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_op
 			continue;
 		}
 
+		if (magic == PNG_MAGIC) printf("has png magic!\n");
+		if (formats & PNG && magic == PNG_MAGIC && png_isfile(ptr, input_len, &length))
+		{
+			WRITE_FILE(ptr, length, "png");
+			ptr += length;
+			continue;
+		}
+
 		if (formats & BINK && IS_BINK_MAGIC(magic) && bink_isfile(ptr, input_len, &length))
 		{
 			WRITE_FILE(ptr, length, "bik");
@@ -576,6 +587,10 @@ int parse_formats(const char *formats)
 		else if (strncasecmp("bmp", start, len) == 0)
 		{
 			mask = BMP;
+		}
+		else if (strncasecmp("png", start, len) == 0)
+		{
+			mask = PNG;
 		}
 		else if (strncasecmp("tracker", start, len) == 0)
 		{
