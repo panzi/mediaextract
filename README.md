@@ -27,21 +27,21 @@ different `--offset` values to process such a file whole.
 This also means that using a 32bit binary extracted files can never be larger
 than 2 GB.
 
-This is because `audioextract` uses `mmap` to read files, wich maps files to
+This is because `mediaextract` uses `mmap` to read files, wich maps files to
 memory. On 32bit platforms the address space of the main memory is simply not
 big enough. 64bit binaries can read up to 8 EB (8 Exabytes) at once.
 
 Usage
 -----
 
-	audioextract [option...] <filename> [<filename> ...]
+	mediaextract [option...] <filename> [<filename> ...]
 
 ### Examples
 
 Extract .wav, .aif and .ogg (might actually be .ogg, .opus or .ogm) files from
 the file `data.bin` and store them in the `~/Music` directory.
 
-	audioextract -f riff,aiff,ogg -o ~/Music data.bin
+	mediaextract -f riff,aiff,ogg -o ~/Music data.bin
 
 This will then write files like such into `~/Music`:
 
@@ -58,7 +58,7 @@ unambigiously detect MPEG files. These false positives are however usually very
 small, so using the `--min-size` option one can hopefully extract only real MPEG
 files.
 
-	audioextract -f id3v2,mpg123 --min-size=100k -o ~/Music data.bin
+	mediaextract -f id3v2,mpg123 --min-size=100k -o ~/Music data.bin
 
 ### Options
 
