@@ -436,7 +436,6 @@ int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_op
 			continue;
 		}
 
-		if (magic == PNG_MAGIC) printf("has png magic!\n");
 		if (formats & PNG && magic == PNG_MAGIC && png_isfile(ptr, input_len, &length))
 		{
 			WRITE_FILE(ptr, length, "png");
