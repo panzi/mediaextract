@@ -30,6 +30,7 @@
 #include "bink.h"
 #include "au.h"
 #include "smk.h"
+#include "bmp.h"
 
 #if defined(__WINDOWS__) && !defined(__CYGWIN__)
 #	ifdef _WIN64
@@ -62,11 +63,12 @@ enum fileformat {
 	ASF    =  0x800,
 	BINK   = 0x1000,
 	AU     = 0x2000,
-	SMK    = 0x4000
+	SMK    = 0x4000,
+	BMP    = 0x8000
 };
 
-#define ALL_FORMATS     (OGG | RIFF | AIFF | MPG123 | MP4 | ID3v2 | MIDI | MOD | S3M | IT | XM | ASF | BINK | AU | SMK)
-#define DEFAULT_FORMATS (OGG | RIFF | AIFF |          MP4 | ID3v2 | MIDI |       S3M | IT | XM | ASF | BINK | AU | SMK)
+#define ALL_FORMATS     (OGG | RIFF | AIFF | MPG123 | MP4 | ID3v2 | MIDI | MOD | S3M | IT | XM | ASF | BINK | AU | SMK | BMP)
+#define DEFAULT_FORMATS (OGG | RIFF | AIFF |          MP4 | ID3v2 | MIDI |       S3M | IT | XM | ASF | BINK | AU | SMK | BMP)
 #define TRACKER_FORMATS (MOD | S3M  | IT   | XM)
 
 static int usage(int argc, char **argv);
@@ -144,6 +146,7 @@ static int usage(int argc, char **argv)
 		"                           asf      Advanced Systems Format files (also WMA and WMV)\n"
 		"                           au       Sun Microsystems audio file format (.au or .snd)\n"
 		"                           bink     BINK files\n"
+		"                           bmp      Windows Bitmap files\n"
 		"                           id3v2    MPEG layer 1/2/3 files with ID3v2 tags\n"
 		"                           it       ImpulseTracker files\n"
 		"                           midi     MIDI files\n"
@@ -429,6 +432,13 @@ int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_op
 			continue;
 		}
 
+		if (formats & BMP && IS_BMP_MAGIC(ptr) && bmp_isfile(ptr, input_len, &length))
+		{
+			WRITE_FILE(ptr, length, "bmp");
+			ptr += length;
+			continue;
+		}
+
 		if (formats & SMK && IS_SMK_MAGIC(magic) && smk_isfile(ptr, input_len, &length))
 		{
 			WRITE_FILE(ptr, length, "smk");
@@ -558,6 +568,14 @@ int parse_formats(const char *formats)
 		else if (strncasecmp("bink", start, len) == 0)
 		{
 			mask = BINK;
+		}
+		else if (strncasecmp("smk", start, len) == 0)
+		{
+			mask = SMK;
+		}
+		else if (strncasecmp("bmp", start, len) == 0)
+		{
+			mask = BMP;
 		}
 		else if (strncasecmp("tracker", start, len) == 0)
 		{

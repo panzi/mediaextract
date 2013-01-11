@@ -95,6 +95,7 @@ files.
 	                         asf      Advanced Systems Format files (also WMA and WMV)
 	                         au       Sun Microsystems audio file format (.au or .snd)
 	                         bink     BINK files
+	                         bmp      Windows Bitmap files
 	                         id3v2    MPEG layer 1/2/3 files with ID3v2 tags
 	                         it       ImpulseTracker files
 	                         midi     MIDI files
