@@ -3,7 +3,7 @@
 /* see: http://www.johnloomis.org/cpe102/asgn/asgn1/riff.html */
 
 struct riff_chunk_spec {
-	const char *type;
+	uint32_t type;
 	const struct riff_chunk_spec *body;
 	int required;
 };
@@ -19,7 +19,7 @@ static const struct riff_chunk_spec riff_empty_body[] = {
 
 /* WAVE */
 static const struct riff_chunk_spec riff_wav_body[] = {
-	{ "fmt ", 0, 1 },
+	{ CMAGIC('f','m','t',' '), 0, 1 },
 	{ 0, 0, 0 }
 };
 
@@ -27,43 +27,43 @@ static const struct riff_chunk_spec riff_wav_body[] = {
 // TODO: AVI 2.0? only makes sense for files > 4 GB
 // http://www.the-labs.com/Video/odmlff2-avidef.pdf
 static const struct riff_chunk_spec riff_avi_hdrl_body[] = {
-	{ "avih", 0, 1 },
+	{ CMAGIC('a','v','i','h'), 0, 1 },
 	{ 0, 0, 0 }
 };
 
 static const struct riff_chunk_spec riff_avi_body[] = {
-	{ "hdrl", 0, 1 },
-	{ "movi", 0, 1 },
+	{ CMAGIC('h','d','r','l'), 0, 1 },
+	{ CMAGIC('m','o','v','i'), 0, 1 },
 	{ 0, 0, 0 }
 };
 
 /* ACON */
 static const struct riff_chunk_spec riff_ani_fram_body[] = {
-	{ "icon", 0, 1 },
+	{ CMAGIC('i','c','o','n'), 0, 1 },
 	{ 0, 0, 0 }
 };
 
 static const struct riff_chunk_spec riff_ani_body[] = {
-	{ "INFO", riff_empty_body, 0 },
-	{ "anih", 0, 1 },
-	{ "fram", riff_ani_fram_body, 1 },
+	{ CMAGIC('I','N','F','O'), riff_empty_body, 0 },
+	{ CMAGIC('a','n','i','h'), 0, 1 },
+	{ CMAGIC('f','r','a','m'), riff_ani_fram_body, 1 },
 	{ 0, 0, 0 }
 };
 
 /* PAL */
 static const struct riff_chunk_spec riff_pal_body[] = {
-	{ "data", 0, 1 },
+	{ CMAGIC('d','a','t','a'), 0, 1 },
 	{ 0, 0, 0 }
 };
 
 static const struct riff_file_spec riff_file_specs[] = {
-	{ { "WAVE", riff_wav_body,   1 }, "wav" },
-	{ { "AVI ", riff_avi_body,   1 }, "avi" },
-	{ { "ACON", riff_ani_body,   1 }, "ani" },
-	{ { "RMID", riff_empty_body, 1 }, "rmi" },
-	{ { "PAL ", riff_pal_body,   1 }, "pal" },
-	{ { "RDIB", riff_empty_body, 1 }, "rdi" },
-	{ { "RMMP", riff_empty_body, 1 }, "mmm" },
+	{ { CMAGIC('W','A','V','E'), riff_wav_body,   1 }, "wav" },
+	{ { CMAGIC('A','V','I',' '), riff_avi_body,   1 }, "avi" },
+	{ { CMAGIC('A','C','O','N'), riff_ani_body,   1 }, "ani" },
+	{ { CMAGIC('R','M','I','D'), riff_empty_body, 1 }, "rmi" },
+	{ { CMAGIC('P','A','L',' '), riff_pal_body,   1 }, "pal" },
+	{ { CMAGIC('R','D','I','B'), riff_empty_body, 1 }, "rdi" },
+	{ { CMAGIC('R','M','M','P'), riff_empty_body, 1 }, "mmm" },
 	{ { 0, 0, 0 }, 0 }
 };
 
@@ -78,7 +78,7 @@ const uint8_t *riff_match(const uint8_t *data, size_t size,
 		uint32_t chunk_size = le32toh(*(const uint32_t *)(data + 4));
 		uint32_t type = MAGIC(data + 8);
 
-		if (type != MAGIC(spec->type))
+		if (type != spec->type)
 			return NULL;
 
 		if (chunk_size > size - 8)
@@ -164,7 +164,7 @@ const uint8_t *riff_match(const uint8_t *data, size_t size,
 	}
 	else
 	{
-		if (size < 8 || MAGIC(data) != MAGIC(spec->type))
+		if (size < 8 || MAGIC(data) != spec->type)
 			return NULL;
 	
 		uint32_t chunk_size = le32toh(*(const uint32_t *)(data + 4));

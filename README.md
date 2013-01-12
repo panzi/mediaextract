@@ -20,7 +20,10 @@ Or (uses `x86_64-w64-mingw32-gcc`):
 	make TARGET=win64 builddir
 	make TARGET=win64
 
-**NOTE:** 32bit binaries can only process 2 GB of a file at once. The rest of
+**Warning:** This program only works correctly on platforms that allow unaligned
+memory access (e.g. x86 and ARM, although it might be quite slow on the latter).
+
+**Note:** 32bit binaries can only process 2 GB of a file at once. The rest of
 bigger files will be ignored. You need to run this program several times with
 different `--offset` values to process such a file whole.
 
@@ -90,10 +93,11 @@ files.
 	                       Supported formats:
 	                         all      all supported formats
 	                         default  the default set of formats (AIFF, ASF, AU, BINK, BMP,
-	                                  ID3v2, IT, JPG, MIDI, MP4, Ogg, PNG, RIFF, S3M, SMK, XM)
+	                                  GIF, ID3v2, IT, JPG, MIDI, MP4, Ogg, PNG, RIFF, S3M,
+	                                  SMK, XM)
 	                         audio    all audio files (AIFF, ASF, AU, ID3v2, IT, MIDI, MP4,
 	                                  Ogg, RIFF, S3M, XM)
-	                         image    all image files (BMP, PNG, JPG)
+	                         image    all image files (BMP, PNG, JPG, GIF)
 	                         tracker  all tracker files (MOD, S3M, IT, XM)
 	                         video    all video files (ASF, BINK, MP4, RIFF, SMK)
 
@@ -102,6 +106,7 @@ files.
 	                         au       Sun Microsystems audio file format (.au or .snd)
 	                         bink     BINK files
 	                         bmp      Windows Bitmap files
+	                         gif      Graphics Interchange Format files
 	                         id3v2    MPEG layer 1/2/3 files with ID3v2 tags
 	                         it       ImpulseTracker files
 	                         jpg      JPEG Interchange Format files
@@ -110,7 +115,7 @@ files.
 	                         mpg123   MPEG layer 1/2/3 files (MP1, MP2, MP3)
 	                         mp4      MP4 files (M4A, M4V, 3GPP etc.)
 	                         ogg      Ogg files (Vorbis, Opus, Theora, etc.)
-	                         png      Portable Network Graphics file
+	                         png      Portable Network Graphics files
 	                         riff     Resource Interchange File Format files (ANI, AVI, MMM,
 	                                  PAL, RDI, RMI, WAV)
 	                         s3m      ScreamTracker III files

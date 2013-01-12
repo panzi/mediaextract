@@ -35,6 +35,11 @@
 #	define be64toh OSSwapBigToHostInt64
 #	define le64toh OSSwapLittleToHostInt64
 
+#	define __BYTE_ORDER    BYTE_ORDER
+#	define __BIG_ENDIAN    BIG_ENDIAN
+#	define __LITTLE_ENDIAN LITTLE_ENDIAN
+#	define __PDP_ENDIAN    PDP_ENDIAN
+
 #elif defined(__OpenBSD__)
 
 #	include <sys/endian.h>
@@ -94,13 +99,18 @@
 
 #	else
 
-#		error "byte order not supported"
+#		error byte order not supported
 
 #	endif
 
+#	define __BYTE_ORDER    BYTE_ORDER
+#	define __BIG_ENDIAN    BIG_ENDIAN
+#	define __LITTLE_ENDIAN LITTLE_ENDIAN
+#	define __PDP_ENDIAN    PDP_ENDIAN
+
 #else
 
-#	error "platform not supported"
+#	error platform not supported
 
 #endif
 
@@ -114,7 +124,34 @@
 
 #endif
 
+#define _CMAGIC(C1,C2,C3,C4) (uint32_t)(((C1) << 24) | ((C2) << 16) | ((C3) << 8) | (C4))
+
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+
+#	define CMAGIC(C1,C2,C3,C4) _CMAGIC(C4,C3,C2,C1)
+
+#elif __BYTE_ORDER == __BIG_ENDIAN
+
+#	define CMAGIC(C1,C2,C3,C4) _CMAGIC(C1,C2,C3,C4)
+
+#elif __BYTE_ORDER == __PDP_ENDIAN
+
+#	define CMAGIC(C1,C2,C3,C4) _CMAGIC(C3,C4,C1,C2)
+
+#else
+
+#	error unsupported byte order
+
+#endif
+
+#if 0
 #define MAGIC(STR) (*(const uint32_t*)(STR))
+#else
+
+#define _MAGIC(B) CMAGIC((B)[0], (B)[1], (B)[2], (B)[3])
+#define MAGIC(S)  _MAGIC((const uint8_t *)(S))
+
+#endif
 
 struct file_info {
 	size_t length;

@@ -33,6 +33,7 @@
 #include "bmp.h"
 #include "png.h"
 #include "jpg.h"
+#include "gif.h"
 
 #if defined(__WINDOWS__) && !defined(__CYGWIN__)
 #	ifdef _WIN64
@@ -68,15 +69,16 @@ enum fileformat {
 	SMK    =  0x4000,
 	BMP    =  0x8000,
 	PNG    = 0x10000,
-	JPEG   = 0x20000
+	JPEG   = 0x20000,
+	GIF    = 0x40000
 };
 
 #define TRACKER_FORMATS (MOD | S3M  | IT   | XM)
 #define AUDIO_FORMATS   (OGG | RIFF | AIFF | MPG123 | MP4 | ID3v2 | MIDI | MOD | S3M | IT | XM | ASF | AU)
 #define VIDEO_FORMATS   (MP4 | RIFF | ASF  | BINK   | SMK)
-#define IMAGE_FORMATS   (BMP | PNG  | JPEG)
-#define ALL_FORMATS     (OGG | RIFF | AIFF | MPG123 | MP4 | ID3v2 | MIDI | MOD | S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG)
-#define DEFAULT_FORMATS (OGG | RIFF | AIFF |          MP4 | ID3v2 | MIDI |       S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG)
+#define IMAGE_FORMATS   (BMP | PNG  | JPEG | GIF)
+#define ALL_FORMATS     (OGG | RIFF | AIFF | MPG123 | MP4 | ID3v2 | MIDI | MOD | S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG | GIF)
+#define DEFAULT_FORMATS (OGG | RIFF | AIFF |          MP4 | ID3v2 | MIDI |       S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG | GIF)
 
 static int usage(int argc, char **argv);
 static const char *basename(const char *path);
@@ -148,10 +150,11 @@ static int usage(int argc, char **argv)
 		"                         Supported formats:\n"
 		"                           all      all supported formats\n"
 		"                           default  the default set of formats (AIFF, ASF, AU, BINK, BMP,\n"
-		"                                    ID3v2, IT, JPG, MIDI, MP4, Ogg, PNG, RIFF, S3M, SMK, XM)\n"
+		"                                    GIF, ID3v2, IT, JPG, MIDI, MP4, Ogg, PNG, RIFF, S3M,\n"
+		"                                    SMK, XM)\n"
 		"                           audio    all audio files (AIFF, ASF, AU, ID3v2, IT, MIDI, MP4,\n"
 		"                                    Ogg, RIFF, S3M, XM)\n"
-		"                           image    all image files (BMP, PNG, JPG)\n"
+		"                           image    all image files (BMP, PNG, JPG, GIF)\n"
 		"                           tracker  all tracker files (MOD, S3M, IT, XM)\n"
 		"                           video    all video files (ASF, BINK, MP4, RIFF, SMK)\n"
 		"\n"
@@ -160,6 +163,7 @@ static int usage(int argc, char **argv)
 		"                           au       Sun Microsystems audio file format (.au or .snd)\n"
 		"                           bink     BINK files\n"
 		"                           bmp      Windows Bitmap files\n"
+		"                           gif      Graphics Interchange Format files\n"
 		"                           id3v2    MPEG layer 1/2/3 files with ID3v2 tags\n"
 		"                           it       ImpulseTracker files\n"
 		"                           jpg      JPEG Interchange Format files\n"
@@ -168,7 +172,7 @@ static int usage(int argc, char **argv)
 		"                           mpg123   MPEG layer 1/2/3 files (MP1, MP2, MP3)\n"
 		"                           mp4      MP4 files (M4A, M4V, 3GPP etc.)\n"
 		"                           ogg      Ogg files (Vorbis, Opus, Theora, etc.)\n"
-		"                           png      Portable Network Graphics file\n"
+		"                           png      Portable Network Graphics files\n"
 		"                           riff     Resource Interchange File Format files (ANI, AVI, MMM,\n"
 		"                                    PAL, RDI, RMI, WAV)\n"
 		"                           s3m      ScreamTracker III files\n"
@@ -445,7 +449,14 @@ int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_op
 			ptr += length;
 			continue;
 		}
-		
+
+		if (formats & GIF && magic == GIF_MAGIC && gif_isfile(ptr, input_len, &length))
+		{
+			WRITE_FILE(ptr, length, "gif");
+			ptr += length;
+			continue;
+		}
+
 		if (formats & JPEG && IS_JPG_MAGIC(magic) && jpg_isfile(ptr, input_len, &length))
 		{
 			WRITE_FILE(ptr, length, "jpg");
@@ -612,6 +623,10 @@ int parse_formats(const char *formats)
 		else if (strncasecmp("jpg", start, len) == 0)
 		{
 			mask = JPEG;
+		}
+		else if (strncasecmp("gif", start, len) == 0)
+		{
+			mask = GIF;
 		}
 		else if (strncasecmp("audio", start, len) == 0)
 		{
