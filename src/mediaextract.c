@@ -32,6 +32,7 @@
 #include "smk.h"
 #include "bmp.h"
 #include "png.h"
+#include "jpg.h"
 
 #if defined(__WINDOWS__) && !defined(__CYGWIN__)
 #	ifdef _WIN64
@@ -66,15 +67,16 @@ enum fileformat {
 	AU     =  0x2000,
 	SMK    =  0x4000,
 	BMP    =  0x8000,
-	PNG    = 0x10000
+	PNG    = 0x10000,
+	JPEG   = 0x20000
 };
 
 #define TRACKER_FORMATS (MOD | S3M  | IT   | XM)
 #define AUDIO_FORMATS   (OGG | RIFF | AIFF | MPG123 | MP4 | ID3v2 | MIDI | MOD | S3M | IT | XM | ASF | AU)
 #define VIDEO_FORMATS   (MP4 | RIFF | ASF  | BINK   | SMK)
-#define IMAGE_FORMATS   (BMP | PNG)
-#define ALL_FORMATS     (OGG | RIFF | AIFF | MPG123 | MP4 | ID3v2 | MIDI | MOD | S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG)
-#define DEFAULT_FORMATS (OGG | RIFF | AIFF |          MP4 | ID3v2 | MIDI |       S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG)
+#define IMAGE_FORMATS   (BMP | PNG  | JPEG)
+#define ALL_FORMATS     (OGG | RIFF | AIFF | MPG123 | MP4 | ID3v2 | MIDI | MOD | S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG)
+#define DEFAULT_FORMATS (OGG | RIFF | AIFF |          MP4 | ID3v2 | MIDI |       S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG)
 
 static int usage(int argc, char **argv);
 static const char *basename(const char *path);
@@ -146,10 +148,10 @@ static int usage(int argc, char **argv)
 		"                         Supported formats:\n"
 		"                           all      all supported formats\n"
 		"                           default  the default set of formats (AIFF, ASF, AU, BINK, BMP,\n"
-		"                                    ID3v2, IT, MIDI, MP4, Ogg, PNG, RIFF, S3M, SMK, XM)\n"
+		"                                    ID3v2, IT, JPG, MIDI, MP4, Ogg, PNG, RIFF, S3M, SMK, XM)\n"
 		"                           audio    all audio files (AIFF, ASF, AU, ID3v2, IT, MIDI, MP4,\n"
 		"                                    Ogg, RIFF, S3M, XM)\n"
-		"                           image    all image files (BMP, PNG)\n"
+		"                           image    all image files (BMP, PNG, JPG)\n"
 		"                           tracker  all tracker files (MOD, S3M, IT, XM)\n"
 		"                           video    all video files (ASF, BINK, MP4, RIFF, SMK)\n"
 		"\n"
@@ -160,6 +162,7 @@ static int usage(int argc, char **argv)
 		"                           bmp      Windows Bitmap files\n"
 		"                           id3v2    MPEG layer 1/2/3 files with ID3v2 tags\n"
 		"                           it       ImpulseTracker files\n"
+		"                           jpg      JPEG Interchange Format files\n"
 		"                           midi     MIDI files\n"
 		"                           mod      Noisetracker/Soundtracker/Protracker Module files\n"
 		"                           mpg123   MPEG layer 1/2/3 files (MP1, MP2, MP3)\n"
@@ -442,6 +445,13 @@ int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_op
 			ptr += length;
 			continue;
 		}
+		
+		if (formats & JPEG && IS_JPG_MAGIC(magic) && jpg_isfile(ptr, input_len, &length))
+		{
+			WRITE_FILE(ptr, length, "jpg");
+			ptr += length;
+			continue;
+		}
 
 		if (formats & BINK && IS_BINK_MAGIC(magic) && bink_isfile(ptr, input_len, &length))
 		{
@@ -598,6 +608,10 @@ int parse_formats(const char *formats)
 		else if (strncasecmp("png", start, len) == 0)
 		{
 			mask = PNG;
+		}
+		else if (strncasecmp("jpg", start, len) == 0)
+		{
+			mask = JPEG;
 		}
 		else if (strncasecmp("audio", start, len) == 0)
 		{

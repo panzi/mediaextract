@@ -8,7 +8,7 @@ Setup
 
 	make builddir
 	make
-	make install PREFIX=/usr
+	sudo make install PREFIX=/usr
 
 Cross compile for Windows (uses `i686-pc-mingw32-gcc`):
 
@@ -90,10 +90,10 @@ files.
 	                       Supported formats:
 	                         all      all supported formats
 	                         default  the default set of formats (AIFF, ASF, AU, BINK, BMP,
-	                                  ID3v2, IT, MIDI, MP4, Ogg, PNG, RIFF, S3M, SMK, XM)
+	                                  ID3v2, IT, JPG, MIDI, MP4, Ogg, PNG, RIFF, S3M, SMK, XM)
 	                         audio    all audio files (AIFF, ASF, AU, ID3v2, IT, MIDI, MP4,
 	                                  Ogg, RIFF, S3M, XM)
-	                         image    all image files (BMP, PNG)
+	                         image    all image files (BMP, PNG, JPG)
 	                         tracker  all tracker files (MOD, S3M, IT, XM)
 	                         video    all video files (ASF, BINK, MP4, RIFF, SMK)
 
@@ -104,6 +104,7 @@ files.
 	                         bmp      Windows Bitmap files
 	                         id3v2    MPEG layer 1/2/3 files with ID3v2 tags
 	                         it       ImpulseTracker files
+	                         jpg      JPEG Interchange Format files
 	                         midi     MIDI files
 	                         mod      Noisetracker/Soundtracker/Protracker Module files
 	                         mpg123   MPEG layer 1/2/3 files (MP1, MP2, MP3)
