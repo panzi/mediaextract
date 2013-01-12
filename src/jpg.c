@@ -17,6 +17,7 @@ int jpg_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 
 	size_t length = 2;
 	int have_scan = 0;
+	int have_body = 0;
 
 	for (;;)
 	{
@@ -56,6 +57,7 @@ int jpg_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 				return 0;
 
 			length += seglen;
+			have_body = 1;
 
 			if (marker == JPG_SOS)
 			{
@@ -86,6 +88,9 @@ int jpg_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 			return 0;
 		}
 	}
+
+	if (!have_body)
+		return 0;
 	
 	if (lengthptr)
 		*lengthptr = length;
