@@ -128,7 +128,7 @@ files.
 	                       'id3v2' format is the better option anyway.
 
 	                       The detection accuracy of MOD files is not much better and thus
-	                       they are also per default disabled.
+	                       the 'mpg123' and 'mod' formats are per default disabled.
 
 	                       NOTE: When using only the 'mpg123' format but not 'id3v2' any ID3v2
 	                       tag will be stripped. ID3v1 tags will still be kept.

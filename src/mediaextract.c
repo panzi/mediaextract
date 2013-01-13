@@ -185,7 +185,7 @@ static int usage(int argc, char **argv)
 		"                         'id3v2' format is the better option anyway.\n"
 		"\n"
 		"                         The detection accuracy of MOD files is not much better and thus\n"
-		"                         they are also per default disabled.\n"
+		"                         the 'mpg123' and 'mod' formats are per default disabled.\n"
 		"\n"
 		"                         NOTE: When using only the 'mpg123' format but not 'id3v2' any ID3v2\n"
 		"                         tag will be stripped. ID3v1 tags will still be kept.\n"
