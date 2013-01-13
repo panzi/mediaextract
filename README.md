@@ -93,11 +93,11 @@ files.
 	                       Supported formats:
 	                         all      all supported formats
 	                         default  the default set of formats (AIFF, ASF, AU, BINK, BMP,
-	                                  GIF, ID3v2, IT, JPG, MIDI, MP4, Ogg, PNG, RIFF, S3M,
+	                                  GIF, ID3v2, IT, JEPG, MIDI, MP4, Ogg, PNG, RIFF, S3M,
 	                                  SMK, XM)
 	                         audio    all audio files (AIFF, ASF, AU, ID3v2, IT, MIDI, MP4,
 	                                  Ogg, RIFF, S3M, XM)
-	                         image    all image files (BMP, PNG, JPG, GIF)
+	                         image    all image files (BMP, PNG, JEPG, GIF)
 	                         tracker  all tracker files (MOD, S3M, IT, XM)
 	                         video    all video files (ASF, BINK, MP4, RIFF, SMK)
 
@@ -109,7 +109,7 @@ files.
 	                         gif      Graphics Interchange Format files
 	                         id3v2    MPEG layer 1/2/3 files with ID3v2 tags
 	                         it       ImpulseTracker files
-	                         jpg      JPEG Interchange Format files
+	                         jepg     JPEG Interchange Format files
 	                         midi     MIDI files
 	                         mod      Noisetracker/Soundtracker/Protracker Module files
 	                         mpg123   MPEG layer 1/2/3 files (MP1, MP2, MP3)

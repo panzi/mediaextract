@@ -150,11 +150,11 @@ static int usage(int argc, char **argv)
 		"                         Supported formats:\n"
 		"                           all      all supported formats\n"
 		"                           default  the default set of formats (AIFF, ASF, AU, BINK, BMP,\n"
-		"                                    GIF, ID3v2, IT, JPG, MIDI, MP4, Ogg, PNG, RIFF, S3M,\n"
+		"                                    GIF, ID3v2, IT, JEPG, MIDI, MP4, Ogg, PNG, RIFF, S3M,\n"
 		"                                    SMK, XM)\n"
 		"                           audio    all audio files (AIFF, ASF, AU, ID3v2, IT, MIDI, MP4,\n"
 		"                                    Ogg, RIFF, S3M, XM)\n"
-		"                           image    all image files (BMP, PNG, JPG, GIF)\n"
+		"                           image    all image files (BMP, PNG, JEPG, GIF)\n"
 		"                           tracker  all tracker files (MOD, S3M, IT, XM)\n"
 		"                           video    all video files (ASF, BINK, MP4, RIFF, SMK)\n"
 		"\n"
@@ -166,7 +166,7 @@ static int usage(int argc, char **argv)
 		"                           gif      Graphics Interchange Format files\n"
 		"                           id3v2    MPEG layer 1/2/3 files with ID3v2 tags\n"
 		"                           it       ImpulseTracker files\n"
-		"                           jpg      JPEG Interchange Format files\n"
+		"                           jepg     JPEG Interchange Format files\n"
 		"                           midi     MIDI files\n"
 		"                           mod      Noisetracker/Soundtracker/Protracker Module files\n"
 		"                           mpg123   MPEG layer 1/2/3 files (MP1, MP2, MP3)\n"
@@ -620,7 +620,7 @@ int parse_formats(const char *formats)
 		{
 			mask = PNG;
 		}
-		else if (strncasecmp("jpg", start, len) == 0)
+		else if (strncasecmp("jepg", start, len) == 0)
 		{
 			mask = JPEG;
 		}
