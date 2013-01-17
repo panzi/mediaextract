@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <title>Mediaextract by panzi</title>
+  </head>
+
+  <body>
+    <div id="container">
+      <div class="inner">
+
+        <header>
+          <h1>Mediaextract</h1>
+          <h2>Extracts media files (AVI, Ogg, Wave, PNG, ...) that are embedded within other files.</h2>
+        </header>
+
+        <section id="downloads" class="clearfix">
+          <a href="https://github.com/panzi/mediaextract/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
+          <a href="https://github.com/panzi/mediaextract/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
+          <a href="https://github.com/panzi/mediaextract" id="view-on-github" class="button"><span>View on GitHub</span></a>
+        </section>
+
+        <hr>
+
+        <section id="main_content">
+          <h1>Mediaextract</h1>
+
+<p>Extract media files that are embedded within other files.</p>
+
+<h2>Setup</h2>
+
+<pre><code>make builddir
+make
+sudo make install PREFIX=/usr
+</code></pre>
+
+<p>Cross compile for Windows (uses <code>i686-pc-mingw32-gcc</code>):</p>
+
+<pre><code>make TARGET=win32 builddir
+make TARGET=win32
+</code></pre>
+
+<p>Or (uses <code>x86_64-w64-mingw32-gcc</code>):</p>
+
+<pre><code>make TARGET=win64 builddir
+make TARGET=win64
+</code></pre>
+
+<p><strong>Warning:</strong> This program only works correctly on platforms that allow unaligned
+memory access (e.g. x86 and ARM, although it might be quite slow on the latter).</p>
+
+<p><strong>Note:</strong> 32bit binaries can only process 2 GB of a file at once. The rest of
+bigger files will be ignored. You need to run this program several times with
+different <code>--offset</code> values to process such a file whole.</p>
+
+<p>This also means that using a 32bit binary extracted files can never be larger
+than 2 GB.</p>
+
+<p>This is because <code>mediaextract</code> uses <code>mmap</code> to read files, wich maps files to
+memory. On 32bit platforms the address space of the main memory is simply not
+big enough. 64bit binaries can read up to 8 EB (8 Exabytes) at once.</p>
+
+<h2>Usage</h2>
+
+<pre><code>mediaextract [option...] &lt;filename&gt; [&lt;filename&gt; ...]
+</code></pre>
+
+<h3>Examples</h3>
+
+<p>Extract .wav, .aif and .ogg (might actually be .ogg, .opus or .ogm) files from
+the file <code>data.bin</code> and store them in the <code>~/Music</code> directory.</p>
+
+<pre><code>mediaextract -f riff,aiff,ogg -o ~/Music data.bin
+</code></pre>
+
+<p>This will then write files like such into <code>~/Music</code>:</p>
+
+<pre><code>data.bin_00000000.ogg
+data.bin_00FFB2E3.wav
+data.bin_01F3CD45.aif
+</code></pre>
+
+<p>The hexadecimal number in the written file names give the offset where in the
+data file the audio file was found.</p>
+
+<p>Extract .mp3, .mp2 and .mp1 files (with or without ID3v2 tags). The <code>mpg123</code>
+option yields a lot of false positives because there is no nice way to
+unambigiously detect MPEG files. These false positives are however usually very
+small, so using the <code>--min-size</code> option one can hopefully extract only real MPEG
+files.</p>
+
+<pre><code>mediaextract -f id3v2,mpg123 --min-size=100k -o ~/Music data.bin
+</code></pre>
+
+<h3>Options</h3>
+
+<pre><code>-h, --help             Print this help message.
+-q, --quiet            Do not print status messages.
+-s, --simulate         Don't write any output files.
+-o, --output=DIR       Directory where extracted files should be written. (default: ".")
+-i, --offset=OFFSET    Start processing at byte OFFSET. (default: 0)
+-n, --length=LENGTH    Only process LENGTH bytes.
+                       (default and maximum: 8 EB)
+-m, --min-size=SIZE    Minumum size of extracted files (skip smaller). (default: 0)
+-x, --max-size=SIZE    Maximum size of extracted files (skip larger).
+                       (default and maximum: 16 EB)
+
+                       The last character of OFFSET, LENGTH and SIZE may be one of the
+                       following:
+                         B (or none)  for Bytes
+                         k            for Kilobytes (units of 1024 Bytes)
+                         M            for Megabytes (units of 1024 Kilobytes)
+                         G            for Gigabytes (units of 1024 Megabytes)
+                         T            for Terabytes (units of 1024 Gigabytes)
+                         P            for Petabytes (units of 1024 Terabytes)
+                         E            for Exabytes  (units of 1024 Petabytes)
+
+                       The special value "max" selects the maximum alowed value.
+
+-f, --formats=FORMATS  Comma separated list of formats (file magics) to extract.
+
+                       Supported formats:
+                         all      all supported formats
+                         default  the default set of formats (AIFF, ASF, AU, BINK, BMP,
+                                  GIF, ID3v2, IT, JEPG, MIDI, MP4, Ogg, PNG, RIFF, S3M,
+                                  SMK, XM)
+                         audio    all audio files (AIFF, ASF, AU, ID3v2, IT, MIDI, MP4,
+                                  Ogg, RIFF, S3M, XM)
+                         image    all image files (BMP, PNG, JEPG, GIF)
+                         tracker  all tracker files (MOD, S3M, IT, XM)
+                         video    all video files (ASF, BINK, MP4, RIFF, SMK)
+
+                         aiff     big-endian (Apple) wave files
+                         asf      Advanced Systems Format files (also WMA and WMV)
+                         au       Sun Microsystems audio file format (.au or .snd)
+                         bink     BINK files
+                         bmp      Windows Bitmap files
+                         gif      Graphics Interchange Format files
+                         id3v2    MPEG layer 1/2/3 files with ID3v2 tags
+                         it       ImpulseTracker files
+                         jepg     JPEG Interchange Format files
+                         midi     MIDI files
+                         mod      Noisetracker/Soundtracker/Protracker Module files
+                         mpg123   MPEG layer 1/2/3 files (MP1, MP2, MP3)
+                         mp4      MP4 files (M4A, M4V, 3GPP etc.)
+                         ogg      Ogg files (Vorbis, Opus, Theora, etc.)
+                         png      Portable Network Graphics files
+                         riff     Resource Interchange File Format files (ANI, AVI, MMM,
+                                  PAL, RDI, RMI, WAV)
+                         s3m      ScreamTracker III files
+                         smk      Smaker files
+                         xm       Extended Module files
+
+                       WARNING: Because MP1/2/3 files do not have a nice file magic, using
+                       the 'mpg123' format may cause *a lot* of false positives. Nowadays
+                       MP3 files usually have an ID3v2 tag at the start, so using the
+                       'id3v2' format is the better option anyway.
+
+                       The detection accuracy of MOD files is not much better and thus
+                       the 'mpg123' and 'mod' formats are per default disabled.
+
+                       NOTE: When using only the 'mpg123' format but not 'id3v2' any ID3v2
+                       tag will be stripped. ID3v1 tags will still be kept.
+
+                       If '-' is written before a format name the format will be
+                       removed from the set of formats to extract. E.g. extract
+                       everything except tracker files:
+
+                         mediaextract --formats=all,-tracker data.bin
+</code></pre>
+        </section>
+
+        <footer>
+          Mediaextract is maintained by <a href="https://github.com/panzi">panzi</a><br>
+          This page was generated by <a href="http://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="http://twitter.com/jasonlong">Jason Long</a>.
+        </footer>
+
+        
+      </div>
+    </div>
+  </body>
+</html>
