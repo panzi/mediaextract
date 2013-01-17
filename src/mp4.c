@@ -1,10 +1,26 @@
 #include "mp4.h"
 
+// See: https://developer.apple.com/library/mac/#documentation/QuickTime/QTFF/QTFFChap1/qtff1.html#//apple_ref/doc/uid/TP40000939-CH203-39013
+
 struct ftyp {
 	uint32_t brand;
 	const char *ext;
 };
 
+struct mp4_atom_head {
+	uint32_t size;
+	uint32_t type;
+};
+
+struct mp4_type_atom {
+	uint32_t size;
+	uint32_t type;
+	uint32_t major_brand;
+	uint32_t minor_version;
+	uint32_t compatible_brands[];
+};
+
+// from http://www.ftyps.com/
 static const struct ftyp mp4_ftyps[] = {
 	{ CMAGIC('3','g','2','a'), "3g2" },
 	{ CMAGIC('3','g','2','b'), "3g2" },
@@ -105,19 +121,6 @@ static const uint32_t mp4_bodyatom_types[] = {
 	0
 };
 
-struct mp4_atom_head {
-	uint32_t size;
-	uint32_t type;
-};
-
-struct mp4_type_atom {
-	uint32_t size;
-	uint32_t type;
-	uint32_t major_brand;
-	uint32_t minor_version;
-	uint32_t compatible_brands[];
-};
-
 static const char *mp4_find_ext(uint32_t brand)
 {
 	for (const struct ftyp *ftyp = mp4_ftyps; ftyp->brand; ++ ftyp)
@@ -181,7 +184,7 @@ int mp4_isfile(const uint8_t *data, size_t input_len, struct file_info *info)
 	{
 		const struct mp4_atom_head *head = (const struct mp4_atom_head *)(data + length);
 		size_t size = be32toh(head->size);
-		if (size < 8 || !mp4_isbodyatom_type(head->type) || (size_t)(-1) - size < length)
+		if (size < 8 || !mp4_isbodyatom_type(head->type) || SIZE_MAX - size < length)
 			break;
 		length += size;
 		if (length > input_len) length = input_len;

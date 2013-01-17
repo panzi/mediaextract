@@ -1,5 +1,8 @@
 #include "asf.h"
 
+// See: http://msdn.microsoft.com/en-us/library/bb643323.aspx
+//      http://www.microsoft.com/en-us/download/details.aspx?id=14995
+
 enum asf_file_property_flag {
 	ASF_BROADCAST_FLAG = 1,
 	ASF_SEEKABLE_FLAG  = 2
@@ -43,7 +46,7 @@ const char *asf_body_object_guids[] = {
 	NULL
 };
 
-int asf_isbody(const struct asf_object *object)
+static int asf_isbody(const struct asf_object *object)
 {
 	for (const char **guid = asf_body_object_guids; *guid; ++ guid)
 	{
