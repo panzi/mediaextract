@@ -123,7 +123,7 @@ files.
 	                         ogg      Ogg files (Vorbis, Opus, Theora, etc.)
 	                         png      Portable Network Graphics files
 	                         riff     Resource Interchange File Format files (ANI, AVI, MMM,
-	                                  PAL, RDI, RMI, WAV)
+	                                  PAL, RDI, RMI, SGT, STY, WAV and more)
 	                         s3m      ScreamTracker III files
 	                         smk      Smaker files
 	                         xm       Extended Module files
