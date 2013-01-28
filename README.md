@@ -122,6 +122,7 @@ files.
 	                         mpg123   MPEG layer 1/2/3 files (MP1, MP2, MP3)
 	                         mpeg1    MPEG 1 System Streams
 	                         mpegps   MPEG 2 Program Streams
+	                         mpegts   MPEG 2 Transport Streams
 	                         mp4      MP4 files (M4A, M4V, 3GPP etc.)
 	                         ogg      Ogg files (Vorbis, Opus, Theora, etc.)
 	                         png      Portable Network Graphics files
@@ -136,8 +137,9 @@ files.
 	                       MP3 files usually have an ID3v2 tag at the start, so using the
 	                       'id3v2' format is the better option anyway.
 
-	                       The detection accuracy of MOD files is not much better and thus
-	                       the 'mpg123' and 'mod' formats are per default disabled.
+	                       The detection accuracy of MOD files is not much better and of MPEG TS
+	                       it is even worse and thus the 'mpg123', 'mpegts' and 'mod' formats
+	                       are per default disabled.
 
 	                       NOTE: When using only the 'mpg123' format but not 'id3v2' any ID3v2
 	                       tag will be stripped. ID3v1 tags will still be kept.

@@ -155,6 +155,7 @@ static int usage(int argc, char **argv)
 		"                           mpg123   MPEG layer 1/2/3 files (MP1, MP2, MP3)\n"
 		"                           mpeg1    MPEG 1 System Streams\n"
 		"                           mpegps   MPEG 2 Program Streams\n"
+		"                           mpegts   MPEG 2 Transport Streams\n"
 		"                           mp4      MP4 files (M4A, M4V, 3GPP etc.)\n"
 		"                           ogg      Ogg files (Vorbis, Opus, Theora, etc.)\n"
 		"                           png      Portable Network Graphics files\n"
@@ -169,8 +170,9 @@ static int usage(int argc, char **argv)
 		"                         MP3 files usually have an ID3v2 tag at the start, so using the\n"
 		"                         'id3v2' format is the better option anyway.\n"
 		"\n"
-		"                         The detection accuracy of MOD files is not much better and thus\n"
-		"                         the 'mpg123' and 'mod' formats are per default disabled.\n"
+		"                         The detection accuracy of MOD files is not much better and of MPEG TS\n"
+		"                         it is even worse and thus the 'mpg123', 'mpegts' and 'mod' formats\n"
+		"                         are per default disabled.\n"
 		"\n"
 		"                         NOTE: When using only the 'mpg123' format but not 'id3v2' any ID3v2\n"
 		"                         tag will be stripped. ID3v1 tags will still be kept.\n"
@@ -442,7 +444,14 @@ int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_op
 			continue;
 		}
 
-		if (formats & (MPEG1 | MPEGPS | MPEGVS | MPEGTS) && IS_MPEG_MAGIC(magic) && mpeg_isfile(ptr, input_len, formats, &length))
+		if (formats & (MPEG1 | MPEGPS | MPEGVS) && IS_MPEG_MAGIC(magic) && mpeg_isfile(ptr, input_len, formats, &length))
+		{
+			WRITE_FILE(ptr, length, "mpg");
+			ptr += length;
+			continue;
+		}
+
+		if (formats & MPEGTS && IS_MPEG_TS_MAGIC(ptr) && mpeg_isfile(ptr, input_len, formats, &length))
 		{
 			WRITE_FILE(ptr, length, "mpg");
 			ptr += length;
