@@ -27,7 +27,8 @@ OBJ=\
 	$(BUILDDIR)/bmp.o \
 	$(BUILDDIR)/png.o \
 	$(BUILDDIR)/jpg.o \
-	$(BUILDDIR)/gif.o
+	$(BUILDDIR)/gif.o \
+	$(BUILDDIR)/mpeg.o
 CC=gcc
 LD=$(CC)
 COMMON_CFLAGS=-Wall -Werror -Wextra -std=gnu99 -O2 -g $(INCLUDE) $(LIBDIRS) -D_FILE_OFFSET_BITS=64
@@ -98,7 +99,8 @@ $(BUILDDIR)/mediaextract.o: src/mediaextract.c \
 		src/bmp.h \
 		src/png.h \
 		src/jpg.h \
-		src/gif.h
+		src/gif.h \
+		src/mpeg.h
 	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
 
 $(BUILDDIR)/mediaextract_$(PLATFORM).o: src/mediaextract_$(PLATFORM).c src/mediaextract.h
@@ -159,6 +161,9 @@ $(BUILDDIR)/jpg.o: src/jpg.c src/mediaextract.h src/jpg.h
 	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
 
 $(BUILDDIR)/gif.o: src/gif.c src/mediaextract.h src/gif.h
+	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
+
+$(BUILDDIR)/mpeg.o: src/mpeg.c src/mediaextract.h src/mpeg.h
 	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
 
 ifeq ($(PLATFORM),posix)

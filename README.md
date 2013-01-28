@@ -99,11 +99,12 @@ files.
 	                       Supported formats:
 	                         all      all supported formats
 	                         default  the default set of formats (AIFF, ASF, AU, BINK, BMP,
-	                                  GIF, ID3v2, IT, JEPG, MIDI, MP4, Ogg, PNG, RIFF, S3M,
-	                                  SMK, XM)
+	                                  GIF, ID3v2, IT, JEPG, MPEG 1, MPEG PS, MIDI, MP4, Ogg,
+	                                  PNG, RIFF, S3M, SMK, XM)
 	                         audio    all audio files (AIFF, ASF, AU, ID3v2, IT, MIDI, MP4,
 	                                  Ogg, RIFF, S3M, XM)
 	                         image    all image files (BMP, PNG, JEPG, GIF)
+	                         mpeg     all safe mpeg files (MPEG 1, MPEG PS, ID3v2)
 	                         tracker  all tracker files (MOD, S3M, IT, XM)
 	                         video    all video files (ASF, BINK, MP4, RIFF, SMK)
 
@@ -119,6 +120,8 @@ files.
 	                         midi     MIDI files
 	                         mod      Noisetracker/Soundtracker/Protracker Module files
 	                         mpg123   MPEG layer 1/2/3 files (MP1, MP2, MP3)
+	                         mpeg1    MPEG 1 System Streams
+	                         mpegps   MPEG 2 Program Streams
 	                         mp4      MP4 files (M4A, M4V, 3GPP etc.)
 	                         ogg      Ogg files (Vorbis, Opus, Theora, etc.)
 	                         png      Portable Network Graphics files

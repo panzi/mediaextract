@@ -34,6 +34,7 @@
 #include "png.h"
 #include "jpg.h"
 #include "gif.h"
+#include "mpeg.h"
 
 #if defined(__WINDOWS__) && !defined(__CYGWIN__)
 #	ifdef _WIN64
@@ -50,39 +51,17 @@
 
 #define SEE_HELP "See --help for usage information.\n"
 
-enum fileformat {
-	NONE   =     0x0,
-	OGG    =     0x1,
-	RIFF   =     0x2,
-	AIFF   =     0x4,
-	MPG123 =     0x8,
-	ID3v2  =    0x10,
-	MP4    =    0x20,
-	MIDI   =    0x40,
-	MOD    =    0x80,
-	S3M    =   0x100,
-	IT     =   0x200,
-	XM     =   0x400,
-	ASF    =   0x800,
-	BINK   =  0x1000,
-	AU     =  0x2000,
-	SMK    =  0x4000,
-	BMP    =  0x8000,
-	PNG    = 0x10000,
-	JPEG   = 0x20000,
-	GIF    = 0x40000
-};
-
-#define TRACKER_FORMATS (MOD | S3M  | IT   | XM)
-#define AUDIO_FORMATS   (OGG | RIFF | AIFF | MPG123 | MP4 | ID3v2 | MIDI | MOD | S3M | IT | XM | ASF | AU)
-#define VIDEO_FORMATS   (MP4 | RIFF | ASF  | BINK   | SMK)
-#define IMAGE_FORMATS   (BMP | PNG  | JPEG | GIF)
-#define ALL_FORMATS     (OGG | RIFF | AIFF | MPG123 | MP4 | ID3v2 | MIDI | MOD | S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG | GIF)
-#define DEFAULT_FORMATS (OGG | RIFF | AIFF |          MP4 | ID3v2 | MIDI |       S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG | GIF)
+#define TRACKER_FORMATS (MOD   | S3M    | IT     | XM)
+#define AUDIO_FORMATS   (OGG   | RIFF   | AIFF   | MPG123 | MP4 | ID3v2  | MIDI   | MOD    | S3M | IT | XM | ASF | AU)
+#define VIDEO_FORMATS   (MP4   | RIFF   | ASF    | BINK   | SMK | MPEGPS | MPEGVS | MPEGTS)
+#define MPEG_FORMATS    (MPEG1 | MPEGPS | MPEGVS | ID3v2)
+#define IMAGE_FORMATS   (BMP   | PNG    | JPEG   | GIF)
+#define ALL_FORMATS     (OGG   | RIFF   | AIFF   | MPG123 | MP4 | ID3v2  | MIDI   | MOD    | S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG | GIF | MPEG1 | MPEGPS | MPEGVS | MPEGTS)
+#define DEFAULT_FORMATS (OGG   | RIFF   | AIFF   |          MP4 | ID3v2  | MIDI   |          S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG | GIF | MPEG1 | MPEGPS | MPEGVS)
 
 static int usage(int argc, char **argv);
 static const char *basename(const char *path);
-static int parse_formats(const char *formats);
+static int parse_formats(const char *sformats, int *formats);
 static int parse_size_p(const char *str, uint64_t *size);
 static int parse_size(const char *str, size_t *size);
 static int parse_offset(const char *str, uint64_t *size);
@@ -144,17 +123,21 @@ static int usage(int argc, char **argv)
 		"                           E            for Exabytes  (units of 1024 Petabytes)\n"
 		"\n"
 		"                         The special value \"max\" selects the maximum alowed value.\n"
-		"\n"
+		"\n",
+		default_size, size_unit);
+
+	fprintf(stderr,
 		"  -f, --formats=FORMATS  Comma separated list of formats (file magics) to extract.\n"
 		"\n"
 		"                         Supported formats:\n"
 		"                           all      all supported formats\n"
 		"                           default  the default set of formats (AIFF, ASF, AU, BINK, BMP,\n"
-		"                                    GIF, ID3v2, IT, JEPG, MIDI, MP4, Ogg, PNG, RIFF, S3M,\n"
-		"                                    SMK, XM)\n"
+		"                                    GIF, ID3v2, IT, JEPG, MPEG 1, MPEG PS, MIDI, MP4, Ogg,\n"
+		"                                    PNG, RIFF, S3M, SMK, XM)\n"
 		"                           audio    all audio files (AIFF, ASF, AU, ID3v2, IT, MIDI, MP4,\n"
 		"                                    Ogg, RIFF, S3M, XM)\n"
 		"                           image    all image files (BMP, PNG, JEPG, GIF)\n"
+		"                           mpeg     all safe mpeg files (MPEG 1, MPEG PS, ID3v2)\n"
 		"                           tracker  all tracker files (MOD, S3M, IT, XM)\n"
 		"                           video    all video files (ASF, BINK, MP4, RIFF, SMK)\n"
 		"\n"
@@ -170,6 +153,8 @@ static int usage(int argc, char **argv)
 		"                           midi     MIDI files\n"
 		"                           mod      Noisetracker/Soundtracker/Protracker Module files\n"
 		"                           mpg123   MPEG layer 1/2/3 files (MP1, MP2, MP3)\n"
+		"                           mpeg1    MPEG 1 System Streams\n"
+		"                           mpegps   MPEG 2 Program Streams\n"
 		"                           mp4      MP4 files (M4A, M4V, 3GPP etc.)\n"
 		"                           ogg      Ogg files (Vorbis, Opus, Theora, etc.)\n"
 		"                           png      Portable Network Graphics files\n"
@@ -196,7 +181,7 @@ static int usage(int argc, char **argv)
 		"\n"
 		"                           %s --formats=all,-tracker data.bin\n"
 		"\n",
-		default_size, size_unit, progname);
+		progname);
 	return 255;
 }
 
@@ -457,6 +442,13 @@ int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_op
 			continue;
 		}
 
+		if (formats & (MPEG1 | MPEGPS | MPEGVS | MPEGTS) && IS_MPEG_MAGIC(magic) && mpeg_isfile(ptr, input_len, formats, &length))
+		{
+			WRITE_FILE(ptr, length, "mpg");
+			ptr += length;
+			continue;
+		}
+
 		if (formats & JPEG && IS_JPG_MAGIC(magic) && jpg_isfile(ptr, input_len, &length))
 		{
 			WRITE_FILE(ptr, length, "jpg");
@@ -535,16 +527,16 @@ cleanup:
 	return success;
 }
 
-int parse_formats(const char *formats)
+int parse_formats(const char *sformats, int *formats)
 {
 	unsigned int parsed = NONE;
-	const char *start = formats;
+	const char *start = sformats;
 	const char *end = strchr(start,',');
 
 	while (*start)
 	{
 		if (!end)
-			end = formats + strlen(formats);
+			end = sformats + strlen(sformats);
 
 		size_t len = (size_t)(end - start);
 		unsigned int mask = NONE;
@@ -624,6 +616,26 @@ int parse_formats(const char *formats)
 		{
 			mask = JPEG;
 		}
+		else if (strncasecmp("mpeg1", start, len) == 0)
+		{
+			mask = MPEG1;
+		}
+		else if (strncasecmp("mpegps", start, len) == 0)
+		{
+			mask = MPEGPS;
+		}
+		else if (strncasecmp("mpegvs", start, len) == 0)
+		{
+			mask = MPEGVS;
+		}
+		else if (strncasecmp("mpegts", start, len) == 0)
+		{
+			mask = MPEGTS;
+		}
+		else if (strncasecmp("mpeg", start, len) == 0)
+		{
+			mask = MPEG_FORMATS;
+		}
 		else if (strncasecmp("gif", start, len) == 0)
 		{
 			mask = GIF;
@@ -656,8 +668,8 @@ int parse_formats(const char *formats)
 		{
 			fprintf(stderr, "Unknown format: \"");
 			fwrite(start, len, 1, stderr);
-			fprintf(stderr, "\"\nSee --help for usage information.\n");
-			return -1;
+			fprintf(stderr, "\"\n"SEE_HELP);
+			return 0;
 		}
 
 		if (remove) parsed &= ~mask;
@@ -667,10 +679,13 @@ int parse_formats(const char *formats)
 			break;
 
 		start = end + 1;
-		end = strchr(start, ',');
+		end   = strchr(start, ',');
 	}
 
-	return parsed;
+	if (formats)
+		*formats = parsed;
+
+	return 1;
 }
 
 int parse_size_p(const char *str, uint64_t *size)
@@ -899,8 +914,7 @@ int main(int argc, char **argv)
 		switch (opt)
 		{
 			case 'f':
-				options.formats = parse_formats(optarg);
-				if (options.formats < 0)
+				if (!parse_formats(optarg, &options.formats))
 					return 255;
 				else if (options.formats == 0)
 				{

@@ -153,6 +153,33 @@
 
 #endif
 
+enum fileformat {
+	NONE   =      0x0,
+	OGG    =      0x1,
+	RIFF   =      0x2,
+	AIFF   =      0x4,
+	MPG123 =      0x8,
+	ID3v2  =     0x10,
+	MP4    =     0x20,
+	MIDI   =     0x40,
+	MOD    =     0x80,
+	S3M    =    0x100,
+	IT     =    0x200,
+	XM     =    0x400,
+	ASF    =    0x800,
+	BINK   =   0x1000,
+	AU     =   0x2000,
+	SMK    =   0x4000,
+	BMP    =   0x8000,
+	PNG    =  0x10000,
+	JPEG   =  0x20000,
+	GIF    =  0x40000,
+	MPEG1  =  0x80000,
+	MPEGPS = 0x100000,
+	MPEGVS = 0x200000, // TODO
+	MPEGTS = 0x400000  // TODO
+};
+
 struct file_info {
 	size_t length;
 	const char *ext;
