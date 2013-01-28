@@ -23,7 +23,7 @@
         </header>
 
         <section id="downloads" class="clearfix">
-          <a href="mediaextract-2013-01-19.zip" id="download-zip" class="button"><span>mediaextract-2013-01-19.zip</span></a>
+          <a href="mediaextract-2013-01-29.zip" id="download-zip" class="button"><span>mediaextract-2013-01-29.zip</span></a>
           <a href="https://github.com/panzi/mediaextract" id="view-on-github" class="button"><span>View on GitHub</span></a>
         </section>
 
@@ -129,11 +129,12 @@ files.</p>
                        Supported formats:
                          all      all supported formats
                          default  the default set of formats (AIFF, ASF, AU, BINK, BMP,
-                                  GIF, ID3v2, IT, JEPG, MIDI, MP4, Ogg, PNG, RIFF, S3M,
-                                  SMK, XM)
+                                  GIF, ID3v2, IT, JEPG, MPEG 1, MPEG PS, MIDI, MP4, Ogg,
+                                  PNG, RIFF, S3M, SMK, XM)
                          audio    all audio files (AIFF, ASF, AU, ID3v2, IT, MIDI, MP4,
                                   Ogg, RIFF, S3M, XM)
                          image    all image files (BMP, PNG, JEPG, GIF)
+                         mpeg     all safe mpeg files (MPEG 1, MPEG PS, ID3v2)
                          tracker  all tracker files (MOD, S3M, IT, XM)
                          video    all video files (ASF, BINK, MP4, RIFF, SMK)
 
@@ -149,6 +150,9 @@ files.</p>
                          midi     MIDI files
                          mod      Noisetracker/Soundtracker/Protracker Module files
                          mpg123   MPEG layer 1/2/3 files (MP1, MP2, MP3)
+                         mpeg1    MPEG 1 System Streams
+                         mpegps   MPEG 2 Program Streams
+                         mpegts   MPEG 2 Transport Streams
                          mp4      MP4 files (M4A, M4V, 3GPP etc.)
                          ogg      Ogg files (Vorbis, Opus, Theora, etc.)
                          png      Portable Network Graphics files
@@ -163,8 +167,9 @@ files.</p>
                        MP3 files usually have an ID3v2 tag at the start, so using the
                        'id3v2' format is the better option anyway.
 
-                       The detection accuracy of MOD files is not much better and thus
-                       the 'mpg123' and 'mod' formats are per default disabled.
+                       The detection accuracy of MOD files is not much better and of MPEG TS
+                       it is even worse and thus the 'mpg123', 'mpegts' and 'mod' formats
+                       are per default disabled.
 
                        NOTE: When using only the 'mpg123' format but not 'id3v2' any ID3v2
                        tag will be stripped. ID3v1 tags will still be kept.
