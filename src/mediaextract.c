@@ -35,6 +35,7 @@
 #include "jpg.h"
 #include "gif.h"
 #include "mpeg.h"
+#include "text.h"
 
 #if defined(__WINDOWS__) && !defined(__CYGWIN__)
 #	ifdef _WIN64
@@ -56,7 +57,7 @@
 #define VIDEO_FORMATS   (MP4   | RIFF   | ASF    | BINK   | SMK | MPEGPS | MPEGVS | MPEGTS)
 #define MPEG_FORMATS    (MPEG1 | MPEGPS | MPEGVS | ID3v2)
 #define IMAGE_FORMATS   (BMP   | PNG    | JPEG   | GIF)
-#define ALL_FORMATS     (OGG   | RIFF   | AIFF   | MPG123 | MP4 | ID3v2  | MIDI   | MOD    | S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG | GIF | MPEG1 | MPEGPS | MPEGVS | MPEGTS)
+#define ALL_FORMATS     (OGG   | RIFF   | AIFF   | MPG123 | MP4 | ID3v2  | MIDI   | MOD    | S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG | GIF | MPEG1 | MPEGPS | MPEGVS | MPEGTS | TEXT)
 #define DEFAULT_FORMATS (OGG   | RIFF   | AIFF   |          MP4 | ID3v2  | MIDI   |          S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG | GIF | MPEG1 | MPEGPS | MPEGVS)
 
 static int usage(int argc, char **argv);
@@ -142,6 +143,7 @@ static int usage(int argc, char **argv)
 		"                           video    all video files (ASF, BINK, MP4, RIFF, SMK)\n"
 		"\n"
 		"                           aiff     big-endian (Apple) wave files\n"
+		"                           ascii    7-bit ASCII files (only printable code points)\n"
 		"                           asf      Advanced Systems Format files (also WMA and WMV)\n"
 		"                           au       Sun Microsystems audio file format (.au or .snd)\n"
 		"                           bink     BINK files\n"
@@ -163,6 +165,7 @@ static int usage(int argc, char **argv)
 		"                                    PAL, RDI, RMI, SGT, STY, WAV and more)\n"
 		"                           s3m      ScreamTracker III files\n"
 		"                           smk      Smaker files\n"
+		"                           text     7-bit ASCII and UTF-8 files (only printable code points)\n"
 		"                           xm       Extended Module files\n"
 		"\n"
 		"                         WARNING: Because MP1/2/3 files do not have a nice file magic, using\n"
@@ -268,8 +271,8 @@ int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_op
 
 	size_t numfiles = 0;
 	const char *filename = basename(options->filepath);
-	// max. ext length is 4 characters
-	size_t namelen = strlen(options->outdir) + strlen(filename) + 25;
+	// max. ext length is 16 characters
+	size_t namelen = strlen(options->outdir) + strlen(filename) + 37;
 
 	struct mpg123_info mpg123;
 	struct ogg_info ogg;
@@ -515,6 +518,17 @@ int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_op
 			}
 		}
 
+		if (formats & TEXT && utf8_isfile(ptr, input_len, &info)) {
+			WRITE_FILE(ptr, info.length, info.ext);
+			ptr += info.length;
+			continue;
+		}
+		else if (formats & ASCII && ascii_isfile(ptr, input_len, &info)) {
+			WRITE_FILE(ptr, info.length, info.ext);
+			ptr += info.length;
+			continue;
+		}
+
 		++ ptr;
 	}
 
@@ -648,6 +662,14 @@ int parse_formats(const char *sformats, int *formats)
 		else if (strncasecmp("gif", start, len) == 0)
 		{
 			mask = GIF;
+		}
+		else if (strncasecmp("ascii", start, len) == 0)
+		{
+			mask = ASCII;
+		}
+		else if (strncasecmp("text", start, len) == 0)
+		{
+			mask = TEXT;
 		}
 		else if (strncasecmp("audio", start, len) == 0)
 		{

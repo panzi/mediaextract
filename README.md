@@ -81,7 +81,7 @@ files.
 	-m, --min-size=SIZE    Minumum size of extracted files (skip smaller). (default: 0)
 	-x, --max-size=SIZE    Maximum size of extracted files (skip larger).
 	                       (default and maximum: 16 EB)
-
+	
 	                       The last character of OFFSET, LENGTH and SIZE may be one of the
 	                       following:
 	                         B (or none)  for Bytes
@@ -91,11 +91,11 @@ files.
 	                         T            for Terabytes (units of 1024 Gigabytes)
 	                         P            for Petabytes (units of 1024 Terabytes)
 	                         E            for Exabytes  (units of 1024 Petabytes)
-
+	
 	                       The special value "max" selects the maximum alowed value.
-
+	
 	-f, --formats=FORMATS  Comma separated list of formats (file magics) to extract.
-
+	
 	                       Supported formats:
 	                         all      all supported formats
 	                         default  the default set of formats (AIFF, ASF, AU, BINK, BMP,
@@ -107,8 +107,9 @@ files.
 	                         mpeg     all safe mpeg files (MPEG 1, MPEG PS, ID3v2)
 	                         tracker  all tracker files (MOD, S3M, IT, XM)
 	                         video    all video files (ASF, BINK, MP4, RIFF, SMK)
-
+	
 	                         aiff     big-endian (Apple) wave files
+	                         ascii    7-bit ASCII files (only printable code points)
 	                         asf      Advanced Systems Format files (also WMA and WMV)
 	                         au       Sun Microsystems audio file format (.au or .snd)
 	                         bink     BINK files
@@ -130,22 +131,23 @@ files.
 	                                  PAL, RDI, RMI, SGT, STY, WAV and more)
 	                         s3m      ScreamTracker III files
 	                         smk      Smaker files
+	                         text     7-bit ASCII and UTF-8 files (only printable code points)
 	                         xm       Extended Module files
-
+	
 	                       WARNING: Because MP1/2/3 files do not have a nice file magic, using
 	                       the 'mpg123' format may cause *a lot* of false positives. Nowadays
 	                       MP3 files usually have an ID3v2 tag at the start, so using the
 	                       'id3v2' format is the better option anyway.
-
+	
 	                       The detection accuracy of MOD files is not much better and of MPEG TS
 	                       it is even worse and thus the 'mpg123', 'mpegts' and 'mod' formats
 	                       are per default disabled.
-
+	
 	                       NOTE: When using only the 'mpg123' format but not 'id3v2' any ID3v2
 	                       tag will be stripped. ID3v1 tags will still be kept.
-
+	
 	                       If '-' is written before a format name the format will be
 	                       removed from the set of formats to extract. E.g. extract
 	                       everything except tracker files:
-
+	
 	                         mediaextract --formats=all,-tracker data.bin
