@@ -103,13 +103,15 @@ files.
 	                                  PNG, RIFF, S3M, SMK, XM)
 	                         audio    all audio files (AIFF, ASF, AU, ID3v2, IT, MIDI, MP4,
 	                                  Ogg, RIFF, S3M, XM)
+	                         text     all text files (ASCII, UTF-8, UTF-16LE, UTF-16BE,
+	                                  UTF-32LE, UTF-32BE)
 	                         image    all image files (BMP, PNG, JEPG, GIF)
 	                         mpeg     all safe mpeg files (MPEG 1, MPEG PS, ID3v2)
 	                         tracker  all tracker files (MOD, S3M, IT, XM)
 	                         video    all video files (ASF, BINK, MP4, RIFF, SMK)
 	
 	                         aiff     big-endian (Apple) wave files
-	                         ascii    7-bit ASCII files (only printable code points)
+	                         ascii    7-bit ASCII files (only printable characters)
 	                         asf      Advanced Systems Format files (also WMA and WMV)
 	                         au       Sun Microsystems audio file format (.au or .snd)
 	                         bink     BINK files
@@ -131,7 +133,11 @@ files.
 	                                  PAL, RDI, RMI, SGT, STY, WAV and more)
 	                         s3m      ScreamTracker III files
 	                         smk      Smaker files
-	                         text     7-bit ASCII and UTF-8 files (only printable code points)
+	                         utf-8    7-bit ASCII and UTF-8 files (only printable code points)
+	                         utf-16be big-endian UTF-16 files (only printable code points)
+	                         utf-16le little-endian UTF-16 files (only printable code points)
+	                         utf-32be big-endian UTF-32 files (only printable code points)
+	                         utf-32le little-endian UTF-32 files (only printable code points)
 	                         xm       Extended Module files
 	
 	                       WARNING: Because MP1/2/3 files do not have a nice file magic, using

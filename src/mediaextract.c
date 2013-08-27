@@ -57,7 +57,8 @@
 #define VIDEO_FORMATS   (MP4   | RIFF   | ASF    | BINK   | SMK | MPEGPS | MPEGVS | MPEGTS)
 #define MPEG_FORMATS    (MPEG1 | MPEGPS | MPEGVS | ID3v2)
 #define IMAGE_FORMATS   (BMP   | PNG    | JPEG   | GIF)
-#define ALL_FORMATS     (OGG   | RIFF   | AIFF   | MPG123 | MP4 | ID3v2  | MIDI   | MOD    | S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG | GIF | MPEG1 | MPEGPS | MPEGVS | MPEGTS | TEXT)
+#define TEXT_FORMATS    (UTF_8 | UTF_16LE | UTF_16BE | UTF_32LE | UTF_32BE)
+#define ALL_FORMATS     (OGG   | RIFF   | AIFF   | MPG123 | MP4 | ID3v2  | MIDI   | MOD    | S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG | GIF | MPEG1 | MPEGPS | MPEGVS | MPEGTS | TEXT_FORMATS)
 #define DEFAULT_FORMATS (OGG   | RIFF   | AIFF   |          MP4 | ID3v2  | MIDI   |          S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG | GIF | MPEG1 | MPEGPS | MPEGVS)
 
 static int usage(int argc, char **argv);
@@ -137,13 +138,15 @@ static int usage(int argc, char **argv)
 		"                                    PNG, RIFF, S3M, SMK, XM)\n"
 		"                           audio    all audio files (AIFF, ASF, AU, ID3v2, IT, MIDI, MP4,\n"
 		"                                    Ogg, RIFF, S3M, XM)\n"
+		"                           text     all text files (ASCII, UTF-8, UTF-16LE, UTF-16BE,\n"
+		"                                    UTF-32LE, UTF-32BE)\n"
 		"                           image    all image files (BMP, PNG, JEPG, GIF)\n"
 		"                           mpeg     all safe mpeg files (MPEG 1, MPEG PS, ID3v2)\n"
 		"                           tracker  all tracker files (MOD, S3M, IT, XM)\n"
 		"                           video    all video files (ASF, BINK, MP4, RIFF, SMK)\n"
 		"\n"
 		"                           aiff     big-endian (Apple) wave files\n"
-		"                           ascii    7-bit ASCII files (only printable code points)\n"
+		"                           ascii    7-bit ASCII files (only printable characters)\n"
 		"                           asf      Advanced Systems Format files (also WMA and WMV)\n"
 		"                           au       Sun Microsystems audio file format (.au or .snd)\n"
 		"                           bink     BINK files\n"
@@ -165,9 +168,15 @@ static int usage(int argc, char **argv)
 		"                                    PAL, RDI, RMI, SGT, STY, WAV and more)\n"
 		"                           s3m      ScreamTracker III files\n"
 		"                           smk      Smaker files\n"
-		"                           text     7-bit ASCII and UTF-8 files (only printable code points)\n"
+		"                           utf-8    7-bit ASCII and UTF-8 files (only printable code points)\n"
+		"                           utf-16be big-endian UTF-16 files (only printable code points)\n"
+		"                           utf-16le little-endian UTF-16 files (only printable code points)\n"
+		"                           utf-32be big-endian UTF-32 files (only printable code points)\n"
+		"                           utf-32le little-endian UTF-32 files (only printable code points)\n"
 		"                           xm       Extended Module files\n"
-		"\n"
+		"\n");
+
+	fprintf(stderr,
 		"                         WARNING: Because MP1/2/3 files do not have a nice file magic, using\n"
 		"                         the 'mpg123' format may cause *a lot* of false positives. Nowadays\n"
 		"                         MP3 files usually have an ID3v2 tag at the start, so using the\n"
@@ -518,7 +527,31 @@ int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_op
 			}
 		}
 
-		if (formats & TEXT && utf8_isfile(ptr, input_len, &info)) {
+		if (formats & UTF_32LE && utf32le_isfile(ptr, input_len, &info)) {
+			WRITE_FILE(ptr, info.length, info.ext);
+			ptr += info.length;
+			continue;
+		}
+
+		if (formats & UTF_32BE && utf32be_isfile(ptr, input_len, &info)) {
+			WRITE_FILE(ptr, info.length, info.ext);
+			ptr += info.length;
+			continue;
+		}
+
+		if (formats & UTF_16LE && utf16le_isfile(ptr, input_len, &info)) {
+			WRITE_FILE(ptr, info.length, info.ext);
+			ptr += info.length;
+			continue;
+		}
+
+		if (formats & UTF_16BE && utf16be_isfile(ptr, input_len, &info)) {
+			WRITE_FILE(ptr, info.length, info.ext);
+			ptr += info.length;
+			continue;
+		}
+
+		if (formats & UTF_8 && utf8_isfile(ptr, input_len, &info)) {
 			WRITE_FILE(ptr, info.length, info.ext);
 			ptr += info.length;
 			continue;
@@ -667,9 +700,25 @@ int parse_formats(const char *sformats, int *formats)
 		{
 			mask = ASCII;
 		}
-		else if (strncasecmp("text", start, len) == 0)
+		else if (strncasecmp("utf8", start, len) == 0 || strncasecmp("utf-8", start, len) == 0)
 		{
-			mask = TEXT;
+			mask = UTF_8;
+		}
+		else if (strncasecmp("utf16le", start, len) == 0 || strncasecmp("utf-16le", start, len) == 0)
+		{
+			mask = UTF_16LE;
+		}
+		else if (strncasecmp("utf16be", start, len) == 0 || strncasecmp("utf-16be", start, len) == 0)
+		{
+			mask = UTF_16BE;
+		}
+		else if (strncasecmp("utf32le", start, len) == 0 || strncasecmp("utf-32le", start, len) == 0)
+		{
+			mask = UTF_32LE;
+		}
+		else if (strncasecmp("utf32be", start, len) == 0 || strncasecmp("utf-32be", start, len) == 0)
+		{
+			mask = UTF_32BE;
 		}
 		else if (strncasecmp("audio", start, len) == 0)
 		{
@@ -686,6 +735,10 @@ int parse_formats(const char *sformats, int *formats)
 		else if (strncasecmp("video", start, len) == 0)
 		{
 			mask = VIDEO_FORMATS;
+		}
+		else if (strncasecmp("text", start, len) == 0)
+		{
+			mask = TEXT_FORMATS;
 		}
 		else if (strncasecmp("all", start, len) == 0)
 		{

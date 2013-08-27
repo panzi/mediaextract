@@ -154,32 +154,36 @@
 #endif
 
 enum fileformat {
-	NONE   =       0,
-	OGG    = 1 <<  0,
-	RIFF   = 1 <<  1,
-	AIFF   = 1 <<  2,
-	MPG123 = 1 <<  3,
-	ID3v2  = 1 <<  4,
-	MP4    = 1 <<  5,
-	MIDI   = 1 <<  6,
-	MOD    = 1 <<  7,
-	S3M    = 1 <<  8,
-	IT     = 1 <<  9,
-	XM     = 1 << 10,
-	ASF    = 1 << 11,
-	BINK   = 1 << 12,
-	AU     = 1 << 13,
-	SMK    = 1 << 14,
-	BMP    = 1 << 15,
-	PNG    = 1 << 16,
-	JPEG   = 1 << 17,
-	GIF    = 1 << 18,
-	MPEG1  = 1 << 19,
-	MPEGPS = 1 << 20,
-	MPEGVS = 1 << 21, // TODO
-	MPEGTS = 1 << 22, // TODO
-	ASCII  = 1 << 23,
-	TEXT   = 1 << 24
+	NONE     =       0,
+	OGG      = 1 <<  0,
+	RIFF     = 1 <<  1,
+	AIFF     = 1 <<  2,
+	MPG123   = 1 <<  3,
+	ID3v2    = 1 <<  4,
+	MP4      = 1 <<  5,
+	MIDI     = 1 <<  6,
+	MOD      = 1 <<  7,
+	S3M      = 1 <<  8,
+	IT       = 1 <<  9,
+	XM       = 1 << 10,
+	ASF      = 1 << 11,
+	BINK     = 1 << 12,
+	AU       = 1 << 13,
+	SMK      = 1 << 14,
+	BMP      = 1 << 15,
+	PNG      = 1 << 16,
+	JPEG     = 1 << 17,
+	GIF      = 1 << 18,
+	MPEG1    = 1 << 19,
+	MPEGPS   = 1 << 20,
+	MPEGVS   = 1 << 21, // TODO
+	MPEGTS   = 1 << 22, // TODO
+	ASCII    = 1 << 23,
+	UTF_8    = 1 << 24,
+	UTF_16LE = 1 << 25,
+	UTF_16BE = 1 << 26,
+	UTF_32LE = 1 << 27,
+	UTF_32BE = 1 << 28
 };
 
 struct file_info {
