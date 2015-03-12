@@ -9,12 +9,12 @@ int bink_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 	if (!IS_BINK_MAGIC(magic))
 		return 0;
 	
-	size_t   length      = le16toh(*(uint32_t *)(data +  4)) + 8;
-	uint32_t frame_count = le16toh(*(uint32_t *)(data +  8));
-	uint32_t width       = le16toh(*(uint32_t *)(data + 20));
-	uint32_t height      = le16toh(*(uint32_t *)(data + 24));
-	uint32_t fps_num     = le16toh(*(uint32_t *)(data + 28));
-	uint32_t fps_den     = le16toh(*(uint32_t *)(data + 32));
+	size_t length      = le32toh(*(uint32_t *)(data +  4)) + 8;
+	size_t frame_count = le32toh(*(uint32_t *)(data +  8));
+	size_t width       = le32toh(*(uint32_t *)(data + 20));
+	size_t height      = le32toh(*(uint32_t *)(data + 24));
+	size_t fps_num     = le32toh(*(uint32_t *)(data + 28));
+	size_t fps_den     = le32toh(*(uint32_t *)(data + 32));
 
 	if (input_len < length ||
 		frame_count == 0 ||
