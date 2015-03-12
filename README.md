@@ -5,7 +5,7 @@ Extract media files that are embedded within other files.
 
 ### Download
 
-[mediaextract-2013-08-27.zip](http://panzi.github.com/mediaextract/mediaextract-2013-08-27.zip)
+[mediaextract-2015-03-13.zip](http://panzi.github.com/mediaextract/mediaextract-2015-03-13.zip)
 
 The download includes Linux and Windows i386 and x86\_64 binaries.
 
@@ -16,7 +16,7 @@ Setup
 	make
 	sudo make install PREFIX=/usr
 
-Cross compile for Windows (uses `i686-pc-mingw32-gcc`):
+Cross compile for Windows (uses `i686-w64-mingw32-gcc`):
 
 	make TARGET=win32 builddir
 	make TARGET=win32
