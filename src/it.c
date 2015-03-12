@@ -81,8 +81,8 @@ int it_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 		if (MAGIC(ptr) != IT_SAMPLE_MAGIC)
 			continue;
 
-		uint32_t sample_length  = le32toh(*(uint32_t *)(ptr + 0x30));
-		uint32_t sample_pointer = le32toh(*(uint32_t *)(ptr + 0x48));
+		size_t sample_length  = le32toh(*(uint32_t *)(ptr + 0x30));
+		size_t sample_pointer = le32toh(*(uint32_t *)(ptr + 0x48));
 
 		if (sample_length && sample_pointer)
 		{
@@ -99,13 +99,13 @@ int it_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 		*para_end = para + patterns;
 		para < para_end; ++ para)
 	{
-		size_t off = (size_t)le32toh(*para);
+		size_t off = le32toh(*para);
 		const unsigned char *ptr = data + off;
 
 		UPDATE_LENGTH(off + IT_PATTERN_HEADER_SIZE);
 
-		uint16_t pattern_length = le32toh(*(uint16_t *)ptr);
-		size_t   pattern_end    = off + IT_PATTERN_HEADER_SIZE + pattern_length;
+		size_t pattern_length = le32toh(*(uint16_t *)ptr);
+		size_t pattern_end    = off + IT_PATTERN_HEADER_SIZE + pattern_length;
 
 		// there are some IT files out there with truncated patterns:
 		if (pattern_end > input_len) pattern_end = input_len;

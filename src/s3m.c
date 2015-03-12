@@ -14,13 +14,13 @@ int s3m_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 	if (MAGIC(data + S3M_MAGIC_OFFSET) != S3M_MAGIC)
 		return 0;
 	
-	uint16_t orders       = le16toh(*(uint16_t *)(data + 32));
-	uint16_t samples      = le16toh(*(uint16_t *)(data + 34));
-	uint16_t patterns     = le16toh(*(uint16_t *)(data + 36));
+	size_t   orders       = le16toh(*(uint16_t *)(data + 32));
+	size_t   samples      = le16toh(*(uint16_t *)(data + 34));
+	size_t   patterns     = le16toh(*(uint16_t *)(data + 36));
 	uint16_t tracker_vers = le16toh(*(uint16_t *)(data + 40));
 	uint16_t format_vers  = le16toh(*(uint16_t *)(data + 42));
 	size_t   length       = S3M_HEADER_SIZE + orders +
-		((size_t)samples << 1) + ((size_t)patterns << 1);
+		(samples << 1) + (patterns << 1);
 
 	if (input_len < length ||
 		tracker_vers < 0x1000 || tracker_vers >= 0x6000 ||
@@ -69,7 +69,7 @@ int s3m_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 		*para_end = para + patterns;
 		para < para_end; ++ para)
 	{
-		size_t off = le16toh(*para) << 4;
+		size_t off = (size_t)le16toh(*para) << 4;
 		const unsigned char *ptr = data + off;
 
 		UPDATE_LENGTH(off + 2);

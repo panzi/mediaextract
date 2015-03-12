@@ -4,8 +4,7 @@
 
 int ogg_ispage(const uint8_t *data, size_t input_len, struct ogg_info *pageinfo)
 {
-	uint8_t nsegs;
-	size_t length, i;
+	size_t nsegs, length, i;
 	const uint8_t *segs = data + OGG_HEADER_SIZE;
 
 	/* full header available? */

@@ -21,10 +21,10 @@ int id3v2_istag(const uint8_t *data, size_t input_len, int appended, size_t *len
 	if (!IS_ID3v2_MAGIC(data))
 		return 0;
 	
-	uint8_t  major = data[3];
-	uint8_t  minor = data[4];
-	uint8_t  flags = data[5];
-	uint32_t size  = ((data[6] & 0x7f) << 21)
+	uint8_t major = data[3];
+	uint8_t minor = data[4];
+	uint8_t flags = data[5];
+	size_t  size  = ((data[6] & 0x7f) << 21)
 	               | ((data[7] & 0x7f) << 14)
 	               | ((data[8] & 0x7f) <<  7)
 	               |  (data[9] & 0x7f);

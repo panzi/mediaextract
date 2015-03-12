@@ -221,7 +221,7 @@ const uint8_t *riff_match(const uint8_t *data, size_t size,
 		if (size < 12 || MAGIC(data) != spec->metatype)
 			return NULL;
 
-		uint32_t chunk_size = le32toh(*(const uint32_t *)(data + 4));
+		size_t chunk_size = le32toh(*(const uint32_t *)(data + 4));
 		uint32_t type = MAGIC(data + 8);
 
 		if (type != spec->type)
@@ -305,7 +305,7 @@ const uint8_t *riff_match(const uint8_t *data, size_t size,
 
 #if 0
 		// If the sub chunk matching code above delivers to many false positives this code could be used
-		// instead. This code is not really correct, because sub chunks could theretically occure in any
+		// instead. This code is not really correct, because sub chunks could theoretically occure in any
 		// order, but most of the time they don't.
 
 		const uint8_t *end = data + size;
@@ -325,7 +325,7 @@ const uint8_t *riff_match(const uint8_t *data, size_t size,
 		if (size < 8 || MAGIC(data) != spec->type)
 			return NULL;
 	
-		uint32_t chunk_size = le32toh(*(const uint32_t *)(data + 4));
+		size_t chunk_size = le32toh(*(const uint32_t *)(data + 4));
 
 		if (chunk_size > size - 8)
 			return NULL;

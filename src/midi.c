@@ -32,7 +32,7 @@ int midi_istrack(const uint8_t *data, size_t input_len, size_t *lengthptr)
 	if (MAGIC(data) != MIDI_TRACK_MAGIC)
 		return 0;
 
-	uint32_t chunk_size = be32toh(*(const uint32_t *)(data + 4));
+	size_t chunk_size = be32toh(*(const uint32_t *)(data + 4));
 	size_t length = MIDI_TRACK_HEADER_SIZE + chunk_size;
 
 	if (input_len < length)

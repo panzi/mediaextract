@@ -65,7 +65,7 @@ int asf_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 		return 0;
 
 	uint64_t header_object_size  = le64toh(header->object_size);
-	uint32_t header_object_count = le32toh(header->header_object_count);
+	size_t   header_object_count = le32toh(header->header_object_count);
 
 	if (header_object_size < 30 || input_len < header_object_size)
 		return 0;
