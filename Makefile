@@ -182,5 +182,10 @@ uninstall:
 	rm -f "$(PREFIX)/bin/$(APPNAME)"
 endif
 
+recode: $(BUILDDIR)/recode
+
+$(BUILDDIR)/recode: src/text.c src/text.h
+	$(CC) $(CFLAGS) $< -o $@ -DMEDIAEXTRACT_RECODE_BIN
+
 clean:
 	rm -f $(BIN) $(OBJ)

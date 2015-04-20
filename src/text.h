@@ -28,6 +28,7 @@
 	((CP) <= 0x8 || (CP) == 0xB || ((CP) >= 0xE && (CP) <= 0x1F) || (CP) == 0x7F)
 
 #define ASCII_MAX 0x7F
+#define LATIN1_MAX 0xFF
 #define CODEPOINT_MAX 0x10FFFF
 
 int ascii_isfile   (const uint8_t *data, size_t input_len, struct file_info *info);

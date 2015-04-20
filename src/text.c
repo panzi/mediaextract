@@ -19,7 +19,7 @@
  * THE SOFTWARE.
  */
 
-#ifndef MEDIAEXTRACT_TO_UTF8_BIN
+#ifndef MEDIAEXTRACT_RECODE_BIN
 #include <strings.h>
 #endif
 
@@ -33,9 +33,11 @@ static const uint8_t *decode_utf16be_codepoint(const uint8_t *str, size_t size, 
 static const uint8_t *decode_utf32le_codepoint(const uint8_t *str, size_t size, codepoint_t *cpptr);
 static const uint8_t *decode_utf32be_codepoint(const uint8_t *str, size_t size, codepoint_t *cpptr);
 
+#ifndef MEDIAEXTRACT_RECODE_BIN
 static int text_isfile(const uint8_t *data, size_t input_len, struct file_info *info,
 	const uint8_t *(*decode_codepoint)(const uint8_t *str, size_t size, codepoint_t *cpptr),
 	const char *ext, const char *cr_ext, const char *crlf_ext, const char *lf_ext);
+#endif
 
 const uint8_t *decode_utf8_codepoint(const uint8_t *str, size_t size, codepoint_t *cpptr) {
 	if (size == 0) {
@@ -258,7 +260,19 @@ const uint8_t *decode_utf32be_codepoint(const uint8_t *str, size_t size, codepoi
 	return str;
 }
 
-#ifndef MEDIAEXTRACT_TO_UTF8_BIN
+const uint8_t *decode_latin1_codepoint(const uint8_t *str, size_t size, codepoint_t *cpptr) {
+	if (size == 0) {
+		return NULL;
+	}
+
+	str += 1;
+
+	if (cpptr) *cpptr = str[0];
+
+	return str;
+}
+
+#ifndef MEDIAEXTRACT_RECODE_BIN
 
 int ascii_isfile(const uint8_t *data, size_t input_len, struct file_info *info) {
 	int cr   = 0;
@@ -524,6 +538,18 @@ size_t encode_utf8_codepoint(codepoint_t codepoint, uint8_t *buf, size_t size) {
 #undef encode_next_byte
 }
 
+size_t encode_latin1_codepoint(codepoint_t codepoint, uint8_t *buf, size_t size) {
+	if (codepoint > LATIN1_MAX) {
+		return 0;
+	}
+
+	if (size > 0) {
+		buf[0] = codepoint;
+	}
+
+	return 1;
+}
+
 enum convert_status {
 	CONVERT_OK           = 0,
 	CONVERT_DECODE_ERROR = 1,
@@ -639,9 +665,10 @@ void print_convert_error(const char *filename, size_t errline, size_t errcol, si
 
 int main (int argc, char *argv[]) {
 	const uint8_t *(*decode_codepoint)(const uint8_t *str, size_t size, codepoint_t *cpptr) = NULL;
+	size_t (*encode_codepoint)(codepoint_t codepoint, uint8_t *buf, size_t size) = NULL;
 
-	if (argc < 2) {
-		fprintf(stderr, "usage: to-utf8 <input-encoding> [file]...\n");
+	if (argc < 3) {
+		fprintf(stderr, "usage: recode <input-encoding> <output-encoding> [file]...\n");
 		return EXIT_FAILURE;
 	}
 
@@ -661,15 +688,32 @@ int main (int argc, char *argv[]) {
 	else if (strcasecmp(encoding,"utf-32be") == 0 || strcasecmp(encoding,"utf32be") == 0) {
 		decode_codepoint = decode_utf32be_codepoint;
 	}
+	else if (strcasecmp(encoding,"latin-1") == 0 || strcasecmp(encoding,"latin1") == 0 ||
+	         strcasecmp(encoding,"iso-8859-1") == 0) {
+		decode_codepoint = decode_latin1_codepoint;
+	}
 	else {
-		fprintf(stderr, "usage: encoding not supported: %s\n", encoding);
+		fprintf(stderr, "usage: input encoding not supported: %s\n", encoding);
+		return EXIT_FAILURE;
+	}
+
+	encoding = argv[2];
+	if (strcasecmp(encoding,"utf-8") == 0 || strcasecmp(encoding,"utf8") == 0) {
+		encode_codepoint = encode_utf8_codepoint;
+	}
+	else if (strcasecmp(encoding,"latin-1") == 0 || strcasecmp(encoding,"latin1") == 0 ||
+	         strcasecmp(encoding,"iso-8859-1") == 0) {
+		encode_codepoint = encode_latin1_codepoint;
+	}
+	else {
+		fprintf(stderr, "usage: output encoding not supported: %s\n", encoding);
 		return EXIT_FAILURE;
 	}
 
 	size_t errline = 0, errcol = 0, errbyte = 0;
 
 	if (argc > 2) {
-		for (size_t i = 2; i < argc; ++ i) {
+		for (int i = 3; i < argc; ++ i) {
 			const char *filename = argv[i];
 			FILE *input = fopen(filename, "rb");
 
@@ -678,7 +722,7 @@ int main (int argc, char *argv[]) {
 				return EXIT_FAILURE;
 			}
 
-			enum convert_status status = convert(input, stdout, decode_codepoint, encode_utf8_codepoint, &errline, &errcol, &errbyte);
+			enum convert_status status = convert(input, stdout, decode_codepoint, encode_codepoint, &errline, &errcol, &errbyte);
 			fclose(input);
 
 			if (status != CONVERT_OK) {
@@ -689,7 +733,7 @@ int main (int argc, char *argv[]) {
 		}
 	}
 	else {
-		enum convert_status status = convert(stdin, stdout, decode_codepoint, encode_utf8_codepoint, &errline, &errcol, &errbyte);
+		enum convert_status status = convert(stdin, stdout, decode_codepoint, encode_codepoint, &errline, &errcol, &errbyte);
 
 		if (status != CONVERT_OK) {
 			fflush(stdout);
