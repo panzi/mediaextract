@@ -44,88 +44,92 @@ const uint8_t *decode_utf8_codepoint(const uint8_t *str, size_t size, codepoint_
 		return NULL;
 	}
 
-	uint8_t byte = *str;
-
-	if (byte >= 0xfc) {
-		return NULL;
-	}
+	uint8_t byte1 = str[0];
 
 	codepoint_t cp = 0;
 
-#define decode_next_byte \
-		byte = *str; \
-		if ((byte & 0xc0) != 0x80) { \
-			return NULL; \
-		} \
-		cp <<= 6; \
-		cp |= byte & 0x3f; \
-		++ str;
-
-	++ str;
-	if ((byte & 0xfe) == 0xfc) {
-		if (size < 6) {
+	if (byte1 < 0x80) {
+		cp = byte1;
+		str += 1;
+	}
+	else if (byte1 < 0xC2) {
+		// unexpected continuation or overlong 2-byte sequence
+		return NULL;
+	}
+	else if (byte1 < 0xE0) {
+		if (size < 2) {
+			// unexpected end of file
 			return NULL;
 		}
 
-		cp = byte & 0x01;
+		uint8_t byte2 = str[1];
 
-		decode_next_byte;
-		decode_next_byte;
-		decode_next_byte;
-		decode_next_byte;
-		decode_next_byte;
+		if ((byte2 & 0xC0) != 0x80) {
+			// illegal byte sequence
+			return NULL;
+		}
+
+		// ensure promotion to codepoint_t (uint32_t) and not to a signed integer
+		cp = (codepoint_t)(byte1 & 0x1F) << 6 |
+		     (codepoint_t)(byte2 & 0x3F);
+
+		str += 2;
+	}
+	else if (byte1 < 0xF0) {
+		if (size < 3) {
+			// unexpected end of file
+			return NULL;
+		}
+
+		uint8_t byte2 = str[1];
+		uint8_t byte3 = str[2];
+
+		if ((byte1 == 0xE0 && byte2 < 0xA0) ||
+		    (byte2 & 0xC0) != 0x80 ||
+		    (byte3 & 0xC0) != 0x80) {
+			// illegal byte sequence
+			return NULL;
+		}
+
+		cp = (codepoint_t)(byte1 & 0x0F) << 12 |
+		     (codepoint_t)(byte2 & 0x3F) <<  6 |
+		     (codepoint_t)(byte3 & 0x3F);
+
+		str += 3;
+	}
+	else if (byte1 < 0xF8) {
+		if (size < 4) {
+			// unexpected end of file
+			return NULL;
+		}
+
+		uint8_t byte2 = str[1];
+		uint8_t byte3 = str[2];
+		uint8_t byte4 = str[3];
+
+		if ((byte1 == 0xF0 && byte2 < 0x90) || (byte1 == 0xF4 && byte2 >= 0x90) ||
+		    (byte2 & 0xC0) != 0x80 ||
+		    (byte3 & 0xC0) != 0x80 ||
+		    (byte4 & 0xC0) != 0x80) {
+			// illegal byte sequence
+			return NULL;
+		}
+
+		cp = (codepoint_t)(byte1 & 0x07) << 18 |
+		     (codepoint_t)(byte2 & 0x3F) << 12 |
+		     (codepoint_t)(byte3 & 0x3F) <<  6 |
+		     (codepoint_t)(byte4 & 0x3F);
 
 		if (cp > CODEPOINT_MAX) {
 			return NULL;
 		}
-	}
-	else if ((byte & 0xfc) == 0xf8) {
-		if (size < 5) {
-			return NULL;
-		}
 
-		cp = byte & 0x03;
-
-		decode_next_byte;
-		decode_next_byte;
-		decode_next_byte;
-		decode_next_byte;
-	}
-	else if ((byte & 0xf8) == 0xf0) {
-		if (size < 4) {
-			return NULL;
-		}
-
-		cp = byte & 0x07;
-
-		decode_next_byte;
-		decode_next_byte;
-		decode_next_byte;
-	}
-	else if ((byte & 0xf0) == 0xe0) {
-		if (size < 3) {
-			return NULL;
-		}
-
-		cp = byte & 0x0f;
-
-		decode_next_byte;
-		decode_next_byte;
-	}
-	else if ((byte & 0xe0) == 0xc0) {
-		if (size < 2) {
-			return NULL;
-		}
-
-		cp = byte & 0x1f;
-
-		decode_next_byte;
+		str += 4;
 	}
 	else {
-		cp = byte;
+		// illegal byte sequence
+		return NULL;
 	}
-
-#undef decode_next_byte
 
 	if (cpptr) *cpptr = cp;
 
@@ -265,9 +269,9 @@ const uint8_t *decode_latin1_codepoint(const uint8_t *str, size_t size, codepoin
 		return NULL;
 	}
 
-	str += 1;
-
 	if (cpptr) *cpptr = str[0];
+
+	str += 1;
 
 	return str;
 }
@@ -473,69 +477,32 @@ size_t encode_utf8_codepoint(codepoint_t codepoint, uint8_t *buf, size_t size) {
 		return 0;
 	}
 
-	size_t i;
+	if (codepoint >= 0x10000) {
+		if (size > 0) buf[0] =  (codepoint >> 18)         | 0xF0;
+		if (size > 1) buf[1] = ((codepoint >> 12) & 0x3F) | 0x80;
+		if (size > 2) buf[2] = ((codepoint >>  6) & 0x3F) | 0x80;
+		if (size > 3) buf[3] =  (codepoint        & 0x3F) | 0x80;
 
-#define encode_first_byte(prefix) \
-		if (size > i) { \
-			buf[i] = prefix | codepoint; \
-		}
-
-#define encode_prev_byte \
-		if (size > i) { \
-			buf[i] = 0x80 | (codepoint & 0x3f); \
-		} \
-		codepoint >>= 6; \
-		-- i;
-
-	if (codepoint > 0x3FFFFFF) {
-		i = 5;
-		encode_prev_byte;
-		encode_prev_byte;
-		encode_prev_byte;
-		encode_prev_byte;
-		encode_prev_byte;
-		encode_first_byte(0xfc);
-		return 6;
-	}
-	else if (codepoint > 0x1FFFFF) {
-		i = 4;
-		encode_prev_byte;
-		encode_prev_byte;
-		encode_prev_byte;
-		encode_prev_byte;
-		encode_first_byte(0xf8);
-		return 5;
-	}
-	else if (codepoint > 0xFFFF) {
-		i = 3;
-		encode_prev_byte;
-		encode_prev_byte;
-		encode_prev_byte;
-		encode_first_byte(0xf0);
 		return 4;
 	}
-	else if (codepoint > 0x07FF) {
-		i = 2;
-		encode_prev_byte;
-		encode_prev_byte;
-		encode_first_byte(0xe0);
+	else if (codepoint >= 0x800) {
+		if (size > 0) buf[0] =  (codepoint >> 12)         | 0xE0;
+		if (size > 1) buf[1] = ((codepoint >>  6) & 0x3F) | 0x80;
+		if (size > 2) buf[2] =  (codepoint        & 0x3F) | 0x80;
+
 		return 3;
 	}
-	else if (codepoint > 0x007F) {
-		i = 1;
-		encode_prev_byte;
-		encode_first_byte(0xc0);
+	else if (codepoint >= 0x80) {
+		if (size > 0) buf[0] = (codepoint >> 6)   | 0xC0;
+		if (size > 1) buf[1] = (codepoint & 0x3F) | 0x80;
+
 		return 2;
 	}
 	else {
-		if (size > 0) {
-			buf[0] = codepoint;
-		}
+		if (size > 0) buf[0] = codepoint;
+
 		return 1;
 	}
-
-#undef encode_first_byte
-#undef encode_next_byte
 }
 
 size_t encode_latin1_codepoint(codepoint_t codepoint, uint8_t *buf, size_t size) {
@@ -558,7 +525,7 @@ enum convert_status {
 	CONVERT_WRITE_ERROR  = 4
 };
 
-#define MAX_ENCODED_BYTES 6
+#define MAX_ENCODED_BYTES 4
 
 enum convert_status convert (
 	FILE *input, FILE *output,
@@ -587,15 +554,6 @@ enum convert_status convert (
 				return CONVERT_DECODE_ERROR;
 			}
 
-			byte += next - ptr;
-			if (cp == '\n') {
-				++ line;
-				col = 1;
-			}
-			else {
-				++ col;
-			}
-
 			size_t outcount = encode_codepoint(cp, outbuf, MAX_ENCODED_BYTES);
 
 			if (outcount == 0 || outcount > MAX_ENCODED_BYTES) {
@@ -612,6 +570,15 @@ enum convert_status convert (
 				if (byteptr) *byteptr = byte;
 
 				return CONVERT_WRITE_ERROR;
+			}
+
+			byte += next - ptr;
+			if (cp == '\n') {
+				++ line;
+				col = 1;
+			}
+			else {
+				++ col;
 			}
 
 			ptr = next;
@@ -712,7 +679,7 @@ int main (int argc, char *argv[]) {
 
 	size_t errline = 0, errcol = 0, errbyte = 0;
 
-	if (argc > 2) {
+	if (argc > 3) {
 		for (int i = 3; i < argc; ++ i) {
 			const char *filename = argv[i];
 			FILE *input = fopen(filename, "rb");
