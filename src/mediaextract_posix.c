@@ -37,7 +37,10 @@ int write_data(const char *filename, const uint8_t *data, size_t length)
 		return 0;
 	}
 
-	write(outfd, data, length);
+	if (write(outfd, data, length) < 0) {
+		perror(filename);
+		return 0;
+	}
 	close(outfd);
 	return 1;
 }
