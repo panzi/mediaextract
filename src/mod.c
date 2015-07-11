@@ -27,7 +27,7 @@ int mod_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 	size_t channels = 0;
 	size_t patterns = 0;
 
-	if (input_len < length || !probalby_mod_text(data, 20))
+	if (input_len < length || !probably_mod_text(data, 20))
 		return 0;
 
 	for (const unsigned char *ptr = data + 20, *sample_end = ptr + 31*30;

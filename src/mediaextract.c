@@ -220,7 +220,7 @@ static int usage(int argc, char **argv)
 	return 255;
 }
 
-int probalby_mod_text(const uint8_t *str, size_t length)
+int probably_mod_text(const uint8_t *str, size_t length)
 {
 	size_t non_ascii = 0;
 	for (const uint8_t *end = str + length; str < end; ++ str)

@@ -23,7 +23,7 @@
 
 int s3m_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 {
-	if (input_len < S3M_HEADER_SIZE || !probalby_mod_text(data, 28))
+	if (input_len < S3M_HEADER_SIZE || !probably_mod_text(data, 28))
 		return 0;
 
 	uint8_t mark = data[28];

@@ -224,7 +224,7 @@ struct extract_options {
 	int simulate;
 };
 
-int probalby_mod_text(const uint8_t *str, size_t length);
+int probably_mod_text(const uint8_t *str, size_t length);
 int extract(const struct extract_options *options,
             size_t *numfilesptr, size_t *sumsizeptr);
 int do_extract(const uint8_t *filedata, size_t filesize,

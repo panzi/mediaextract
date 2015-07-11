@@ -26,7 +26,7 @@ int it_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 	if (input_len < IT_HEADER_SIZE)
 		return 0;
 
-	if (MAGIC(data) != IT_MAGIC || !probalby_mod_text(data + 4, 26))
+	if (MAGIC(data) != IT_MAGIC || !probably_mod_text(data + 4, 26))
 		return 0;
 
 	uint16_t orders      = le16toh(*(uint16_t *)(data + 0x20));
