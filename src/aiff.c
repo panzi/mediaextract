@@ -33,7 +33,12 @@ int aiff_isfile(const uint8_t *data, size_t input_len, struct file_info *info)
 	if (MAGIC(data) != FORM_MAGIC)
 		return 0;
 
-	length = be32toh(*(const uint32_t *)(data + 4)) + 8;
+	length = be32toh(*(const uint32_t *)(data + 4));
+
+	if (SIZE_MAX - 8 < length)
+		return 0;
+	
+	length += 8;
 
 	if (input_len < length)
 		return 0;

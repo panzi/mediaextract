@@ -43,6 +43,7 @@
 #include "mp4.h"
 #include "id3.h"
 #include "midi.h"
+#include "xmidi.h"
 #include "mod.h"
 #include "s3m.h"
 #include "xm.h"
@@ -74,13 +75,13 @@
 #define SEE_HELP "See --help for usage information.\n"
 
 #define TRACKER_FORMATS (MOD   | S3M    | IT     | XM)
-#define AUDIO_FORMATS   (OGG   | RIFF   | AIFF   | MPG123 | MP4 | ID3v2  | MIDI   | MOD    | S3M | IT | XM | ASF | AU)
+#define AUDIO_FORMATS   (OGG   | RIFF   | AIFF   | MPG123 | MP4 | ID3v2  | MIDI   | XMIDI  | MOD | S3M | IT | XM | ASF | AU)
 #define VIDEO_FORMATS   (MP4   | RIFF   | ASF    | BINK   | SMK | MPEGPS | MPEGVS | MPEGTS)
 #define MPEG_FORMATS    (MPEG1 | MPEGPS | MPEGVS | ID3v2)
 #define IMAGE_FORMATS   (BMP   | PNG    | JPEG   | GIF)
 #define TEXT_FORMATS    (UTF_8 | UTF_16LE | UTF_16BE | UTF_32LE | UTF_32BE)
-#define ALL_FORMATS     (OGG   | RIFF   | AIFF   | MPG123 | MP4 | ID3v2  | MIDI   | MOD    | S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG | GIF | MPEG1 | MPEGPS | MPEGVS | MPEGTS | TEXT_FORMATS)
-#define DEFAULT_FORMATS (OGG   | RIFF   | AIFF   |          MP4 | ID3v2  | MIDI   |          S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG | GIF | MPEG1 | MPEGPS | MPEGVS)
+#define ALL_FORMATS     (OGG   | RIFF   | AIFF   | MPG123 | MP4 | ID3v2  | MIDI   | XMIDI  | MOD | S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG | GIF | MPEG1 | MPEGPS | MPEGVS | MPEGTS | TEXT_FORMATS)
+#define DEFAULT_FORMATS (OGG   | RIFF   | AIFF   |          MP4 | ID3v2  | MIDI   | XMIDI  |       S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG | GIF | MPEG1 | MPEGPS | MPEGVS)
 
 static int usage(int argc, char **argv);
 static const char *basename(const char *path);
@@ -156,9 +157,9 @@ static int usage(int argc, char **argv)
 		"                           all      all supported formats\n"
 		"                           default  the default set of formats (AIFF, ASF, AU, BINK, BMP,\n"
 		"                                    GIF, ID3v2, IT, JEPG, MPEG 1, MPEG PS, MIDI, MP4, Ogg,\n"
-		"                                    PNG, RIFF, S3M, SMK, XM)\n"
+		"                                    PNG, RIFF, S3M, SMK, XM, XMIDI)\n"
 		"                           audio    all audio files (AIFF, ASF, AU, ID3v2, IT, MIDI, MP4,\n"
-		"                                    Ogg, RIFF, S3M, XM)\n"
+		"                                    Ogg, RIFF, S3M, XM, XMIDI)\n"
 		"                           text     all text files (ASCII, UTF-8, UTF-16LE, UTF-16BE,\n"
 		"                                    UTF-32LE, UTF-32BE)\n"
 		"                           image    all image files (BMP, PNG, JEPG, GIF)\n"
@@ -195,6 +196,7 @@ static int usage(int argc, char **argv)
 		"                           utf-32be big-endian UTF-32 files (only printable code points)\n"
 		"                           utf-32le little-endian UTF-32 files (only printable code points)\n"
 		"                           xm       Extended Module files\n"
+		"                           xmidi    XMIDI files\n"
 		"\n");
 
 	fprintf(stderr,
@@ -388,6 +390,13 @@ int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_op
 			}
 
 			WRITE_FILE(audio_start, ptr - audio_start, "mid");
+			continue;
+		}
+		
+		if (formats & XMIDI && magic == FORM_MAGIC && xmidi_isfile(ptr, input_len, &info))
+		{
+			WRITE_FILE(ptr, info.length, info.ext);
+			ptr += info.length;
 			continue;
 		}
 		
@@ -652,6 +661,10 @@ int parse_formats(const char *sformats, int *formats)
 		else if (strncasecmp("midi", start, len) == 0)
 		{
 			mask = MIDI;
+		}
+		else if (strncasecmp("xmidi", start, len) == 0)
+		{
+			mask = XMIDI;
 		}
 		else if (strncasecmp("mod", start, len) == 0)
 		{

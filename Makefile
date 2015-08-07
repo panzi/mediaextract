@@ -16,6 +16,7 @@ OBJ=\
 	$(BUILDDIR)/mp4.o \
 	$(BUILDDIR)/id3.o \
 	$(BUILDDIR)/midi.o \
+	$(BUILDDIR)/xmidi.o \
 	$(BUILDDIR)/mod.o \
 	$(BUILDDIR)/s3m.o \
 	$(BUILDDIR)/xm.o \
@@ -89,6 +90,7 @@ $(BUILDDIR)/mediaextract.o: src/mediaextract.c \
 		src/mp4.h \
 		src/id3.h \
 		src/midi.h \
+		src/xmidi.h \
 		src/mod.h \
 		src/s3m.h \
 		src/xm.h \
@@ -127,6 +129,9 @@ $(BUILDDIR)/id3.o: src/id3.c src/mediaextract.h src/id3.h
 	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
 
 $(BUILDDIR)/midi.o: src/midi.c src/mediaextract.h src/midi.h
+	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
+
+$(BUILDDIR)/xmidi.o: src/xmidi.c src/mediaextract.h src/xmidi.h
 	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
 
 $(BUILDDIR)/mod.o: src/mod.c src/mediaextract.h src/mod.h
