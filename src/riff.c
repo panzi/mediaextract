@@ -54,9 +54,9 @@ static const struct riff_chunk_spec riff_wav_body[] = BODY(
 /* AVI */
 // TODO: AVI 2.0? only makes sense for files > 4 GB
 // http://www.the-labs.com/Video/odmlff2-avidef.pdf
-static const struct riff_chunk_spec riff_avi_hdrl_body[] = BODY(
-	CHUNK('a','v','i','h', 1)
-);
+// static const struct riff_chunk_spec riff_avi_hdrl_body[] = BODY(
+// 	CHUNK('a','v','i','h', 1)
+// );
 
 static const struct riff_chunk_spec riff_avi_body[] = BODY(
 	CHUNK('h','d','r','l', 1),
