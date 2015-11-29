@@ -812,7 +812,7 @@ int parse_size_p(const char *str, uint64_t *size)
 	char *endptr = NULL;
 	uint64_t sz = strtoull(str, &endptr, 10);
 
-	if (endptr == optarg)
+	if (endptr == str)
 	{
 		errno = EINVAL;
 		return 0;
