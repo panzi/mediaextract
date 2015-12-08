@@ -176,7 +176,7 @@ static int usage(int argc, char **argv)
 		"                           gif      Graphics Interchange Format files\n"
 		"                           id3v2    MPEG layer 1/2/3 files with ID3v2 tags\n"
 		"                           it       ImpulseTracker files\n"
-		"                           jepg     JPEG Interchange Format files\n"
+		"                           jpeg     JPEG Interchange Format files\n"
 		"                           midi     MIDI files\n"
 		"                           mod      Noisetracker/Soundtracker/Protracker Module files\n"
 		"                           mpg123   MPEG layer 1/2/3 files (MP1, MP2, MP3)\n"
@@ -702,7 +702,7 @@ int parse_formats(const char *sformats, int *formats)
 		{
 			mask = PNG;
 		}
-		else if (strncasecmp("jepg", start, len) == 0)
+		else if (strncasecmp("jpeg", start, len) == 0)
 		{
 			mask = JPEG;
 		}

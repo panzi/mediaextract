@@ -113,7 +113,7 @@ files.
 	                         gif      Graphics Interchange Format files
 	                         id3v2    MPEG layer 1/2/3 files with ID3v2 tags
 	                         it       ImpulseTracker files
-	                         jepg     JPEG Interchange Format files
+	                         jpeg     JPEG Interchange Format files
 	                         midi     MIDI files
 	                         mod      Noisetracker/Soundtracker/Protracker Module files
 	                         mpg123   MPEG layer 1/2/3 files (MP1, MP2, MP3)
