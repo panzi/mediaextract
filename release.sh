@@ -8,7 +8,7 @@ rm -rf $pkg/source/.git $pkg/source/.gitignore
 mv $pkg/source/README.md $pkg
 for target in linux32 linux64 win32 win64; do
 	builddir=build-$target
-	make TARGET=$target || exit $1
+	make TARGET=$target || exit $?
 	if [ -d $builddir ]; then
 		mkdir $pkg/$builddir
 
