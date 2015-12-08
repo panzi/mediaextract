@@ -64,8 +64,6 @@ int bmp_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 	uint16_t bpp           = le16toh(header->bpp);
 	uint32_t compression   = le32toh(header->compression);
 	size_t   datasize      = le32toh(header->datasize);
-	uint32_t hres          = le32toh(header->hres);
-	uint32_t vres          = le32toh(header->vres);
 	size_t   palettecolors = le32toh(header->palettecolors);
 	size_t   colortblsize  = 4 * palettecolors;
 
@@ -81,7 +79,7 @@ int bmp_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 		return 0;
 
 	// legal range of values?
-	if (width <= 0 || height == 0 || planes != 1 || bpp == 0 || hres == 0 || vres == 0 ||
+	if (width <= 0 || height == 0 || planes != 1 || bpp == 0 ||
 		reserved1 != 0 || reserved2 != 0 || compression > 6)
 		return 0;
 
