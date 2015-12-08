@@ -3,12 +3,6 @@ Mediaextract
 
 Extract media files that are embedded within other files.
 
-### Download
-
-[mediaextract-2015-03-13.zip](http://panzi.github.com/mediaextract/mediaextract-2015-03-13.zip)
-
-The download includes Linux and Windows i386 and x86\_64 binaries.
-
 Setup
 -----
 
