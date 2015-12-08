@@ -29,11 +29,15 @@
  * Original author of oggextract: Adrian Keet
  */
 
+#include <unistd.h>
+#include <errno.h>
 #include <getopt.h>
 #include <strings.h>
 #include <inttypes.h>
 #include <errno.h>
 #include <ctype.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "mediaextract.h"
 #include "riff.h"
@@ -1026,6 +1030,7 @@ int main(int argc, char **argv)
 	size_t numfiles = 0;
 	size_t size = 0;
 	size_t sumsize = 0;
+	struct stat st;
 
 	while ((opt = getopt_long(argc, argv, "f:o:hqm:x:n:i:s", long_options, NULL)) != -1)
 	{
@@ -1100,6 +1105,16 @@ int main(int argc, char **argv)
 		if (!options.quiet)
 			printf("Nothing to extract for 0-length range.\n");
 		return 0;
+	}
+
+	if (stat(options.outdir, &st) != 0) {
+		perror(options.outdir);
+		return 1;
+	}
+
+	if (!S_ISDIR(st.st_mode)) {
+		fprintf(stderr, "%s: %s\n", options.outdir, strerror(ENOTDIR));
+		return 1;
 	}
 
 	for (i = optind; i < argc; ++ i)
