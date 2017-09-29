@@ -3,7 +3,6 @@ TARGET=$(shell uname|tr '[A-Z]' '[a-z]')$(shell getconf LONG_BIT)
 INCLUDE=
 LIBDIRS=
 LIBS=
-LDFLAGS=
 PLATFORM=posix
 BUILDDIR=build-$(TARGET)
 OBJ=\
@@ -33,10 +32,7 @@ OBJ=\
 	$(BUILDDIR)/text.o
 CC=gcc
 LD=$(CC)
-COMMON_CFLAGS=-Wall -Werror -Wextra -std=gnu99 -O2 -g $(INCLUDE) $(LIBDIRS) -D_FILE_OFFSET_BITS=64
-POSIX_CFLAGS=$(COMMON_CFLAGS) -pedantic
-CFLAGS=$(POSIX_CFLAGS)
-WINDOWS_CFLAGS=$(COMMON_CFLAGS) -DWINVER=0x500
+CFLAGS+= -Wall -Werror -Wextra -std=gnu99 -O2 -g $(INCLUDE) $(LIBDIRS) -D_FILE_OFFSET_BITS=64
 WINDOWS_LIBS=-lws2_32
 APPNAME=mediaextract
 BIN=$(BUILDDIR)/$(APPNAME)
@@ -44,26 +40,26 @@ BIN=$(BUILDDIR)/$(APPNAME)
 ifeq ($(TARGET),win32)
 	PLATFORM=windows
 	CC=i686-w64-mingw32-gcc
-	CFLAGS=$(WINDOWS_CFLAGS) -m32
-	LDFLAGS=-m32
+	CFLAGS+=-DWINVER=0x500 -m32
+	LDFLAGS+=-m32
 	LIBS=$(WINDOWS_LIBS)
 	APPNAME=mediaextract.exe
 else
 ifeq ($(TARGET),win64)
 	PLATFORM=windows
 	CC=x86_64-w64-mingw32-gcc
-	CFLAGS=$(WINDOWS_CFLAGS) -m64
-	LDFLAGS=-m64
+	CFLAGS+=-DWINVER=0x500 -m64
+	LDFLAGS+=-m64
 	LIBS=$(WINDOWS_LIBS)
 	APPNAME=mediaextract.exe
 else
 ifeq ($(TARGET),linux32)
-	CFLAGS=$(POSIX_CFLAGS) -m32
-	LDFLAGS=-m32
+	CFLAGS+=-pedantic -m32
+	LDFLAGS+=-m32
 else
 ifeq ($(TARGET),linux64)
-	CFLAGS=$(POSIX_CFLAGS) -m64
-	LDFLAGS=-m64
+	CFLAGS+=-pedantic -m64
+	LDFLAGS+=-m64
 endif
 endif
 endif
