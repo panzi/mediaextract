@@ -93,13 +93,13 @@ files.
 	                       Supported formats:
 	                         all      all supported formats
 	                         default  the default set of formats (AIFF, ASF, AU, BINK, BMP,
-	                                  GIF, ID3v2, IT, JEPG, MPEG 1, MPEG PS, MIDI, MP4, Ogg,
+	                                  GIF, ID3v2, IT, JPEG, MPEG 1, MPEG PS, MIDI, MP4, Ogg,
 	                                  PNG, RIFF, S3M, SMK, XM)
 	                         audio    all audio files (AIFF, ASF, AU, ID3v2, IT, MIDI, MP4,
 	                                  Ogg, RIFF, S3M, XM)
 	                         text     all text files (ASCII, UTF-8, UTF-16LE, UTF-16BE,
 	                                  UTF-32LE, UTF-32BE)
-	                         image    all image files (BMP, PNG, JEPG, GIF)
+	                         image    all image files (BMP, PNG, JPEG, GIF)
 	                         mpeg     all safe mpeg files (MPEG 1, MPEG PS, ID3v2)
 	                         tracker  all tracker files (MOD, S3M, IT, XM)
 	                         video    all video files (ASF, BINK, MP4, RIFF, SMK)
