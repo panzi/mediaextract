@@ -191,7 +191,7 @@ static int usage(int argc, char **argv)
 		"                           ogg      Ogg files (Vorbis, Opus, Theora, etc.)\n"
 		"                           png      Portable Network Graphics files\n"
 		"                           riff     Resource Interchange File Format files (ANI, AVI, MMM,\n"
-		"                                    PAL, RDI, RMI, SGT, STY, WAV and more)\n"
+		"                                    PAL, RDI, RMI, SGT, STY, WAV, WEBP and more)\n"
 		"                           s3m      ScreamTracker III files\n"
 		"                           smk      Smaker files\n"
 		"                           utf-8    7-bit ASCII and UTF-8 files (only printable code points)\n"
