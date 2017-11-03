@@ -3,6 +3,7 @@ TARGET=$(shell uname|tr '[A-Z]' '[a-z]')$(shell getconf LONG_BIT)
 INCLUDE=
 LIBDIRS=
 LIBS=
+MANPAGE=mediaextract.1.gz
 PLATFORM=posix
 BUILDDIR=build-$(TARGET)
 OBJ=\
@@ -173,7 +174,12 @@ $(BUILDDIR)/text.o: src/text.c src/mediaextract.h src/text.h
 	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
 
 ifeq ($(PLATFORM),posix)
-install: $(PREFIX)/bin/$(APPNAME)
+install: $(PREFIX)/bin/$(APPNAME) $(PREFIX)/share/man/man1/$(MANPAGE)
+
+$(PREFIX)/share/man/man1/$(MANPAGE):src/$(APPNAME).1
+	gzip -kf src/$(APPNAME).1
+	mkdir -p "$(PREFIX)/share/man/man1/"
+	install src/$(MANPAGE) "$@"
 
 $(PREFIX)/bin/$(APPNAME): $(BIN)
 	mkdir -p "$(PREFIX)/bin"
@@ -189,4 +195,4 @@ $(BUILDDIR)/recode: src/text.c src/text.h
 	$(CC) $(CFLAGS) $< -o $@ -DMEDIAEXTRACT_RECODE_BIN
 
 clean:
-	rm -f $(BIN) $(OBJ)
+	rm -f $(BIN) $(OBJ) src/$(MANPAGE)
