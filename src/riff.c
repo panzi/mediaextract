@@ -208,6 +208,13 @@ static const struct riff_chunk_spec riff_dmpt_body[] = BODY(
 	LIST( 'p','t','t','n', 0, 1)
 );
 
+/* WebP */
+static const struct riff_chunk_spec riff_webp_body[] = BODY(
+	CHUNK('V','P','8',' ',    0),
+	CHUNK('V','P','8','L',    0),
+	CHUNK('V','P','8','X',    0)
+);
+
 static const struct riff_file_spec riff_file_specs[] = {
 	{ RIFF('W','A','V','E', riff_wav_body ), "wav"  },
 	{ RIFF('A','V','I',' ', riff_avi_body ), "avi"  },
@@ -230,6 +237,7 @@ static const struct riff_file_spec riff_file_specs[] = {
 	{ RIFF('D','M','T','K', riff_dmtk_body), "riff" },
 	{ RIFF('D','M','B','T', riff_dmbt_body), "riff" },
 	{ RIFF('D','M','P','T', riff_dmpt_body), "riff" },
+	{ RIFF('W','E','B','P', riff_webp_body), "webp" },
 
 	{ END, 0 }
 };

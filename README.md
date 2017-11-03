@@ -93,13 +93,13 @@ files.
 	                       Supported formats:
 	                         all      all supported formats
 	                         default  the default set of formats (AIFF, ASF, AU, BINK, BMP,
-	                                  GIF, ID3v2, IT, JEPG, MPEG 1, MPEG PS, MIDI, MP4, Ogg,
-	                                  PNG, RIFF, S3M, SMK, XM)
+	                                  GIF, ID3v2, IT, JPEG, MPEG 1, MPEG PS, MIDI, MP4, Ogg,
+	                                  PNG, RIFF, S3M, SMK, XM, XMIDI)
 	                         audio    all audio files (AIFF, ASF, AU, ID3v2, IT, MIDI, MP4,
-	                                  Ogg, RIFF, S3M, XM)
+	                                  Ogg, RIFF, S3M, XM, XMIDI)
 	                         text     all text files (ASCII, UTF-8, UTF-16LE, UTF-16BE,
 	                                  UTF-32LE, UTF-32BE)
-	                         image    all image files (BMP, PNG, JEPG, GIF)
+	                         image    all image files (BMP, PNG, JPEG, GIF)
 	                         mpeg     all safe mpeg files (MPEG 1, MPEG PS, ID3v2)
 	                         tracker  all tracker files (MOD, S3M, IT, XM)
 	                         video    all video files (ASF, BINK, MP4, RIFF, SMK)
@@ -133,6 +133,7 @@ files.
 	                         utf-32be big-endian UTF-32 files (only printable code points)
 	                         utf-32le little-endian UTF-32 files (only printable code points)
 	                         xm       Extended Module files
+	                         xmidi    XMIDI files
 	
 	                       WARNING: Because MP1/2/3 files do not have a nice file magic, using
 	                       the 'mpg123' format may cause *a lot* of false positives. Nowadays
@@ -149,5 +150,5 @@ files.
 	                       If '-' is written before a format name the format will be
 	                       removed from the set of formats to extract. E.g. extract
 	                       everything except tracker files:
-	
+
 	                         mediaextract --formats=all,-tracker data.bin
