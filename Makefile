@@ -3,6 +3,7 @@ TARGET=$(shell uname|tr '[A-Z]' '[a-z]')$(shell getconf LONG_BIT)
 INCLUDE=
 LIBDIRS=
 LIBS=
+MANPAGE=mediaextract.1.gz
 PLATFORM=posix
 BUILDDIR=build-$(TARGET)
 OBJ=\
@@ -67,7 +68,7 @@ endif
 
 .PHONY: all clean install uninstall builddir
 
-all: $(BIN)
+all: $(BIN) $(BUILDDIR)/$(MANPAGE)
 
 builddir: $(BUILDDIR)
 
@@ -173,7 +174,15 @@ $(BUILDDIR)/text.o: src/text.c src/mediaextract.h src/text.h
 	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
 
 ifeq ($(PLATFORM),posix)
-install: $(PREFIX)/bin/$(APPNAME)
+install: $(PREFIX)/bin/$(APPNAME) $(PREFIX)/share/man/man1/$(MANPAGE)
+
+$(BUILDDIR)/$(MANPAGE):src/ManPageIncludeFile
+	help2man $(BIN) --no-discard-stderr --no-info -n "extracts media files that are embedded within other files" -S "Mathias Panzenböck" -i src/ManPageIncludeFile|sed '/the default set of formats/s/^/.TP\n/'|sed '/the default set of formats/{N;s/.TP//}'|sed -r '/([)]|files)$ /a .TP' >$(BUILDDIR)/$(APPNAME).1
+	gzip -kf $(BUILDDIR)/$(APPNAME).1
+
+$(PREFIX)/share/man/man1/$(MANPAGE):$(BUILDDIR)/$(APPNAME).1
+	mkdir -p "$(PREFIX)/share/man/man1/"
+	install $(BUILDDIR)/$(MANPAGE) "$@"
 
 $(PREFIX)/bin/$(APPNAME): $(BIN)
 	mkdir -p "$(PREFIX)/bin"
@@ -189,4 +198,4 @@ $(BUILDDIR)/recode: src/text.c src/text.h
 	$(CC) $(CFLAGS) $< -o $@ -DMEDIAEXTRACT_RECODE_BIN
 
 clean:
-	rm -f $(BIN) $(OBJ)
+	rm -rf $(BUILDDIR)
