@@ -68,7 +68,11 @@ endif
 
 .PHONY: all clean install uninstall builddir
 
+ifeq ($(PLATFORM),posix)
 all: $(BIN) $(BUILDDIR)/$(MANPAGE)
+else
+all: $(BIN)
+endif
 
 builddir: $(BUILDDIR)
 

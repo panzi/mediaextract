@@ -1,8 +1,10 @@
 #!/bin/bash
 
+set -e
+
 pkg=mediaextract-`git describe --tags`
 
-rm -r $pkg $pkg.zip
+rm -r $pkg $pkg.zip 2>/dev/null || echo
 git clone . $pkg/source
 rm -rf $pkg/source/.git $pkg/source/.gitignore
 mv $pkg/source/README.md $pkg
