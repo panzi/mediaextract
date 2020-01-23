@@ -21,6 +21,7 @@
 
 #ifndef MEDIAEXTRACT_MIDI_H__
 #define MEDIAEXTRACT_MIDI_H__
+#pragma once
 
 #include "mediaextract.h"
 

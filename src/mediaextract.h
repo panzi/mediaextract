@@ -21,11 +21,13 @@
 
 #ifndef MEDIAEXTRACT_H__
 #define MEDIAEXTRACT_H__
+#pragma once
 
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #if (defined(_WIN16) || defined(_WIN32) || defined(_WIN64)) && !defined(__WINDOWS__)
 
@@ -138,10 +140,12 @@
 #ifdef __WINDOWS__
 
 #	define PATH_SEP '\\'
+#	define PATH_SEP_STR "\\"
 
 #else
 
 #	define PATH_SEP '/'
+#	define PATH_SEP_STR "/"
 
 #endif
 
@@ -216,13 +220,15 @@ struct file_info {
 struct extract_options {
 	const char *filepath;
 	const char *outdir;
+	const char *filename;
 	size_t   minsize;
 	size_t   maxsize;
 	uint64_t offset;
 	size_t   length;
+	size_t   index;
 	int formats;
-	int quiet;
-	int simulate;
+	bool quiet;
+	bool simulate;
 };
 
 int probably_mod_text(const uint8_t *str, size_t length);

@@ -21,6 +21,7 @@
 
 #ifndef MEDIAEXTRACT_BINK_H__
 #define MEDIAEXTRACT_BINK_H__
+#pragma once
 
 #include "mediaextract.h"
 

@@ -9,6 +9,7 @@ BUILDDIR=build-$(TARGET)
 OBJ=\
 	$(BUILDDIR)/mediaextract.o \
 	$(BUILDDIR)/mediaextract_$(PLATFORM).o \
+	$(BUILDDIR)/formatstring.o \
 	$(BUILDDIR)/riff.o \
 	$(BUILDDIR)/aiff.o \
 	$(BUILDDIR)/ogg.o \
@@ -84,6 +85,7 @@ $(BIN): $(OBJ)
 
 $(BUILDDIR)/mediaextract.o: src/mediaextract.c \
 		src/mediaextract.h \
+		src/formatstring.h \
 		src/ogg.h \
 		src/riff.h \
 		src/aiff.h \
@@ -109,6 +111,9 @@ $(BUILDDIR)/mediaextract.o: src/mediaextract.c \
 	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
 
 $(BUILDDIR)/mediaextract_$(PLATFORM).o: src/mediaextract_$(PLATFORM).c src/mediaextract.h
+	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
+
+$(BUILDDIR)/formatstring.o: src/formatstring.c src/formatstring.h
 	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
 
 $(BUILDDIR)/riff.o: src/riff.c src/mediaextract.h src/riff.h

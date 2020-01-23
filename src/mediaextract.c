@@ -36,10 +36,12 @@
 #include <inttypes.h>
 #include <errno.h>
 #include <ctype.h>
+#include <assert.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
 #include "mediaextract.h"
+#include "formatstring.h"
 #include "riff.h"
 #include "aiff.h"
 #include "ogg.h"
@@ -114,6 +116,17 @@ static int usage(int argc, char **argv)
 		"  -q, --quiet            Do not print status messages.\n"
 		"  -s, --simulate         Don't write any output files.\n"
 		"  -o, --output=DIR       Directory where extracted files should be written. (default: \".\")\n"
+		"  -a, --filename=FORMAT  Format string for the file names.\n"
+		"                         (default: \"{filename}_{offset}.{ext}\")\n"
+		"\n"
+		"                         Supported variables:\n"
+		"                           filename  Filename of the extracted archive.\n"
+		"                           offset    Offset within the archive in hexadecimal.\n"
+		"                           index     0-based index of the extracted file in decimal.\n"
+		"                           size      Size of the extracted file in decimal.\n"
+		"                           ext       Extension associated with the filetype of the\n"
+		"                                     extracted file.\n"
+		"\n"
 		"  -i, --offset=OFFSET    Start processing at byte OFFSET. (default: 0)\n"
 		"  -n, --length=LENGTH    Only process LENGTH bytes.\n"
 		"                         (default and maximum: %g %s)\n",
@@ -256,13 +269,20 @@ const char *basename(const char *path)
 }
 
 int write_file(const uint8_t *data, size_t length, const struct extract_options *options,
-               const char *filename, size_t offset, const char *ext, char *pathbuf, size_t pathbuflen)
+               const char *filename, size_t index, size_t offset, const char *ext, char *pathbuf, size_t pathbuflen)
 {
 	double sz = 0;
 	const char *sz_unit = NULL;
-	snprintf(pathbuf, pathbuflen, "%s%c%s_%08"PRIzx".%s",
-		options->outdir, PATH_SEP, filename, offset, ext);
-	
+
+	size_t outdir_len = strlen(options->outdir);
+	assert(pathbuflen > 0 && pathbuflen - 1 > outdir_len);
+	memcpy(pathbuf, options->outdir, outdir_len);
+	pathbuf[outdir_len] = PATH_SEP;
+
+	size_t pathbuf_used = outdir_len + 1;
+	ssize_t filename_len = formatstring(pathbuf + pathbuf_used, pathbuflen - pathbuf_used, options->filename, filename, index, offset, length, ext);
+	assert(filename_len >= 0 && (size_t)filename_len <= pathbuflen);
+
 	if (length < options->minsize)
 	{
 		if (!options->quiet)
@@ -308,7 +328,16 @@ int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_op
 	size_t numfiles = 0;
 	const char *filename = basename(options->filepath);
 	// max. ext length is 16 characters
-	size_t namelen = strlen(options->outdir) + strlen(filename) + 37;
+	ssize_t formatted_len = formatstring(NULL, 0, options->filename, filename, SIZE_MAX, SIZE_MAX, SIZE_MAX, "0123456789ABCDEF");
+	if (formatted_len < 0) {
+		goto error;
+	}
+	size_t output_len = strlen(options->outdir);
+	if (output_len > SIZE_MAX - 2 || output_len + 2 > SIZE_MAX - (size_t)formatted_len) {
+		fprintf(stderr, "error: output filename too long\n");
+		goto error;
+	}
+	size_t namelen = output_len + 1 + (size_t)formatted_len + 1;
 
 	struct mpg123_info mpg123;
 	struct ogg_info ogg;
@@ -336,7 +365,7 @@ int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_op
 	}
 
 #define WRITE_FILE(data, length, ext) \
-	if (write_file((data), length, options, filename, (size_t)((data) - filedata), (ext), outfilename, namelen)) \
+	if (write_file((data), length, options, filename, numfiles, (size_t)((data) - filedata), (ext), outfilename, namelen)) \
 	{ \
 		++ numfiles; \
 		sumsize += length; \
@@ -1011,6 +1040,7 @@ const char *format_size(uint64_t in, double *out)
 const struct option long_options[] = {
 	{"formats",  required_argument, 0, 'f' },
 	{"output",   required_argument, 0, 'o' },
+	{"filename", required_argument, 0, 'a' },
 	{"help",     no_argument,       0, 'h' },
 	{"quiet",    no_argument,       0, 'q' },
 	{"min-size", required_argument, 0, 'm' },
@@ -1023,7 +1053,17 @@ const struct option long_options[] = {
 
 int main(int argc, char **argv)
 {
-	struct extract_options options = { NULL, ".", 0, SIZE_MAX, 0, (SIZE_MAX>>1), DEFAULT_FORMATS, 0, 0 };
+	struct extract_options options = {
+		.filepath = NULL,
+		.outdir   = ".",
+		.filename = "{filename}_{offset}.{ext}",
+		.minsize  = 0,
+		.maxsize  = SIZE_MAX,
+		.length   = (SIZE_MAX>>1),
+		.formats  = DEFAULT_FORMATS,
+		.quiet    = false,
+		.simulate = false
+	};
 	int i = 0, opt = 0;
 	size_t failures = 0;
 	size_t sumnumfiles = 0;
@@ -1032,7 +1072,7 @@ int main(int argc, char **argv)
 	size_t sumsize = 0;
 	struct stat st;
 
-	while ((opt = getopt_long(argc, argv, "f:o:hqm:x:n:i:s", long_options, NULL)) != -1)
+	while ((opt = getopt_long(argc, argv, "f:o:a:hqm:x:n:i:s", long_options, NULL)) != -1)
 	{
 		switch (opt)
 		{
@@ -1048,6 +1088,10 @@ int main(int argc, char **argv)
 
 			case 'o':
 				options.outdir = optarg;
+				break;
+
+			case 'a':
+				options.filename = optarg;
 				break;
 
 			case 'h':

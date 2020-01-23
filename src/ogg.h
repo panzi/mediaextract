@@ -21,6 +21,7 @@
 
 #ifndef MEDIAEXTRACT_OGG_H__
 #define MEDIAEXTRACT_OGG_H__
+#pragma once
 
 #include "mediaextract.h"
 
