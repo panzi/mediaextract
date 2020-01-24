@@ -173,8 +173,8 @@
 #define MAGIC(STR) (*(const uint32_t*)(STR))
 #else
 
-#define _MAGIC(B) CMAGIC((B)[0], (B)[1], (B)[2], (B)[3])
-#define MAGIC(S)  _MAGIC((const uint8_t *)(S))
+#define U8PTR_MAGIC(B) CMAGIC((B)[0], (B)[1], (B)[2], (B)[3])
+#define MAGIC(S) U8PTR_MAGIC((const uint8_t *)(S))
 
 #endif
 
@@ -209,7 +209,8 @@ enum fileformat {
 	UTF_16LE = 1 << 26,
 	UTF_16BE = 1 << 27,
 	UTF_32LE = 1 << 28,
-	UTF_32BE = 1 << 29
+	UTF_32BE = 1 << 29,
+	DDS      = 1 << 30,
 };
 
 struct file_info {

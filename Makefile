@@ -10,6 +10,7 @@ OBJ=\
 	$(BUILDDIR)/mediaextract.o \
 	$(BUILDDIR)/mediaextract_$(PLATFORM).o \
 	$(BUILDDIR)/formatstring.o \
+	$(BUILDDIR)/dds.o \
 	$(BUILDDIR)/riff.o \
 	$(BUILDDIR)/aiff.o \
 	$(BUILDDIR)/ogg.o \
@@ -86,6 +87,7 @@ $(BIN): $(OBJ)
 $(BUILDDIR)/mediaextract.o: src/mediaextract.c \
 		src/mediaextract.h \
 		src/formatstring.h \
+		src/dds.h \
 		src/ogg.h \
 		src/riff.h \
 		src/aiff.h \
@@ -114,6 +116,9 @@ $(BUILDDIR)/mediaextract_$(PLATFORM).o: src/mediaextract_$(PLATFORM).c src/media
 	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
 
 $(BUILDDIR)/formatstring.o: src/formatstring.c src/formatstring.h
+	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
+
+$(BUILDDIR)/dds.o: src/dds.c src/mediaextract.h src/byteorder.h src/dds.h
 	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
 
 $(BUILDDIR)/riff.o: src/riff.c src/mediaextract.h src/riff.h

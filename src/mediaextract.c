@@ -64,6 +64,7 @@
 #include "gif.h"
 #include "mpeg.h"
 #include "text.h"
+#include "dds.h"
 
 #if defined(__WINDOWS__) && !defined(__CYGWIN__)
 #	ifdef _WIN64
@@ -84,10 +85,10 @@
 #define AUDIO_FORMATS   (OGG   | RIFF   | AIFF   | MPG123 | MP4 | ID3v2  | MIDI   | XMIDI  | MOD | S3M | IT | XM | ASF | AU)
 #define VIDEO_FORMATS   (MP4   | RIFF   | ASF    | BINK   | SMK | MPEGPS | MPEGVS | MPEGTS)
 #define MPEG_FORMATS    (MPEG1 | MPEGPS | MPEGVS | ID3v2)
-#define IMAGE_FORMATS   (BMP   | PNG    | JPEG   | GIF)
+#define IMAGE_FORMATS   (BMP   | PNG    | JPEG   | GIF    | DDS)
 #define TEXT_FORMATS    (UTF_8 | UTF_16LE | UTF_16BE | UTF_32LE | UTF_32BE)
-#define ALL_FORMATS     (OGG   | RIFF   | AIFF   | MPG123 | MP4 | ID3v2  | MIDI   | XMIDI  | MOD | S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG | GIF | MPEG1 | MPEGPS | MPEGVS | MPEGTS | TEXT_FORMATS)
-#define DEFAULT_FORMATS (OGG   | RIFF   | AIFF   |          MP4 | ID3v2  | MIDI   | XMIDI  |       S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG | GIF | MPEG1 | MPEGPS | MPEGVS)
+#define ALL_FORMATS     (OGG   | RIFF   | AIFF   | MPG123 | MP4 | ID3v2  | MIDI   | XMIDI  | MOD | S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG | GIF | DDS | MPEG1 | MPEGPS | MPEGVS | MPEGTS | TEXT_FORMATS)
+#define DEFAULT_FORMATS (OGG   | RIFF   | AIFF   |          MP4 | ID3v2  | MIDI   | XMIDI  |       S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG | GIF | DDS | MPEG1 | MPEGPS | MPEGVS)
 
 static int usage(int argc, char **argv);
 static const char *basename(const char *path);
@@ -174,12 +175,12 @@ static int usage(int argc, char **argv)
 		"                           all      all supported formats\n"
 		"                           default  the default set of formats (AIFF, ASF, AU, BINK, BMP,\n"
 		"                                    GIF, ID3v2, IT, JPEG, MPEG 1, MPEG PS, MIDI, MP4, Ogg,\n"
-		"                                    PNG, RIFF, S3M, SMK, XM, XMIDI)\n"
+		"                                    PNG, RIFF, S3M, SMK, XM, XMIDI, DDS)\n"
 		"                           audio    all audio files (AIFF, ASF, AU, ID3v2, IT, MIDI, MP4,\n"
 		"                                    Ogg, RIFF, S3M, XM, XMIDI)\n"
 		"                           text     all text files (ASCII, UTF-8, UTF-16LE, UTF-16BE,\n"
 		"                                    UTF-32LE, UTF-32BE)\n"
-		"                           image    all image files (BMP, PNG, JPEG, GIF)\n"
+		"                           image    all image files (BMP, PNG, JPEG, GIF, DDS)\n"
 		"                           mpeg     all safe mpeg files (MPEG 1, MPEG PS, ID3v2)\n"
 		"                           tracker  all tracker files (MOD, S3M, IT, XM)\n"
 		"                           video    all video files (ASF, BINK, MP4, RIFF, SMK)\n"
@@ -190,6 +191,7 @@ static int usage(int argc, char **argv)
 		"                           au       Sun Microsystems audio file format (.au or .snd)\n"
 		"                           bink     BINK files\n"
 		"                           bmp      Windows Bitmap files\n"
+		"                           dds      DirectDraw Surface container file format\n"
 		"                           gif      Graphics Interchange Format files\n"
 		"                           id3v2    MPEG layer 1/2/3 files with ID3v2 tags\n"
 		"                           it       ImpulseTracker files\n"
@@ -519,6 +521,13 @@ int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_op
 			continue;
 		}
 
+		if (formats & DDS && magic == DDS_MAGIC && dds_isfile(ptr, input_len, &length))
+		{
+			WRITE_FILE(ptr, length, "dds");
+			ptr += length;
+			continue;
+		}
+
 		if (formats & (MPEG1 | MPEGPS | MPEGVS) && IS_MPEG_MAGIC(magic) && mpeg_isfile(ptr, input_len, formats, &length))
 		{
 			WRITE_FILE(ptr, length, "mpg");
@@ -762,6 +771,10 @@ int parse_formats(const char *sformats, int *formats)
 		else if (strncasecmp("gif", start, len) == 0)
 		{
 			mask = GIF;
+		}
+		else if (strncasecmp("dds", start, len) == 0)
+		{
+			mask = DDS;
 		}
 		else if (strncasecmp("ascii", start, len) == 0)
 		{
