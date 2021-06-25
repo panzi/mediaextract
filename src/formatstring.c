@@ -47,11 +47,16 @@
 #include <assert.h>
 #include <errno.h>
 #include <string.h>
+#include <inttypes.h>
+
+#ifdef __linux__
+#	include <sys/types.h>
+#endif
 
 #define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
 
 void formatstring_error(const char *format, size_t index, const char *message) {
-	fprintf(stderr, "illegal format string:%zu: %s\n\n\t%s\n\t", index + 1, message, format);
+	fprintf(stderr, "illegal format string:%" PRIuPTR ": %s\n\n\t%s\n\t", index + 1, message, format);
 	while (index > 0) {
 		fprintf(stderr, "-");
 		-- index;
