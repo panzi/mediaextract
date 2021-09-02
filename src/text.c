@@ -52,7 +52,7 @@ const uint8_t *decode_utf8_codepoint(const uint8_t *str, size_t size, codepoint_
 		cp = byte1;
 		str += 1;
 	}
-	else if (byte1 < 0xC2) {
+	else if (byte1 < 0xBF) {
 		// unexpected continuation or overlong 2-byte sequence
 		return NULL;
 	}
