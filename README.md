@@ -158,6 +158,10 @@ files.
 	                       NOTE: When using only the 'mpg123' format but not 'id3v2' any ID3v2
 	                       tag will be stripped. ID3v1 tags will still be kept.
 
+	                       NOTE: The 'text' format might detect too much bogus text in UTF-16 or
+	                       UTF-32 encodings. I recommend to use 'utf-8' or 'ascii' instead, if
+	                       you can.
+
 	                       If '-' is written before a format name the format will be
 	                       removed from the set of formats to extract. E.g. extract
 	                       everything except tracker files:
