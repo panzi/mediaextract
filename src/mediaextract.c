@@ -90,7 +90,7 @@
 #define ALL_FORMATS     (TRACKER_FORMATS | AUDIO_FORMATS | VIDEO_FORMATS | MPEG_FORMATS | IMAGE_FORMATS | TEXT_FORMATS | ASCII)
 #define DEFAULT_FORMATS (OGG | RIFF | AIFF | MP4 | ID3v2 | MIDI | XMIDI | S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG | GIF | MPEG1 | MPEGPS | MPEGVS | AVIF | HEIF)
 
-static int usage(int argc, char **argv);
+static int usage(FILE *stream, int argc, char **argv);
 static const char *basename(const char *path);
 static int parse_formats(const char *sformats, file_format *formats);
 static int parse_size_p(const char *str, uint64_t *size);
@@ -98,7 +98,7 @@ static int parse_size(const char *str, size_t *size);
 static int parse_offset(const char *str, uint64_t *size);
 static const char *format_size(uint64_t in, double *out);
 
-static int usage(int argc, char **argv)
+static int usage(FILE *stream, int argc, char **argv)
 {
 	const char *progname = argc <= 0 ? "mediaextract" : argv[0];
 	double default_length = 0;
@@ -106,7 +106,7 @@ static int usage(int argc, char **argv)
 	const char *length_unit = format_size((SIZE_MAX>>1), &default_length);
 	const char *size_unit   = format_size(SIZE_MAX,      &default_size);
 
-	fprintf(stderr,
+	fprintf(stream,
 		"mediaextract - extracts media files that are embedded within other files\n"
 		"\n"
 		"Usage:\n"
@@ -114,6 +114,7 @@ static int usage(int argc, char **argv)
 		"\n"
 		"Options:\n"
 		"  -h, --help             Print this help message.\n"
+		"  -v, --version          Print program version.\n"
 		"  -q, --quiet            Do not print status messages.\n"
 		"  -s, --simulate         Don't write any output files.\n"
 		"  -o, --output=DIR       Directory where extracted files should be written. (default: \".\")\n"
@@ -121,12 +122,13 @@ static int usage(int argc, char **argv)
 		"                         (default: \"{filename}_{offset}.{ext}\")\n"
 		"\n"
 		"                         Supported variables:\n"
-		"                           filename  Filename of the extracted archive.\n"
-		"                           offset    Offset within the archive in hexadecimal.\n"
-		"                           index     0-based index of the extracted file in decimal.\n"
-		"                           size      Size of the extracted file in decimal.\n"
-		"                           ext       Extension associated with the filetype of the\n"
-		"                                     extracted file.\n"
+		"\n"
+		"                           filename   Filename of the extracted archive.\n"
+		"                           offset     Offset within the archive in hexadecimal.\n"
+		"                           index      0-based index of the extracted file in decimal.\n"
+		"                           size       Size of the extracted file in decimal.\n"
+		"                           ext        Extension associated with the filetype of the\n"
+		"                                      extracted file.\n"
 		"\n"
 		"  -i, --offset=OFFSET    Start processing at byte OFFSET. (default: 0)\n"
 		"  -n, --length=LENGTH    Only process LENGTH bytes.\n"
@@ -135,7 +137,7 @@ static int usage(int argc, char **argv)
 
 #if !defined(__LP64__) && !defined(_WIN64)
 
-	fprintf(stderr,
+	fprintf(stream,
 		"\n"
 		"                         NOTE: This program is compiled as a 32bit binary. This means\n"
 		"                         the maximum amount of bytes that can be processed at once are\n"
@@ -149,77 +151,78 @@ static int usage(int argc, char **argv)
 
 #endif
 
-	fprintf(stderr,
+	fprintf(stream,
 		"  -m, --min-size=SIZE    Minumum size of extracted files (skip smaller). (default: 0)\n"
 		"  -x, --max-size=SIZE    Maximum size of extracted files (skip larger).\n"
 		"                         (default and maximum: %g %s)\n"
 		"\n"
 		"                         The last character of OFFSET, LENGTH and SIZE may be one of the\n"
 		"                         following:\n"
-		"                           B (or none)  for Bytes\n"
-		"                           k            for Kilobytes (units of 1024 Bytes)\n"
-		"                           M            for Megabytes (units of 1024 Kilobytes)\n"
-		"                           G            for Gigabytes (units of 1024 Megabytes)\n"
-		"                           T            for Terabytes (units of 1024 Gigabytes)\n"
-		"                           P            for Petabytes (units of 1024 Terabytes)\n"
-		"                           E            for Exabytes  (units of 1024 Petabytes)\n"
+		"                           B (or none)   for Bytes\n"
+		"                           k             for Kilobytes (units of 1024 Bytes)\n"
+		"                           M             for Megabytes (units of 1024 Kilobytes)\n"
+		"                           G             for Gigabytes (units of 1024 Megabytes)\n"
+		"                           T             for Terabytes (units of 1024 Gigabytes)\n"
+		"                           P             for Petabytes (units of 1024 Terabytes)\n"
+		"                           E             for Exabytes  (units of 1024 Petabytes)\n"
 		"\n"
 		"                         The special value \"max\" selects the maximum alowed value.\n"
 		"\n",
 		default_size, size_unit);
 
-	fprintf(stderr,
+	fprintf(stream,
 		"  -f, --formats=FORMATS  Comma separated list of formats (file magics) to extract.\n"
 		"\n"
 		"                         Supported formats:\n"
-		"                           all      all supported formats\n"
-		"                           default  the default set of formats (AIFF, ASF, AU, AVIF, BINK,\n"
-		"                                    BMP, GIF, HEIF, ID3v2, IT, JPEG, MPEG 1, MPEG PS,\n"
-		"                                    MIDI, MP4, Ogg, PNG, RIFF, S3M, SMK, XM, XMIDI)\n"
-		"                           audio    all audio files (AIFF, ASF, AU, ID3v2, IT, MIDI, MP4,\n"
-		"                                    Ogg, RIFF, S3M, XM, XMIDI)\n"
-		"                           text     all text files (ASCII, UTF-8, UTF-16LE, UTF-16BE,\n"
-		"                                    UTF-32LE, UTF-32BE)\n"
-		"                           image    all image files (BMP, PNG, JPEG, GIF, AVIF, HEIF)\n"
-		"                           mpeg     all safe mpeg files (MPEG 1, MPEG PS, ID3v2)\n"
-		"                           tracker  all tracker files (MOD, S3M, IT, XM)\n"
-		"                           video    all video files (ASF, BINK, MP4, RIFF, SMK)\n"
 		"\n"
-		"                           avif     AVIF image files\n"
-		"                           aiff     big-endian (Apple) wave files\n"
-		"                           ascii    7-bit ASCII files (only printable characters)\n"
-		"                           asf      Advanced Systems Format files (also WMA and WMV)\n"
-		"                           au       Sun Microsystems audio file format (.au or .snd)\n"
-		"                           bink     BINK files\n"
-		"                           bmp      Windows Bitmap files\n"
-		"                           gif      Graphics Interchange Format files\n"
-		"                           heif     HEIF images files\n"
-		"                           id3v2    MPEG layer 1/2/3 files with ID3v2 tags\n"
-		"                           it       ImpulseTracker files\n"
-		"                           jpeg     JPEG Interchange Format files\n"
-		"                           midi     MIDI files\n"
-		"                           mod      Noisetracker/Soundtracker/Protracker Module files\n"
-		"                           mpg123   MPEG layer 1/2/3 files (MP1, MP2, MP3)\n"
-		"                           mpeg1    MPEG 1 System Streams\n"
-		"                           mpegps   MPEG 2 Program Streams\n"
-		"                           mpegts   MPEG 2 Transport Streams\n"
-		"                           mp4      MP4 files (M4A, M4V, 3GPP etc.)\n"
-		"                           ogg      Ogg files (Vorbis, Opus, Theora, etc.)\n"
-		"                           png      Portable Network Graphics files\n"
-		"                           riff     Resource Interchange File Format files (ANI, AVI, MMM,\n"
-		"                                    PAL, RDI, RMI, SGT, STY, WAV, WEBP and more)\n"
-		"                           s3m      ScreamTracker III files\n"
-		"                           smk      Smaker files\n"
-		"                           utf-8    7-bit ASCII and UTF-8 files (only printable code points)\n"
-		"                           utf-16be big-endian UTF-16 files (only printable code points)\n"
-		"                           utf-16le little-endian UTF-16 files (only printable code points)\n"
-		"                           utf-32be big-endian UTF-32 files (only printable code points)\n"
-		"                           utf-32le little-endian UTF-32 files (only printable code points)\n"
-		"                           xm       Extended Module files\n"
-		"                           xmidi    XMIDI files\n"
+		"                           all        all supported formats\n"
+		"                           default    the default set of formats (AIFF, ASF, AU, AVIF, BINK,\n"
+		"                                      BMP, GIF, HEIF, ID3v2, IT, JPEG, MPEG 1, MPEG PS,\n"
+		"                                      MIDI, MP4, Ogg, PNG, RIFF, S3M, SMK, XM, XMIDI)\n"
+		"                           audio      all audio files (AIFF, ASF, AU, ID3v2, IT, MIDI, MP4,\n"
+		"                                      Ogg, RIFF, S3M, XM, XMIDI)\n"
+		"                           text       all text files (ASCII, UTF-8, UTF-16LE, UTF-16BE,\n"
+		"                                      UTF-32LE, UTF-32BE)\n"
+		"                           image      all image files (BMP, PNG, JPEG, GIF, AVIF, HEIF)\n"
+		"                           mpeg       all safe mpeg files (MPEG 1, MPEG PS, ID3v2)\n"
+		"                           tracker    all tracker files (MOD, S3M, IT, XM)\n"
+		"                           video      all video files (ASF, BINK, MP4, RIFF, SMK)\n"
+		"\n"
+		"                           avif       AVIF image files\n"
+		"                           aiff       big-endian (Apple) wave files\n"
+		"                           ascii      7-bit ASCII files (only printable characters)\n"
+		"                           asf        Advanced Systems Format files (also WMA and WMV)\n"
+		"                           au         Sun Microsystems audio file format (.au or .snd)\n"
+		"                           bink       BINK files\n"
+		"                           bmp        Windows Bitmap files\n"
+		"                           gif        Graphics Interchange Format files\n"
+		"                           heif       HEIF images files\n"
+		"                           id3v2      MPEG layer 1/2/3 files with ID3v2 tags\n"
+		"                           it         ImpulseTracker files\n"
+		"                           jpeg       JPEG Interchange Format files\n"
+		"                           midi       MIDI files\n"
+		"                           mod        Noisetracker/Soundtracker/Protracker Module files\n"
+		"                           mpg123     MPEG layer 1/2/3 files (MP1, MP2, MP3)\n"
+		"                           mpeg1      MPEG 1 System Streams\n"
+		"                           mpegps     MPEG 2 Program Streams\n"
+		"                           mpegts     MPEG 2 Transport Streams\n"
+		"                           mp4        MP4 files (M4A, M4V, 3GPP etc.)\n"
+		"                           ogg        Ogg files (Vorbis, Opus, Theora, etc.)\n"
+		"                           png        Portable Network Graphics files\n"
+		"                           riff       Resource Interchange File Format files (ANI, AVI, MMM,\n"
+		"                                      PAL, RDI, RMI, SGT, STY, WAV, WEBP and more)\n"
+		"                           s3m        ScreamTracker III files\n"
+		"                           smk        Smaker files\n"
+		"                           utf-8      7-bit ASCII and UTF-8 files (only printable code points)\n"
+		"                           utf-16be   big-endian UTF-16 files (only printable code points)\n"
+		"                           utf-16le   little-endian UTF-16 files (only printable code points)\n"
+		"                           utf-32be   big-endian UTF-32 files (only printable code points)\n"
+		"                           utf-32le   little-endian UTF-32 files (only printable code points)\n"
+		"                           xm         Extended Module files\n"
+		"                           xmidi      XMIDI files\n"
 		"\n");
 
-	fprintf(stderr,
+	fprintf(stream,
 		"                         WARNING: Because MP1/2/3 files do not have a nice file magic, using\n"
 		"                         the 'mpg123' format may cause *a lot* of false positives. Nowadays\n"
 		"                         MP3 files usually have an ID3v2 tag at the start, so using the\n"
@@ -1066,6 +1069,7 @@ const struct option long_options[] = {
 	{"length",   required_argument, 0, 'n' },
 	{"offset",   required_argument, 0, 'i' },
 	{"simulate", no_argument,       0, 's' },
+	{"version",  no_argument,       0, 'v' },
 	{0,          0,                 0,  0  }
 };
 
@@ -1090,7 +1094,7 @@ int main(int argc, char **argv)
 	size_t sumsize = 0;
 	struct stat st;
 
-	while ((opt = getopt_long(argc, argv, "f:o:a:hqm:x:n:i:s", long_options, NULL)) != -1)
+	while ((opt = getopt_long(argc, argv, "f:o:a:hqm:x:n:i:sv", long_options, NULL)) != -1)
 	{
 		switch (opt)
 		{
@@ -1113,7 +1117,7 @@ int main(int argc, char **argv)
 				break;
 
 			case 'h':
-				return usage(argc, argv);
+				return usage(stdout, argc, argv);
 
 			case 'q':
 				options.quiet = 1;
@@ -1149,6 +1153,10 @@ int main(int argc, char **argv)
 			case 's':
 				options.simulate = 1;
 				break;
+
+			case 'v':
+				printf("%s\n", MEDIAEXTRACT_VERSION);
+				return 0;
 
 			default:
 				fprintf(stderr, SEE_HELP);

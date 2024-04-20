@@ -178,6 +178,8 @@
 
 #endif
 
+#define MEDIAEXTRACT_VERSION "1.2.0"
+
 typedef uint64_t file_format;
 
 #define NONE     ((uint64_t)      0)

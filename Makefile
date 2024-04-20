@@ -3,9 +3,12 @@ TARGET=$(shell uname|tr '[A-Z]' '[a-z]')$(shell getconf LONG_BIT)
 INCLUDE=
 LIBDIRS=
 LIBS=
-MANPAGE=mediaextract.1.gz
+APPNAME=mediaextract
+BINEXT=
+MANPAGE=$(APPNAME).1.gz
 PLATFORM=posix
-BUILDDIR=build-$(TARGET)
+BUILD_TYPE=debug
+BUILDDIR=build/$(TARGET)/$(BUILD_TYPE)
 OBJ=\
 	$(BUILDDIR)/mediaextract.o \
 	$(BUILDDIR)/mediaextract_$(PLATFORM).o \
@@ -35,14 +38,12 @@ OBJ=\
 	$(BUILDDIR)/text.o
 CC=gcc
 LD=$(CC)
-CFLAGS+= -Wall -Werror -Wextra -std=gnu99 -O2 -g $(INCLUDE) $(LIBDIRS) -D_FILE_OFFSET_BITS=64
+CFLAGS+= -Wall -Werror -Wextra -std=gnu99 $(INCLUDE) $(LIBDIRS) -D_FILE_OFFSET_BITS=64
 WINDOWS_LIBS=-lws2_32
-APPNAME=mediaextract
-BIN=$(BUILDDIR)/$(APPNAME)
-RELEASE=0
+BIN=$(BUILDDIR)/$(APPNAME)$(BINEXT)
 
-ifeq ($(RELEASE),1)
-	CFLAGS+=-O3
+ifeq ($(BUILD_TYPE),release)
+	CFLAGS+=-O2
 else
 	CFLAGS+=-g
 endif
@@ -53,7 +54,7 @@ ifeq ($(TARGET),win32)
 	CFLAGS+=-DWINVER=0x500 -m32
 	LDFLAGS+=-m32
 	LIBS=$(WINDOWS_LIBS)
-	APPNAME=mediaextract.exe
+	BINEXT=.exe
 else
 ifeq ($(TARGET),win64)
 	PLATFORM=windows
@@ -61,7 +62,7 @@ ifeq ($(TARGET),win64)
 	CFLAGS+=-DWINVER=0x500 -m64
 	LDFLAGS+=-m64
 	LIBS=$(WINDOWS_LIBS)
-	APPNAME=mediaextract.exe
+	BINEXT=.exe
 else
 ifeq ($(TARGET),linux32)
 	CFLAGS+=-pedantic -m32
@@ -131,8 +132,8 @@ $(BUILDDIR)/%.o: src/%.c src/mediaextract.h src/riff.h
 ifeq ($(PLATFORM),posix)
 install: $(PREFIX)/bin/$(APPNAME) $(PREFIX)/share/man/man1/$(MANPAGE)
 
-$(BUILDDIR)/$(MANPAGE): src/ManPageIncludeFile
-	help2man $(BIN) --no-discard-stderr --no-info -n "extracts media files that are embedded within other files" -S "Mathias Panzenböck" -i src/ManPageIncludeFile|sed '/the default set of formats/s/^/.TP\n/'|sed '/the default set of formats/{N;s/.TP//}'|sed -r '/([)]|files)$ /a .TP' >$(BUILDDIR)/$(APPNAME).1
+$(BUILDDIR)/$(MANPAGE): src/ManPageIncludeFile $(BIN)
+	PATH=$(BUILDDIR):$(PATH) help2man $(APPNAME) --no-info -n "extracts media files that are embedded within other files" -S "Mathias Panzenböck" -i src/ManPageIncludeFile >$(BUILDDIR)/$(APPNAME).1
 	gzip -kf $(BUILDDIR)/$(APPNAME).1
 
 $(PREFIX)/share/man/man1/$(MANPAGE): $(BUILDDIR)/$(APPNAME).1
