@@ -14,11 +14,10 @@ for target in linux32 linux64 win32 win64; do
 	if [[ -d "$builddir" ]]; then
 		mkdir "$pkg/$builddir"
 
-		if [[ -f "$builddir/mediaextract" ]]; then
-			cp "$builddir/mediaextract" "$pkg/$builddir"
-		elif [ -f "$builddir/mediaextract.exe" ]; then
-			cp "$builddir/mediaextract.exe" "$pkg/$builddir"
-		fi
+		suffix=
+		case "$target" in win*) suffix=.exe;; esac
+
+		cp "$builddir/mediaextract$suffix" "$pkg/$builddir"
 	fi
 done
 zip -r9 "$pkg.zip" "$pkg"

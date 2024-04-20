@@ -61,6 +61,7 @@
 #include "bmp.h"
 #include "png.h"
 #include "jpg.h"
+#include "avif.h"
 #include "gif.h"
 #include "mpeg.h"
 #include "text.h"
@@ -81,17 +82,17 @@
 #define SEE_HELP "See --help for usage information.\n"
 
 #define TRACKER_FORMATS (MOD   | S3M    | IT     | XM)
-#define AUDIO_FORMATS   (OGG   | RIFF   | AIFF   | MPG123 | MP4 | ID3v2  | MIDI   | XMIDI  | MOD | S3M | IT | XM | ASF | AU)
+#define AUDIO_FORMATS   (OGG   | RIFF   | AIFF   | MPG123 | MP4 | ID3v2  | MIDI   | XMIDI | TRACKER_FORMATS | ASF | AU)
 #define VIDEO_FORMATS   (MP4   | RIFF   | ASF    | BINK   | SMK | MPEGPS | MPEGVS | MPEGTS)
 #define MPEG_FORMATS    (MPEG1 | MPEGPS | MPEGVS | ID3v2)
-#define IMAGE_FORMATS   (BMP   | PNG    | JPEG   | GIF)
+#define IMAGE_FORMATS   (AVIF  | HEIF   | BMP    | PNG    | GIF | JPEG)
 #define TEXT_FORMATS    (UTF_8 | UTF_16LE | UTF_16BE | UTF_32LE | UTF_32BE)
-#define ALL_FORMATS     (OGG   | RIFF   | AIFF   | MPG123 | MP4 | ID3v2  | MIDI   | XMIDI  | MOD | S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG | GIF | MPEG1 | MPEGPS | MPEGVS | MPEGTS | TEXT_FORMATS)
-#define DEFAULT_FORMATS (OGG   | RIFF   | AIFF   |          MP4 | ID3v2  | MIDI   | XMIDI  |       S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG | GIF | MPEG1 | MPEGPS | MPEGVS)
+#define ALL_FORMATS     (TRACKER_FORMATS | AUDIO_FORMATS | VIDEO_FORMATS | MPEG_FORMATS | IMAGE_FORMATS | TEXT_FORMATS | ASCII)
+#define DEFAULT_FORMATS (OGG | RIFF | AIFF | MP4 | ID3v2 | MIDI | XMIDI | S3M | IT | XM | ASF | BINK | AU | SMK | BMP | PNG | JPEG | GIF | MPEG1 | MPEGPS | MPEGVS | AVIF | HEIF)
 
 static int usage(int argc, char **argv);
 static const char *basename(const char *path);
-static int parse_formats(const char *sformats, int *formats);
+static int parse_formats(const char *sformats, file_format *formats);
 static int parse_size_p(const char *str, uint64_t *size);
 static int parse_size(const char *str, size_t *size);
 static int parse_offset(const char *str, uint64_t *size);
@@ -172,18 +173,19 @@ static int usage(int argc, char **argv)
 		"\n"
 		"                         Supported formats:\n"
 		"                           all      all supported formats\n"
-		"                           default  the default set of formats (AIFF, ASF, AU, BINK, BMP,\n"
-		"                                    GIF, ID3v2, IT, JPEG, MPEG 1, MPEG PS, MIDI, MP4, Ogg,\n"
-		"                                    PNG, RIFF, S3M, SMK, XM, XMIDI)\n"
+		"                           default  the default set of formats (AIFF, ASF, AU, AVIF, BINK,\n"
+		"                                    BMP, GIF, HEIF, ID3v2, IT, JPEG, MPEG 1, MPEG PS,\n"
+		"                                    MIDI, MP4, Ogg, PNG, RIFF, S3M, SMK, XM, XMIDI)\n"
 		"                           audio    all audio files (AIFF, ASF, AU, ID3v2, IT, MIDI, MP4,\n"
 		"                                    Ogg, RIFF, S3M, XM, XMIDI)\n"
 		"                           text     all text files (ASCII, UTF-8, UTF-16LE, UTF-16BE,\n"
 		"                                    UTF-32LE, UTF-32BE)\n"
-		"                           image    all image files (BMP, PNG, JPEG, GIF)\n"
+		"                           image    all image files (BMP, PNG, JPEG, GIF, AVIF, HEIF)\n"
 		"                           mpeg     all safe mpeg files (MPEG 1, MPEG PS, ID3v2)\n"
 		"                           tracker  all tracker files (MOD, S3M, IT, XM)\n"
 		"                           video    all video files (ASF, BINK, MP4, RIFF, SMK)\n"
 		"\n"
+		"                           avif     AVIF image files\n"
 		"                           aiff     big-endian (Apple) wave files\n"
 		"                           ascii    7-bit ASCII files (only printable characters)\n"
 		"                           asf      Advanced Systems Format files (also WMA and WMV)\n"
@@ -191,6 +193,7 @@ static int usage(int argc, char **argv)
 		"                           bink     BINK files\n"
 		"                           bmp      Windows Bitmap files\n"
 		"                           gif      Graphics Interchange Format files\n"
+		"                           heif     HEIF images files\n"
 		"                           id3v2    MPEG layer 1/2/3 files with ID3v2 tags\n"
 		"                           it       ImpulseTracker files\n"
 		"                           jpeg     JPEG Interchange Format files\n"
@@ -321,7 +324,7 @@ int write_file(const uint8_t *data, size_t length, const struct extract_options 
 int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_options *options, size_t *numfilesptr, size_t *sumsizeptr)
 {
 	const uint8_t *ptr = NULL, *end = NULL;
-	enum fileformat format = NONE;
+	file_format format = NONE;
 
 	size_t sumsize = 0;
 	size_t length = 0;
@@ -539,8 +542,15 @@ int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_op
 
 		if (formats & JPEG && IS_JPG_MAGIC(magic) && jpg_isfile(ptr, input_len, &length))
 		{
-			WRITE_FILE(ptr, length, "jpg");
+			WRITE_FILE(ptr, length, "jpeg");
 			ptr += length;
+			continue;
+		}
+
+		if (formats & (AVIF | HEIF) && input_len >= AVIF_MIN_SIZE && avif_isfile(ptr, input_len, formats, &info))
+		{
+			WRITE_FILE(ptr, info.length, info.ext);
+			ptr += info.length;
 			continue;
 		}
 
@@ -650,7 +660,7 @@ cleanup:
 	return success;
 }
 
-int parse_formats(const char *sformats, int *formats)
+int parse_formats(const char *sformats, file_format *formats)
 {
 	unsigned int parsed = NONE;
 	const char *start = sformats;
@@ -742,6 +752,10 @@ int parse_formats(const char *sformats, int *formats)
 		else if (strncasecmp("jpeg", start, len) == 0)
 		{
 			mask = JPEG;
+		}
+		else if (strncasecmp("avif", start, len) == 0)
+		{
+			mask = AVIF;
 		}
 		else if (strncasecmp("mpeg1", start, len) == 0)
 		{
@@ -1063,7 +1077,7 @@ int main(int argc, char **argv)
 		.filename = "{filename}_{offset}.{ext}",
 		.minsize  = 0,
 		.maxsize  = SIZE_MAX,
-		.length   = (SIZE_MAX>>1),
+		.length   = (SIZE_MAX >> 1),
 		.formats  = DEFAULT_FORMATS,
 		.quiet    = false,
 		.simulate = false

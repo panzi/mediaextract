@@ -29,6 +29,7 @@ OBJ=\
 	$(BUILDDIR)/bmp.o \
 	$(BUILDDIR)/png.o \
 	$(BUILDDIR)/jpg.o \
+	$(BUILDDIR)/avif.o \
 	$(BUILDDIR)/gif.o \
 	$(BUILDDIR)/mpeg.o \
 	$(BUILDDIR)/text.o
@@ -38,6 +39,13 @@ CFLAGS+= -Wall -Werror -Wextra -std=gnu99 -O2 -g $(INCLUDE) $(LIBDIRS) -D_FILE_O
 WINDOWS_LIBS=-lws2_32
 APPNAME=mediaextract
 BIN=$(BUILDDIR)/$(APPNAME)
+RELEASE=0
+
+ifeq ($(RELEASE),1)
+	CFLAGS+=-O3
+else
+	CFLAGS+=-g
+endif
 
 ifeq ($(TARGET),win32)
 	PLATFORM=windows
@@ -105,6 +113,7 @@ $(BUILDDIR)/mediaextract.o: src/mediaextract.c \
 		src/bmp.h \
 		src/png.h \
 		src/jpg.h \
+		src/avif.h \
 		src/gif.h \
 		src/mpeg.h \
 		src/text.h
@@ -116,80 +125,17 @@ $(BUILDDIR)/mediaextract_$(PLATFORM).o: src/mediaextract_$(PLATFORM).c src/media
 $(BUILDDIR)/formatstring.o: src/formatstring.c src/formatstring.h
 	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
 
-$(BUILDDIR)/riff.o: src/riff.c src/mediaextract.h src/riff.h
-	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
-
-$(BUILDDIR)/aiff.o: src/aiff.c src/mediaextract.h src/aiff.h
-	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
-
-$(BUILDDIR)/ogg.o: src/ogg.c src/mediaextract.h src/ogg.h
-	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
-
-$(BUILDDIR)/mpg123.o: src/mpg123.c src/mediaextract.h src/mpg123.h
-	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
-
-$(BUILDDIR)/mp4.o: src/mp4.c src/mediaextract.h src/mp4.h
-	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
-
-$(BUILDDIR)/id3.o: src/id3.c src/mediaextract.h src/id3.h
-	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
-
-$(BUILDDIR)/midi.o: src/midi.c src/mediaextract.h src/midi.h
-	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
-
-$(BUILDDIR)/xmidi.o: src/xmidi.c src/mediaextract.h src/xmidi.h
-	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
-
-$(BUILDDIR)/mod.o: src/mod.c src/mediaextract.h src/mod.h
-	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
-
-$(BUILDDIR)/s3m.o: src/s3m.c src/mediaextract.h src/s3m.h
-	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
-
-$(BUILDDIR)/xm.o: src/xm.c src/mediaextract.h src/xm.h
-	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
-
-$(BUILDDIR)/it.o: src/it.c src/mediaextract.h src/it.h
-	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
-
-$(BUILDDIR)/asf.o: src/asf.c src/mediaextract.h src/asf.h
-	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
-
-$(BUILDDIR)/bink.o: src/bink.c src/mediaextract.h src/bink.h
-	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
-
-$(BUILDDIR)/au.o: src/au.c src/mediaextract.h src/au.h
-	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
-
-$(BUILDDIR)/smk.o: src/smk.c src/mediaextract.h src/smk.h
-	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
-
-$(BUILDDIR)/bmp.o: src/bmp.c src/mediaextract.h src/bmp.h
-	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
-
-$(BUILDDIR)/png.o: src/png.c src/mediaextract.h src/png.h
-	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
-
-$(BUILDDIR)/jpg.o: src/jpg.c src/mediaextract.h src/jpg.h
-	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
-
-$(BUILDDIR)/gif.o: src/gif.c src/mediaextract.h src/gif.h
-	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
-
-$(BUILDDIR)/mpeg.o: src/mpeg.c src/mediaextract.h src/mpeg.h
-	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
-
-$(BUILDDIR)/text.o: src/text.c src/mediaextract.h src/text.h
+$(BUILDDIR)/%.o: src/%.c src/mediaextract.h src/riff.h
 	$(CC) $(CFLAGS) $< -o $@ -c $(LIBS)
 
 ifeq ($(PLATFORM),posix)
 install: $(PREFIX)/bin/$(APPNAME) $(PREFIX)/share/man/man1/$(MANPAGE)
 
-$(BUILDDIR)/$(MANPAGE):src/ManPageIncludeFile
+$(BUILDDIR)/$(MANPAGE): src/ManPageIncludeFile
 	help2man $(BIN) --no-discard-stderr --no-info -n "extracts media files that are embedded within other files" -S "Mathias Panzenböck" -i src/ManPageIncludeFile|sed '/the default set of formats/s/^/.TP\n/'|sed '/the default set of formats/{N;s/.TP//}'|sed -r '/([)]|files)$ /a .TP' >$(BUILDDIR)/$(APPNAME).1
 	gzip -kf $(BUILDDIR)/$(APPNAME).1
 
-$(PREFIX)/share/man/man1/$(MANPAGE):$(BUILDDIR)/$(APPNAME).1
+$(PREFIX)/share/man/man1/$(MANPAGE): $(BUILDDIR)/$(APPNAME).1
 	mkdir -p "$(PREFIX)/share/man/man1/"
 	install $(BUILDDIR)/$(MANPAGE) "$@"
 

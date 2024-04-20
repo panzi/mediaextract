@@ -178,39 +178,44 @@
 
 #endif
 
-enum fileformat {
-	NONE     =       0,
-	OGG      = 1 <<  0,
-	RIFF     = 1 <<  1,
-	AIFF     = 1 <<  2,
-	MPG123   = 1 <<  3,
-	ID3v2    = 1 <<  4,
-	MP4      = 1 <<  5,
-	MIDI     = 1 <<  6,
-	XMIDI    = 1 <<  7,
-	MOD      = 1 <<  8,
-	S3M      = 1 <<  9,
-	IT       = 1 << 10,
-	XM       = 1 << 11,
-	ASF      = 1 << 12,
-	BINK     = 1 << 13,
-	AU       = 1 << 14,
-	SMK      = 1 << 15,
-	BMP      = 1 << 16,
-	PNG      = 1 << 17,
-	JPEG     = 1 << 18,
-	GIF      = 1 << 19,
-	MPEG1    = 1 << 20,
-	MPEGPS   = 1 << 21,
-	MPEGVS   = 1 << 22, // TODO
-	MPEGTS   = 1 << 23, // TODO
-	ASCII    = 1 << 24,
-	UTF_8    = 1 << 25,
-	UTF_16LE = 1 << 26,
-	UTF_16BE = 1 << 27,
-	UTF_32LE = 1 << 28,
-	UTF_32BE = 1 << 29
-};
+typedef uint64_t file_format;
+
+#define NONE     ((uint64_t)      0)
+#define OGG      ((uint64_t)1 <<  0)
+#define RIFF     ((uint64_t)1 <<  1)
+#define AIFF     ((uint64_t)1 <<  2)
+#define MPG123   ((uint64_t)1 <<  3)
+#define ID3v2    ((uint64_t)1 <<  4)
+#define MP4      ((uint64_t)1 <<  5)
+#define MIDI     ((uint64_t)1 <<  6)
+#define XMIDI    ((uint64_t)1 <<  7)
+#define MOD      ((uint64_t)1 <<  8)
+#define S3M      ((uint64_t)1 <<  9)
+#define IT       ((uint64_t)1 << 10)
+#define XM       ((uint64_t)1 << 11)
+#define ASF      ((uint64_t)1 << 12)
+#define BINK     ((uint64_t)1 << 13)
+#define AU       ((uint64_t)1 << 14)
+#define SMK      ((uint64_t)1 << 15)
+#define BMP      ((uint64_t)1 << 16)
+#define PNG      ((uint64_t)1 << 17)
+#define JPEG     ((uint64_t)1 << 18)
+#define GIF      ((uint64_t)1 << 19)
+#define MPEG1    ((uint64_t)1 << 20)
+#define MPEGPS   ((uint64_t)1 << 21)
+#define MPEGVS   ((uint64_t)1 << 22) // TODO
+#define MPEGTS   ((uint64_t)1 << 23)
+#define ASCII    ((uint64_t)1 << 24)
+#define UTF_8    ((uint64_t)1 << 25)
+#define UTF_16LE ((uint64_t)1 << 26)
+#define UTF_16BE ((uint64_t)1 << 27)
+#define UTF_32LE ((uint64_t)1 << 28)
+#define UTF_32BE ((uint64_t)1 << 29)
+#define AVIF     ((uint64_t)1 << 30)
+#define HEIF     ((uint64_t)1 << 31)
+
+// TODO: look into these formats:
+// VTF, PSD, XCF, ICO, OpenEXR, PCX, JPEG 2000, TIFF
 
 struct file_info {
 	size_t length;
@@ -226,7 +231,7 @@ struct extract_options {
 	uint64_t offset;
 	size_t   length;
 	size_t   index;
-	int formats;
+	file_format formats;
 	bool quiet;
 	bool simulate;
 };

@@ -47,7 +47,7 @@ static size_t mpeg_ispacket(const uint8_t *data, size_t input_len)
 	return length;
 }
 
-static size_t mpeg_ispack(const uint8_t *data, size_t input_len, enum fileformat *format)
+static size_t mpeg_ispack(const uint8_t *data, size_t input_len, file_format *format)
 {
 	if (input_len < 12 || MAGIC(data) != MPEG_MAGIC)
 		return 0;
@@ -99,7 +99,7 @@ static size_t mpeg_ispack(const uint8_t *data, size_t input_len, enum fileformat
 
 static size_t mpeg_ispacks(const uint8_t *data, size_t input_len, int formats)
 {
-	enum fileformat format = NONE;
+	file_format format = NONE;
 	size_t length = mpeg_ispack(data, input_len, &format);
 	
 	if (length == 0 || (format & formats) == 0)
@@ -121,7 +121,7 @@ static size_t mpeg_ispacks(const uint8_t *data, size_t input_len, int formats)
 			break;
 		length = i - 2;
 
-		enum fileformat nextformat = NONE;
+		file_format nextformat = NONE;
 		size_t nextlen = mpeg_ispack(data + length, input_len - length, &nextformat);
 
 		if (nextlen == 0 || nextformat != format)

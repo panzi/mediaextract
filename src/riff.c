@@ -27,7 +27,7 @@
 #define CHUNK_SPEC(metatype,c1,c2,c3,c4,body,required) { (metatype), CMAGIC(c1,c2,c3,c4), (body), (required) }
 #define LIST(c1,c2,c3,c4,body,required) CHUNK_SPEC(CMAGIC('L','I','S','T'),c1,c2,c3,c4,body,required)
 #define FORM(c1,c2,c3,c4,body,required) CHUNK_SPEC(CMAGIC('R','I','F','F'),c1,c2,c3,c4,body,required)
-#define RIFF(c1,c2,c3,c4,body)          FORM(c1,c2,c3,c4,body,1)
+#define RIFF_FORM(c1,c2,c3,c4,body)     FORM(c1,c2,c3,c4,body,1)
 #define CHUNK(c1,c2,c3,c4,required)     CHUNK_SPEC(0,c1,c2,c3,c4,0,required)
 #define END { 0, 0, 0, 0 }
 #define BODY(...) { __VA_ARGS__, END }
@@ -241,29 +241,29 @@ static const struct riff_chunk_spec riff_webp_body[] = BODY(
 	    CHUNK_SPEC_COUNT(riff_webp_body)))))))))))))))))))))
 
 static const struct riff_file_spec riff_file_specs[] = {
-	{ RIFF('W','A','V','E', riff_wav_body ), "wav"  },
-	{ RIFF('A','V','I',' ', riff_avi_body ), "avi"  },
-	{ RIFF('A','C','O','N', riff_ani_body ), "ani"  },
-	{ RIFF('R','M','I','D', 0             ), "rmi"  },
-	{ RIFF('P','A','L',' ', riff_pal_body ), "pal"  },
-	{ RIFF('R','D','I','B', 0             ), "rdi"  },
-	{ RIFF('R','M','M','P', 0             ), "mmm"  },
-	{ RIFF('D','M','A','P', riff_aud_body ), "aud"  },
-	{ RIFF('D','M','B','D', riff_dmbd_body), "riff" },
-	{ RIFF('D','M','P','R', riff_dmpr_body), "cdm"  },
-	{ RIFF('D','M','C','N', riff_dmcn_body), "riff" },
-	{ RIFF('D','S','B','C', riff_dsbc_body), "riff" },
-	{ RIFF('D','S','F','X', riff_dsfx_body), "riff" },
-	{ RIFF('D','M','S','C', riff_dmsc_body), "riff" },
-	{ RIFF('D','M','S','G', riff_sgt_body ), "sgt"  },
-	{ RIFF('D','M','S','T', riff_sty_body ), "sty"  },
-	{ RIFF('D','M','T','L', riff_dmtl_body), "riff" },
-	{ RIFF('D','M','T','G', riff_dmtg_body), "riff" },
-	{ RIFF('D','M','T','K', riff_dmtk_body), "riff" },
-	{ RIFF('D','M','B','T', riff_dmbt_body), "riff" },
-	{ RIFF('D','M','P','T', riff_dmpt_body), "riff" },
-	{ RIFF('W','E','B','P', riff_webp_body), "webp" },
-	{ RIFF('M','T','D','F', 0             ), "mtd"  },
+	{ RIFF_FORM('W','A','V','E', riff_wav_body ), "wav"  },
+	{ RIFF_FORM('A','V','I',' ', riff_avi_body ), "avi"  },
+	{ RIFF_FORM('A','C','O','N', riff_ani_body ), "ani"  },
+	{ RIFF_FORM('R','M','I','D', 0             ), "rmi"  },
+	{ RIFF_FORM('P','A','L',' ', riff_pal_body ), "pal"  },
+	{ RIFF_FORM('R','D','I','B', 0             ), "rdi"  },
+	{ RIFF_FORM('R','M','M','P', 0             ), "mmm"  },
+	{ RIFF_FORM('D','M','A','P', riff_aud_body ), "aud"  },
+	{ RIFF_FORM('D','M','B','D', riff_dmbd_body), "riff" },
+	{ RIFF_FORM('D','M','P','R', riff_dmpr_body), "cdm"  },
+	{ RIFF_FORM('D','M','C','N', riff_dmcn_body), "riff" },
+	{ RIFF_FORM('D','S','B','C', riff_dsbc_body), "riff" },
+	{ RIFF_FORM('D','S','F','X', riff_dsfx_body), "riff" },
+	{ RIFF_FORM('D','M','S','C', riff_dmsc_body), "riff" },
+	{ RIFF_FORM('D','M','S','G', riff_sgt_body ), "sgt"  },
+	{ RIFF_FORM('D','M','S','T', riff_sty_body ), "sty"  },
+	{ RIFF_FORM('D','M','T','L', riff_dmtl_body), "riff" },
+	{ RIFF_FORM('D','M','T','G', riff_dmtg_body), "riff" },
+	{ RIFF_FORM('D','M','T','K', riff_dmtk_body), "riff" },
+	{ RIFF_FORM('D','M','B','T', riff_dmbt_body), "riff" },
+	{ RIFF_FORM('D','M','P','T', riff_dmpt_body), "riff" },
+	{ RIFF_FORM('W','E','B','P', riff_webp_body), "webp" },
+	{ RIFF_FORM('M','T','D','F', 0             ), "mtd"  },
 
 	{ END, 0 }
 };
