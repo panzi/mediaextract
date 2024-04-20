@@ -13,12 +13,12 @@ for target in linux32 linux64 win32 win64; do
 	make TARGET=$target BUILD_TYPE=release builddir
 	make TARGET=$target BUILD_TYPE=release "-j$(nproc)"
 	if [[ -d "$builddir" ]]; then
-		mkdir "$pkg/$builddir"
+		mkdir "$pkg/$target"
 
 		suffix=
 		case "$target" in win*) suffix=.exe;; esac
 
-		cp "$builddir/mediaextract$suffix" "$pkg/$builddir"
+		cp "$builddir/mediaextract$suffix" "$pkg/$target"
 	fi
 done
 zip -r9 "$pkg.zip" "$pkg"
