@@ -188,5 +188,5 @@ mediaextract -f id3v2,mpg123 --min-size=100k -o ~/Music data.bin
                          removed from the set of formats to extract. E.g. extract
                          everything except tracker files:
 
-                         mediaextract --formats=all,-tracker data.bin
+                           mediaextract --formats=all,-tracker data.bin
 ```
