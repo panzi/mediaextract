@@ -43,7 +43,7 @@ WINDOWS_LIBS=-lws2_32
 BIN=$(BUILDDIR)/$(APPNAME)$(BINEXT)
 
 ifeq ($(BUILD_TYPE),release)
-	CFLAGS+=-O2
+	CFLAGS+=-O2 -DNDEBUG
 else
 	CFLAGS+=-g
 endif

@@ -1,4 +1,4 @@
-/* Copyright (c) 2015 Mathias Panzenböck
+/* Copyright (c) 2015-2026 Mathias Panzenböck
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,6 @@
 #define END { 0, 0, 0, 0 }
 #define BODY(...) { __VA_ARGS__, END }
 #define CHUNK_SPEC_COUNT(SPECS) ((sizeof(SPECS) / sizeof(struct riff_chunk_spec)) - 1)
-#define MAX(X, Y) ((X) > (Y) ? (X) : (Y))
 
 struct riff_chunk_spec {
 	uint32_t metatype;
@@ -217,28 +216,8 @@ static const struct riff_chunk_spec riff_webp_body[] = BODY(
 	CHUNK('V','P','8','X',    0)
 );
 
-#define MAX_CHUNK_SPEC_COUNT \
-	MAX(CHUNK_SPEC_COUNT(riff_empty_body), \
-	MAX(CHUNK_SPEC_COUNT(riff_wav_body), \
-	MAX(CHUNK_SPEC_COUNT(riff_avi_body), \
-	MAX(CHUNK_SPEC_COUNT(riff_ani_fram_body), \
-	MAX(CHUNK_SPEC_COUNT(riff_ani_body), \
-	MAX(CHUNK_SPEC_COUNT(riff_pal_body), \
-	MAX(CHUNK_SPEC_COUNT(riff_aud_body), \
-	MAX(CHUNK_SPEC_COUNT(riff_dmbd_body), \
-	MAX(CHUNK_SPEC_COUNT(riff_dmpr_body), \
-	MAX(CHUNK_SPEC_COUNT(riff_dmcn_body), \
-	MAX(CHUNK_SPEC_COUNT(riff_dsbc_body), \
-	MAX(CHUNK_SPEC_COUNT(riff_dsfx_body), \
-	MAX(CHUNK_SPEC_COUNT(riff_dmsc_body), \
-	MAX(CHUNK_SPEC_COUNT(riff_sgt_body), \
-	MAX(CHUNK_SPEC_COUNT(riff_sty_body), \
-	MAX(CHUNK_SPEC_COUNT(riff_dmtl_body), \
-	MAX(CHUNK_SPEC_COUNT(riff_dmtg_body), \
-	MAX(CHUNK_SPEC_COUNT(riff_dmtk_body), \
-	MAX(CHUNK_SPEC_COUNT(riff_dmbt_body), \
-	MAX(CHUNK_SPEC_COUNT(riff_dmpt_body), \
-	    CHUNK_SPEC_COUNT(riff_webp_body)))))))))))))))))))))
+/* NOTE: Be sure to update this! */
+#define MAX_CHUNK_SPEC_COUNT 9
 
 static const struct riff_file_spec riff_file_specs[] = {
 	{ RIFF_FORM('W','A','V','E', riff_wav_body ), "wav"  },
@@ -310,7 +289,7 @@ const uint8_t *riff_match(const uint8_t *data, size_t size,
 			if (subchunk_size > subsize - 8)
 				break;
 
-			for (size_t i = 0;; ++ i)
+			for (size_t i = 0; i < MAX_CHUNK_SPEC_COUNT; ++ i)
 			{
 				const struct riff_chunk_spec *subspec = body + i;
 
@@ -327,7 +306,7 @@ const uint8_t *riff_match(const uint8_t *data, size_t size,
 			subdata += subchunk_size + 8;
 		}
 
-		for (size_t i = 0;; ++ i)
+		for (size_t i = 0; i < MAX_CHUNK_SPEC_COUNT; ++ i)
 		{
 			const struct riff_chunk_spec *subspec = body + i;
 
