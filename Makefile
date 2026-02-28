@@ -38,7 +38,7 @@ OBJ=\
 	$(BUILDDIR)/text.o
 CC=gcc
 LD=$(CC)
-CFLAGS+= -Wall -Werror -Wextra -std=gnu99 $(INCLUDE) $(LIBDIRS) -D_FILE_OFFSET_BITS=64
+CFLAGS+= -Wall -Werror -Wextra -std=gnu99 $(INCLUDE) $(LIBDIRS) -D_FILE_OFFSET_BITS=64 -fPIE
 WINDOWS_LIBS=-lws2_32
 BIN=$(BUILDDIR)/$(APPNAME)$(BINEXT)
 
