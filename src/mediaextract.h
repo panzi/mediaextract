@@ -178,7 +178,7 @@
 
 #endif
 
-#define MEDIAEXTRACT_VERSION "1.2.0"
+#define MEDIAEXTRACT_VERSION "1.2.1"
 
 typedef uint64_t file_format;
 
