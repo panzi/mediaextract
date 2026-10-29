@@ -1,5 +1,8 @@
 .*
 *~
 *.o
+*.zip
+/mediaextract-v*/
 /build
 /tmp
+!.gitignore
