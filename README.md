@@ -28,17 +28,17 @@ make TARGET=win64 builddir
 make TARGET=win64
 ```
 
-> ![WARNING]
+> [!WARNING]
 > This is written in C by me a long time ago and is not well tested. This means
 > it is likely to have read buffer overflows that might dump arbitrary program
 > memory to the extracted file or crash the program. Use at your own risk.
 
-> ![WARNING]
+> [!WARNING]
 > This program only works correctly on platforms that allow unaligned
 > memory access (e.g. x86 and ARM, although it might be quite slow on the latter).
 > I wrote this a long time ago where I didn't have a clue about these things.
 
-> ![NOTE]
+> [!NOTE]
 > 32bit binaries can only process 2 GB of a file at once. The rest of
 > bigger files will be ignored. You need to run this program several times with
 > different `--offset` values to process such a file in whole.
