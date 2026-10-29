@@ -57,7 +57,7 @@ int it_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 		size_t message_length = le16toh(*(uint16_t *)(data + 0x36));
 		size_t message_start  = le32toh(*(uint32_t *)(data + 0x38));
 
-		if ((size_t)(-1) - message_length < message_start)
+		if (SIZE_MAX - message_length < message_start)
 			return 0;
 
 		size_t message_end = message_start + message_length;

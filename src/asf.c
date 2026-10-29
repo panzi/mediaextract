@@ -98,7 +98,7 @@ int asf_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 		const struct asf_object *object = (const struct asf_object *)ptr;
 		size_t off = (size_t)(ptr - data);
 
-		if ((size_t)(-1) - ASF_OBJECT_SIZE < off)
+		if (SIZE_MAX - ASF_OBJECT_SIZE < off)
 			return 0;
 
 		if (off + ASF_OBJECT_SIZE > header_object_size)
@@ -111,7 +111,7 @@ int asf_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 
 		uint64_t object_size = le64toh(object->object_size);
 
-		if ((size_t)(-1) - object_size < off)
+		if (SIZE_MAX - object_size < off)
 			return 0;
 
 		if (off + object_size > header_object_size)
@@ -130,7 +130,7 @@ int asf_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 		{
 			size_t off = (size_t)(ptr - data);
 
-			if ((size_t)(-1) - ASF_OBJECT_SIZE < off)
+			if (SIZE_MAX - ASF_OBJECT_SIZE < off)
 				break;
 
 			if (off + ASF_OBJECT_SIZE > input_len)
@@ -143,7 +143,7 @@ int asf_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 
 			uint64_t object_size = le64toh(object->object_size);
 
-			if ((size_t)(-1) - object_size < off)
+			if (SIZE_MAX - object_size < off)
 				break;
 
 			if (off + object_size > header_object_size)

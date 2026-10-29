@@ -106,12 +106,12 @@ int xm_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 		uint32_t pattern_header_size = le32toh(pattern_header->header_size);
 		uint16_t pattern_data_size   = le16toh(pattern_header->data_size);
 
-		if ((size_t)(-1) - pattern_header_size < length)
+		if (SIZE_MAX - pattern_header_size < length)
 			return 0;
 
 		length += pattern_header_size;
 		
-		if ((size_t)(-1) - pattern_data_size < length)
+		if (SIZE_MAX - pattern_data_size < length)
 			return 0;
 
 		length += pattern_data_size;
@@ -139,7 +139,7 @@ int xm_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 		size_t instrument_samples     = instrument_header_size >= 29 ?
 			le16toh(instrument_header->samples) : 0;
 		
-		if ((size_t)(-1) - instrument_header_size < length)
+		if (SIZE_MAX - instrument_header_size < length)
 		{
 			return 0;
 		}
@@ -182,13 +182,13 @@ int xm_isfile(const uint8_t *data, size_t input_len, size_t *lengthptr)
 
 				uint32_t sample_size = le32toh(sample_header->size);
 
-				if ((size_t)(-1) - sample_size < data_size)
+				if (SIZE_MAX - sample_size < data_size)
 					return 0;
 
 				data_size += sample_size;
 			}
 
-			if ((size_t)(-1) - data_size < length)
+			if (SIZE_MAX - data_size < length)
 				return 0;
 
 			length += data_size;
