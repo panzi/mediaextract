@@ -28,19 +28,27 @@ make TARGET=win64 builddir
 make TARGET=win64
 ```
 
-**Warning:** This program only works correctly on platforms that allow unaligned
-memory access (e.g. x86 and ARM, although it might be quite slow on the latter).
+> ![WARNING]
+> This is written in C by me a long time ago and is not well tested. This means
+> it is likely to have read buffer overflows that might dump arbitrary program
+> memory to the extracted file or crash the program. Use at your own risk.
 
-**Note:** 32bit binaries can only process 2 GB of a file at once. The rest of
-bigger files will be ignored. You need to run this program several times with
-different `--offset` values to process such a file whole.
+> ![WARNING]
+> This program only works correctly on platforms that allow unaligned
+> memory access (e.g. x86 and ARM, although it might be quite slow on the latter).
+> I wrote this a long time ago where I didn't have a clue about these things.
 
-This also means that using a 32bit binary extracted files can never be larger
-than 2 GB.
-
-This is because `mediaextract` uses `mmap` to read files, which maps files to
-memory. On 32bit platforms the address space of the main memory is simply not
-big enough. 64bit binaries can read up to 8 EB (8 Exabytes) at once.
+> ![NOTE]
+> 32bit binaries can only process 2 GB of a file at once. The rest of
+> bigger files will be ignored. You need to run this program several times with
+> different `--offset` values to process such a file in whole.
+>
+> This also means that using a 32bit binary extracted files can never be larger
+> than 2 GB.
+>
+> This is because `mediaextract` uses `mmap` to read files, which maps files to
+> memory. On 32bit platforms the address space of the main memory is simply not
+> big enough. 64bit binaries can read up to 8 EB (8 Exabytes) at once.
 
 Usage
 -----
