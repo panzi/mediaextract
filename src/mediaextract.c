@@ -383,7 +383,10 @@ int do_extract(const uint8_t *filedata, size_t filesize, const struct extract_op
 	
 	ptr = filedata;
 	end = filedata + filesize;
-	for (input_len = filesize; input_len >= 4; input_len = (size_t)(end - ptr))
+	for (
+		input_len = filesize;
+		input_len >= 4;
+		input_len = ptr < end ? (size_t)(end - ptr) : 0)
 	{
 		uint32_t magic = MAGIC(ptr);
 		

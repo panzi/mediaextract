@@ -61,6 +61,17 @@ int avif_isfile(const uint8_t *data, size_t input_len, file_format formats, stru
 
 	for (;;)
 	{
+		// The walked box header is 8 bytes (size + fourcc). Refuse to read it
+		// unless it lies wholly inside the buffer: length comes from the file
+		// and data + length otherwise walks off the mapping.
+		if (length > input_len || (input_len - length) < 8)
+		{
+			if (boxes & (MOOV | MDAT))
+				break;
+
+			return 0;
+		}
+
 		const uint8_t *ptr = data + length;
 		box_size = READ_U32_BE(ptr);
 
@@ -90,7 +101,8 @@ int avif_isfile(const uint8_t *data, size_t input_len, file_format formats, stru
 		{
 			break;
 		}
-		else{
+		else
+		{
 			return 0;
 		}
 
